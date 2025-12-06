@@ -1632,7 +1632,7 @@ shaderSection:CreateSlider({
 })
 
 local contrastLabel = shaderSection:CreateLabel({text = "Contrast"})
-shaderSectionCreateSlider({
+shaderSection:CreateSlider({
     min = -1,
     max = 1,
     default = 0,
