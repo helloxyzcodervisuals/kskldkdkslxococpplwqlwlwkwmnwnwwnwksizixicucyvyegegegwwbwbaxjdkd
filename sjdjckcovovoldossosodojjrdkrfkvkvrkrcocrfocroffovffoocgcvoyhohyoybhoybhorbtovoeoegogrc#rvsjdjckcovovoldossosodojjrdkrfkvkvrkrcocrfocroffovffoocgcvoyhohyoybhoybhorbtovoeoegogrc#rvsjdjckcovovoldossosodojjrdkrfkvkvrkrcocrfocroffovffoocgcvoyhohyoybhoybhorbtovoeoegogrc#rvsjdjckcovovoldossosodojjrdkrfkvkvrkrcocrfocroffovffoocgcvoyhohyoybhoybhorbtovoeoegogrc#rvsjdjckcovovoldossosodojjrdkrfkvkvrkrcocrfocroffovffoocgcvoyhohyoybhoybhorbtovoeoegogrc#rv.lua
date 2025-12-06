@@ -67,9 +67,19 @@ end
 local AsyV2 = loadstring(game:HttpGet("https://github.com/ske-code/eupismyflycup/blob/main/AsyV2eupisnigger.lua?raw=true"))()
 AsyV2.font = Font.new(getcustomasset and getcustomasset("aui/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
 
+local screenSize = workspace.CurrentCamera.ViewportSize
+local screenY = screenSize.Y
+
+local targetHeight
+if screenY > 350 then
+    targetHeight = 550
+else
+    targetHeight = 300
+end
+
 local window = AsyV2:CreateWindow({
     name = "Example Script",
-    size = UDim2.new(0, 650, 0, 550)
+    size = UDim2.new(0, 650, 0, targetHeight)
 })
 
 local mainTab = window:CreateTab("Main")
