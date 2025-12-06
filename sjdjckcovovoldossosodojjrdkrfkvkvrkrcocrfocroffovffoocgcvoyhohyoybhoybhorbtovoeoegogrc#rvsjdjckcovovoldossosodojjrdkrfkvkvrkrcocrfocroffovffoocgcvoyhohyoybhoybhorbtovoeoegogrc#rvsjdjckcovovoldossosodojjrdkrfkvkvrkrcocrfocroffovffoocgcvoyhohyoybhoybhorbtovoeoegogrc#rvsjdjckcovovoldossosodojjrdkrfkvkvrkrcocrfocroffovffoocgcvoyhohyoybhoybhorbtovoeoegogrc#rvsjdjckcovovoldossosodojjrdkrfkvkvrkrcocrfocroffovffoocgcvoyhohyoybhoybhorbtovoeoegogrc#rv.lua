@@ -72,7 +72,7 @@ local screenY = screenSize.Y
 
 local targetHeight
 if UserInputService.TouchEnabled then
-    if screenY > 350 then
+    if screenY > 550 then
         targetHeight = 550
     else
         targetHeight = 350
