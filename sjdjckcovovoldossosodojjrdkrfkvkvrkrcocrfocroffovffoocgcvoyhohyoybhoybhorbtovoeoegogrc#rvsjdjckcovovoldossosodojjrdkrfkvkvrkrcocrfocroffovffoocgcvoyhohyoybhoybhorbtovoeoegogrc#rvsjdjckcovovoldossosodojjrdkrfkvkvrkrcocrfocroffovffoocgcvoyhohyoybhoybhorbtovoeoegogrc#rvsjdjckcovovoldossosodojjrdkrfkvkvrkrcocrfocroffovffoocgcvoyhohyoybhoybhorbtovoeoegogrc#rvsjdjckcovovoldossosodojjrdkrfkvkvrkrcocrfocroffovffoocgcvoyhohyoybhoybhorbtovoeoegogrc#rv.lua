@@ -622,7 +622,7 @@ rageRight:CreateToggle({
         getgenv().Ragebot.LowHealthCheck = s
     end
 })
-
+--[[
 local function checkClearPath(startPos, endPos)
     local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
@@ -695,6 +695,112 @@ local function wallbang()
     end
     return bestShootPos or localHead.Position, bestHitPos or target.Position
 end
+--]]
+local function checkClearPath(startPos, endPos)
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    
+    local direction = (endPos - startPos)
+    local distance = direction.Magnitude
+    
+    local raycastResult = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
+    
+    if raycastResult then
+        local hitPart = raycastResult.Instance
+        if hitPart and hitPart.CanCollide then
+            local model = hitPart:FindFirstAncestorOfClass("Model")
+            if model then
+                local humanoid = model:FindFirstChild("Humanoid")
+                if not humanoid then
+                    return false
+                end
+            else
+                return false
+            end
+        end
+    end
+    return true
+end
+local function wallbang()
+    local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
+    if not localHead then return nil end
+    local target = getClosestTarget()
+    if not target then return nil end
+    if not getgenv().Ragebot.Wallbang then
+        return localHead.Position, target.Position
+    end
+
+    local attempts = 150
+    local bestShootPos = nil
+    local bestHitPos = nil
+    local wallbangRange = getgenv().Ragebot.WallbangRange or 30
+    local verticalRange = getgenv().Ragebot.WallbangRange or 30
+    
+    local startPos = localHead.Position
+    
+    for i = 1, attempts do
+        local function applyOffset(basePos, offsetX, offsetY, offsetZ)
+            local pos = basePos
+            if offsetX < 0 then
+                pos = Vector3.new(pos.X - offsetX, pos.Y, pos.Z)
+            else
+                pos = Vector3.new(pos.X + offsetX, pos.Y, pos.Z)
+            end
+            
+            if offsetY < 0 then
+                pos = Vector3.new(pos.X, pos.Y - offsetY, pos.Z)
+            else
+                pos = Vector3.new(pos.X, pos.Y + offsetY, pos.Z)
+            end
+            
+            if offsetZ < 0 then
+                pos = Vector3.new(pos.X, pos.Y, pos.Z - offsetZ)
+            else
+                pos = Vector3.new(pos.X, pos.Y, pos.Z + offsetZ)
+            end
+            return pos
+        end
+        
+        local shootOffsetX = math.random(-wallbangRange, wallbangRange)
+        local shootOffsetY = math.random(-verticalRange, verticalRange)
+        local shootOffsetZ = math.random(-wallbangRange, wallbangRange)
+        local shootPos = applyOffset(startPos, shootOffsetX, shootOffsetY, shootOffsetZ)
+        
+        local hitOffsetX = math.random(-wallbangRange, wallbangRange)
+        local hitOffsetY = math.random(-verticalRange, verticalRange)
+        local hitOffsetZ = math.random(-wallbangRange, wallbangRange)
+        local hitPos = applyOffset(target.Position, hitOffsetX, hitOffsetY, hitOffsetZ)
+        
+        local pathToShoot = checkClearPath(startPos, shootPos)
+        local pathToTarget = checkClearPath(shootPos, hitPos)
+    
+        if pathToShoot and pathToTarget then
+            if not bestShootPos then
+                bestShootPos = shootPos
+                bestHitPos = hitPos
+            else
+                local currentDistance = (shootPos - startPos).Magnitude + (hitPos - target.Position).Magnitude
+                local bestDistance = (bestShootPos - startPos).Magnitude + (bestHitPos - target.Position).Magnitude
+                
+                if currentDistance < bestDistance then
+                    bestShootPos = shootPos
+                    bestHitPos = hitPos
+                end
+            end
+        end
+    end
+    
+    if not bestShootPos then
+        bestShootPos = startPos
+    end
+    if not bestHitPos then
+        bestHitPos = target.Position
+    end
+    
+    return bestShootPos, bestHitPos
+end
+
 
 local function createTracer(startPos, endPos)
     if not getgenv().Ragebot.Tracers then return end
