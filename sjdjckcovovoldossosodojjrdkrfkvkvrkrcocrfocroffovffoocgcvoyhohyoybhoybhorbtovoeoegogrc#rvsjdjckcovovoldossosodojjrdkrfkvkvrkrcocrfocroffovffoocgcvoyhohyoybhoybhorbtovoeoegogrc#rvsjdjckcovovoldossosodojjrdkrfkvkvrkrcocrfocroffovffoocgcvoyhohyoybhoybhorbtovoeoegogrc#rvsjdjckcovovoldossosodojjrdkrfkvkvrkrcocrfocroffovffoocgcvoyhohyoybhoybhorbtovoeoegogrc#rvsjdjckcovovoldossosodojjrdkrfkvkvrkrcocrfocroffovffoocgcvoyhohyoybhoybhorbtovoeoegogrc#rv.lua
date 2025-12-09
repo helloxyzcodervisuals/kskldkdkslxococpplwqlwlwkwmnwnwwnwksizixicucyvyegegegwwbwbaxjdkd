@@ -904,23 +904,21 @@ end
 local lastShotTime = 0
 RunService.Heartbeat:Connect(function()
     if not getgenv().Ragebot.Enabled then return end
+    if not LocalPlayer.Character then return end
+    if not LocalPlayer.Character:FindFirstChild("Head") then return end
     
-    spawn(function()
-        while getgenv().Ragebot.Enabled do
-            if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("Head") then
-                task.wait()
-                continue
+    local currentTime = tick()
+    local waitTime = 1 / (getgenv().Ragebot.FireRate * 5)
+    
+    if currentTime - lastShotTime >= waitTime then
+        local target = getClosestTarget()
+        if target then
+            local success = shootAtTarget(target)
+            if success then
+                lastShotTime = currentTime
             end
-            
-            local target = getClosestTarget()
-            if target then
-                shootAtTarget(target)
-            end
-            
-            local delay = 1 / (getgenv().Ragebot.FireRate * 10)
-            task.wait(math.max(0.001, delay))
         end
-    end)
+    end
 end)
 
 local fovCircle = Drawing.new("Circle")
