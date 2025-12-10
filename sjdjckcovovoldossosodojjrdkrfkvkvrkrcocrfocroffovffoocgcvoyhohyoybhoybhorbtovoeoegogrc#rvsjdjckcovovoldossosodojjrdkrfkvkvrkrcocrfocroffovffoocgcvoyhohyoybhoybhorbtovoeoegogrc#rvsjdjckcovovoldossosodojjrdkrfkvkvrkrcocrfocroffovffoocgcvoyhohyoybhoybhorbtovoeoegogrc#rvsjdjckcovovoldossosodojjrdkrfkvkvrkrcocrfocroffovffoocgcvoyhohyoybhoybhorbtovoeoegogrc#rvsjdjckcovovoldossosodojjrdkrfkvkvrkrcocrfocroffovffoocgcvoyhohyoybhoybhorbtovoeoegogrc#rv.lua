@@ -697,7 +697,7 @@ local function wallbang()
 end
 --]]
 local function checkClearPath(startPos, endPos)
-    local raycaifParams = RaycastParams.new()
+    local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
     raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
     
