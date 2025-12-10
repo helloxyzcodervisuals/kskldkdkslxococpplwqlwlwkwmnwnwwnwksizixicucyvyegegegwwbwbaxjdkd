@@ -696,6 +696,32 @@ local function wallbang()
     return bestShootPos or localHead.Position, bestHitPos or target.Position
 end
 --]]
+local function checkClearPath(startPos, endPos)
+    local raycaifParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    
+    local direction = (endPos - startPos)
+    local distance = direction.Magnitude
+    
+    local raycastResult = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
+    
+    if raycastResult then
+        local hitPart = raycastResult.Instance
+        if hitPart and hitPart.CanCollide then
+            local model = hitPart:FindFirstAncestorOfClass("Model")
+            if model then
+                local humanoid = model:FindFirstChild("Humanoid")
+                if not humanoid then
+                    return false
+                end
+            else
+                return false
+            end
+        end
+    end
+    return true
+end
 local function wallbang()
     local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
     if not localHead then return nil end
