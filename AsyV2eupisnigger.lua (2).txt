@@ -36,19 +36,19 @@ local AsyV2Font = Font.new(getcustomasset and getcustomasset("aui/fonts/main_enc
 
 local themes = {
     PinkTokyoNight = {
-        Accent = Color3.fromRGB(255, 150, 203),
-        WindowOutlineBackground = Color3.fromRGB(30, 25, 45),
-        WindowInlineBackground = Color3.fromRGB(40, 35, 60),
-        WindowHolderBackground = Color3.fromRGB(50, 45, 75),
-        PageUnselected = Color3.fromRGB(60, 55, 90),
-        PageSelected = Color3.fromRGB(90, 80, 130),
-        SectionBackground = Color3.fromRGB(45, 40, 70),
-        SectionInnerBorder = Color3.fromRGB(80, 70, 110),
-        SectionOuterBorder = Color3.fromRGB(25, 20, 40),
-        WindowBorder = Color3.fromRGB(100, 85, 150),
-        Text = Color3.fromRGB(245, 200, 230),
-        RiskyText = Color3.fromRGB(255, 100, 150),
-        ObjectBackground = Color3.fromRGB(55, 50, 85)
+        Accent = Color3.fromRGB(0, 255, 150),
+        WindowOutlineBackground = Color3.fromRGB(10, 10, 10),
+        WindowInlineBackground = Color3.fromRGB(15, 15, 15),
+        WindowHolderBackground = Color3.fromRGB(20, 20, 20),
+        PageUnselected = Color3.fromRGB(25, 25, 25),
+        PageSelected = Color3.fromRGB(0, 200, 120),
+        SectionBackground = Color3.fromRGB(18, 18, 18),
+        SectionInnerBorder = Color3.fromRGB(0, 180, 100),
+        SectionOuterBorder = Color3.fromRGB(5, 5, 5),
+        WindowBorder = Color3.fromRGB(0, 160, 90),
+        Text = Color3.fromRGB(220, 220, 220),
+        RiskyText = Color3.fromRGB(255, 75, 75),
+        ObjectBackground = Color3.fromRGB(22, 22, 22)
     }
 }
 
