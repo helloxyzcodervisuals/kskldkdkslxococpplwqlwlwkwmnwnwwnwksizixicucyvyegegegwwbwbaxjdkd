@@ -114,7 +114,8 @@ getgenv().Ragebot = {
     TargetList = {},
     Whitelist = {},
     UseTargetList = false,
-    UseWhitelist = false
+    UseWhitelist = false,
+    HitNotifyDuration = 5
 }
 
 local white = Color3.fromRGB(255, 255, 255)
@@ -132,23 +133,42 @@ local rageRight = mainTab:CreateSection({
     size = 250
 })
 
-rageLeft:CreateLabel({text = "Core Ragebot"})
+--rageLeft:CreateLabel({text = "Core Ragebot"})
 rageLeft:CreateToggle({
-    name = "Enable Ragebot",
+    name = "Enable",
     default = false,
     callback = function(s) 
         getgenv().Ragebot.Enabled = s 
     end
 })
 
-rageLeft:CreateToggle({
-    name = "Hit Notifications",
+
+--local visualTab = window:CreateTab("Visual")
+local notifSection = visualTab:CreateSection({
+    name = "Notifications",
+    side = "Left",
+    size = 250
+})
+
+local hitNotifyToggle = notifSection:CreateToggle({
+    name = "Hit Notification",
     default = true,
-    callback = function(s) 
-        getgenv().Ragebot.HitNotify = s 
+    --flag = "hit_notify_enabled",
+    callback = function(state)
+        getgenv().Ragebot.HitNotify = state
     end
 })
 
+local hitNotifyDuration = notifSection:CreateSlider({
+    name = "Notification Duration",
+    min = 1,
+    max = 10,
+    default = 5,
+    --flag = "hit_notify_duration",
+    callback = function(value)
+        getgenv().Ragebot.HitNotifyDuration = value
+    end
+})
 rageLeft:CreateToggle({
     name = "Hit Sound",
     default = true,
@@ -414,8 +434,10 @@ local function createHitNotification(toolName, offsetValue, playerName)
     local box = Instance.new("Frame")
     box.Parent = ScreenGui
     box.BackgroundColor3 = Color3.new(0, 0, 0)
-    box.BackgroundTransparency = 0.3
+    box.BackgroundTransparency = 0.5
     box.BorderSizePixel = 0
+    box.AnchorPoint = Vector2.new(0, 0)
+    box.Position = UDim2.new(0, 10, 0, -50)
     
     local parts = {
         {"Using ", white},
@@ -450,10 +472,21 @@ local function createHitNotification(toolName, offsetValue, playerName)
     end
     
     box.Size = UDim2.new(0, totalW + 12, 0, maxH + 8)
-    box.Position = UDim2.new(0, 10, 0, 10 + (#hitNotifications * (maxH + 8 + 5)))
+    
+    local targetY = 10 + (#hitNotifications * (maxH + 8 + 5))
+    
+    local slideInTween = TweenService:Create(
+        box,
+        TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+        {Position = UDim2.new(0, 10, 0, targetY)}
+    )
+    slideInTween:Play()
+    
     table.insert(hitNotifications, box)
     
-    task.delay(5, function()
+    local duration = getgenv().Ragebot.HitNotifyDuration or 5
+    
+    task.delay(duration, function()
         for i, notif in ipairs(hitNotifications) do
             if notif == box then
                 table.remove(hitNotifications, i)
