@@ -376,7 +376,7 @@ local HitFont = Font.new(getcustomasset and getcustomasset("aui/fonts/main_encod
 
 local hitSoundList = {
     name = "Hit Sound",
-    options = {"Skeet", "XP Level"},
+    options = {"Skeet", "XP Level", "Bell"},
     def = "Skeet",
     multiselect = false,
     callback = function(v)
@@ -389,7 +389,8 @@ local function playHitSound()
     
     local soundIds = {
         ["Skeet"] = "rbxassetid://4817809188",
-        ["XP Level"] = "rbxassetid://17148249625"
+        ["XP Level"] = "rbxassetid://17148249625",
+        ["Bell"] = "rbxassetid://6534948092"
     }
     
     local soundId = soundIds[getgenv().Ragebot.SelectedHitSound] or soundIds["Skeet"]
