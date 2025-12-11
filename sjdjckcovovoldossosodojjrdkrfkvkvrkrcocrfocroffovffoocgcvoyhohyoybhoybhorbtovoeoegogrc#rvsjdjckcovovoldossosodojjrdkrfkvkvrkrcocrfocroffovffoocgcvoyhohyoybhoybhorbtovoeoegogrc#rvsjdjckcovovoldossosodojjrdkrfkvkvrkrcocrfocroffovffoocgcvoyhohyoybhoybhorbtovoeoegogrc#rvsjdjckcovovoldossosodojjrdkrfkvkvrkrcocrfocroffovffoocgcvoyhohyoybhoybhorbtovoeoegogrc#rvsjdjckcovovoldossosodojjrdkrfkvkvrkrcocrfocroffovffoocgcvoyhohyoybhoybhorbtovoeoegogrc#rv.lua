@@ -144,7 +144,7 @@ rageLeft:CreateToggle({
 
 
 --local visualTab = window:CreateTab("Visual")
-local notifSection = visualTab:CreateSection({
+local notifSection = visualsTab:CreateSection({
     name = "Notifications",
     side = "Left",
     size = 250
