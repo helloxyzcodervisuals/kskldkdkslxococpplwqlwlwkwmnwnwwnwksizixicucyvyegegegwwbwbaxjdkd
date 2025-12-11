@@ -64,7 +64,7 @@ if writefile and not isfile("aui/fonts/main_encoded.ttf") then
     writefile("aui/fonts/main_encoded.ttf", game:GetService("HttpService"):JSONEncode(font_data))
 end
 
-local AsyV2 = loadstring(game:HttpGet("https://github.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/blob/main/AsyV2eupisnigger.lua%20(2).txt?raw=true"))()
+local AsyV2 = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/AsyV2eupisnigger.lua%20(2).txt"))()
 AsyV2.font = Font.new(getcustomasset and getcustomasset("aui/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
 local UserInputService = game:GetService("UserInputService")
 local screenSize = workspace.CurrentCamera.ViewportSize
