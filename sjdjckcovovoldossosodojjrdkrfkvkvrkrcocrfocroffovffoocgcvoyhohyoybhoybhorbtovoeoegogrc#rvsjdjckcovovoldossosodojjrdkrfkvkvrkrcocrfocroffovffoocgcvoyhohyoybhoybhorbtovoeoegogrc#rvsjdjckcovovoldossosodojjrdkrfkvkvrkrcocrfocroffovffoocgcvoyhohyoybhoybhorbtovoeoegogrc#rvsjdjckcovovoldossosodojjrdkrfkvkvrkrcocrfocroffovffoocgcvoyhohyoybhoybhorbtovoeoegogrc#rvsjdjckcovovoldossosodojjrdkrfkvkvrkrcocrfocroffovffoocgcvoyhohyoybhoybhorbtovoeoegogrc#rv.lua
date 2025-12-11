@@ -2081,3 +2081,330 @@ script.functions.new_connection(run_service.RenderStepped, function()
     
     fovCircle.Position = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
 end)
+local espSection = visualsTab:CreateSection({name = "ESP Settings", side = "Left", size = 200})
+local espColorsSection = visualsTab:CreateSection({name = "ESP Colors", side = "Right", size = 250})
+
+getgenv().ESP = {
+    Enabled = false, 
+    Box = true, 
+    BoxColor = Color3.fromRGB(255,255,255), 
+    BoxThickness = 1, 
+    BoxTransparency = 0.5, 
+    Name = true, 
+    NameColor = Color3.fromRGB(255,255,255), 
+    NameSize = 13, 
+    Health = true, 
+    HealthColor = Color3.fromRGB(0,255,0), 
+    HealthSize = 13, 
+    Distance = true, 
+    DistanceColor = Color3.fromRGB(255,255,255), 
+    DistanceSize = 13, 
+    Weapon = true, 
+    WeaponColor = Color3.fromRGB(255,182,193), 
+    WeaponSize = 13, 
+    TeamCheck = false, 
+    TeamColor = true, 
+    ShowSnaplines = false, 
+    SnaplineColor = Color3.fromRGB(255,0,0), 
+    SnaplineThickness = 1, 
+    Arrows = false, 
+    ArrowColor = Color3.fromRGB(255,255,255), 
+    ArrowSize = 30,
+    MaxDistance = 500,
+    MinBoxSize = Vector2.new(50, 100),
+    MaxBoxSize = Vector2.new(150, 200)
+}
+
+espSection:CreateToggle({name = "Enable ESP", default = false, callback = function(s) getgenv().ESP.Enabled = s end})
+espSection:CreateToggle({name = "Box ESP", default = true, callback = function(s) getgenv().ESP.Box = s end})
+espSection:CreateToggle({name = "Show Name", default = true, callback = function(s) getgenv().ESP.Name = s end})
+espSection:CreateToggle({name = "Show Health", default = true, callback = function(s) getgenv().ESP.Health = s end})
+espSection:CreateToggle({name = "Show Distance", default = true, callback = function(s) getgenv().ESP.Distance = s end})
+espSection:CreateToggle({name = "Show Weapon", default = true, callback = function(s) getgenv().ESP.Weapon = s end})
+espSection:CreateToggle({name = "Team Check", default = false, callback = function(s) getgenv().ESP.TeamCheck = s end})
+espSection:CreateToggle({name = "Team Color", default = true, callback = function(s) getgenv().ESP.TeamColor = s end})
+espSection:CreateToggle({name = "Snaplines", default = false, callback = function(s) getgenv().ESP.ShowSnaplines = s end})
+espSection:CreateToggle({name = "Direction Arrows", default = false, callback = function(s) getgenv().ESP.Arrows = s end})
+espSection:CreateSlider({name = "Max Distance", min = 50, max = 1000, default = 500, callback = function(v) getgenv().ESP.MaxDistance = v end})
+
+espColorsSection:CreateLabel({text = "Box Color"}):CreateColorpicker({default = Color3.fromRGB(255,255,255), callback = function(c) getgenv().ESP.BoxColor = c end})
+espColorsSection:CreateLabel({text = "Name Color"}):CreateColorpicker({default = Color3.fromRGB(255,255,255), callback = function(c) getgenv().ESP.NameColor = c end})
+espColorsSection:CreateLabel({text = "Health Color"}):CreateColorpicker({default = Color3.fromRGB(0,255,0), callback = function(c) getgenv().ESP.HealthColor = c end})
+espColorsSection:CreateLabel({text = "Distance Color"}):CreateColorpicker({default = Color3.fromRGB(255,255,255), callback = function(c) getgenv().ESP.DistanceColor = c end})
+espColorsSection:CreateLabel({text = "Weapon Color"}):CreateColorpicker({default = Color3.fromRGB(255,182,193), callback = function(c) getgenv().ESP.WeaponColor = c end})
+espColorsSection:CreateLabel({text = "Snapline Color"}):CreateColorpicker({default = Color3.fromRGB(255,0,0), callback = function(c) getgenv().ESP.SnaplineColor = c end})
+espColorsSection:CreateLabel({text = "Arrow Color"}):CreateColorpicker({default = Color3.fromRGB(255,255,255), callback = function(c) getgenv().ESP.ArrowColor = c end})
+espColorsSection:CreateSlider({name = "Box Transparency", min = 0, max = 1, default = 0.5, callback = function(v) getgenv().ESP.BoxTransparency = v end})
+espColorsSection:CreateSlider({name = "Arrow Size", min = 10, max = 50, default = 30, callback = function(v) getgenv().ESP.ArrowSize = v end})
+
+local ESPDrawings = {}
+
+local function getPlayerWeapon(player)
+    if player.Character then
+        for _, tool in pairs(player.Character:GetChildren()) do
+            if tool:IsA("Tool") then
+                return tool.Name
+            end
+        end
+    end
+    return "None"
+end
+
+local function calculateBoxSize(distance)
+    local minSize = getgenv().ESP.MinBoxSize
+    local maxSize = getgenv().ESP.MaxBoxSize
+    local maxDist = getgenv().ESP.MaxDistance
+    
+    local t = math.clamp(distance / maxDist, 0, 1)
+    local width = minSize.X + (maxSize.X - minSize.X) * (1 - t)
+    local height = minSize.Y + (maxSize.Y - minSize.Y) * (1 - t)
+    
+    return Vector2.new(width, height)
+end
+
+local function updateESP(player)
+    if not getgenv().ESP.Enabled then return end
+    if not player.Character then return end
+    if not player.Character:FindFirstChild("HumanoidRootPart") then return end
+    if not player.Character:FindFirstChild("Humanoid") then return end
+    
+    local localPlayer = Players.LocalPlayer
+    if player == localPlayer then return end
+    
+    if getgenv().ESP.TeamCheck and player.Team == localPlayer.Team then return end
+    
+    local distance = (localPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+    if distance > getgenv().ESP.MaxDistance then return end
+    
+    local character = player.Character
+    local humanoid = character.Humanoid
+    local hrp = character.HumanoidRootPart
+    
+    if not ESPDrawings[player] then
+        ESPDrawings[player] = {
+            Box = Drawing.new("Square"),
+            Name = Drawing.new("Text"),
+            Health = Drawing.new("Text"),
+            Distance = Drawing.new("Text"),
+            Weapon = Drawing.new("Text"),
+            Snapline = Drawing.new("Line"),
+            HealthBar = {Top = Drawing.new("Square"), Bottom = Drawing.new("Square")},
+            Arrow = Drawing.new("Triangle")
+        }
+        
+        ESPDrawings[player].Box.Filled = false
+        ESPDrawings[player].Box.Thickness = getgenv().ESP.BoxThickness
+        ESPDrawings[player].Box.Color = getgenv().ESP.BoxColor
+        ESPDrawings[player].Box.Transparency = getgenv().ESP.BoxTransparency
+        
+        ESPDrawings[player].Name.Font = 2
+        ESPDrawings[player].Name.Size = getgenv().ESP.NameSize
+        ESPDrawings[player].Name.Color = getgenv().ESP.NameColor
+        ESPDrawings[player].Name.Outline = true
+        ESPDrawings[player].Name.OutlineColor = Color3.new(0, 0, 0)
+        
+        ESPDrawings[player].Health.Font = 2
+        ESPDrawings[player].Health.Size = getgenv().ESP.HealthSize
+        ESPDrawings[player].Health.Color = getgenv().ESP.HealthColor
+        ESPDrawings[player].Health.Outline = true
+        ESPDrawings[player].Health.OutlineColor = Color3.new(0, 0, 0)
+        
+        ESPDrawings[player].Distance.Font = 2
+        ESPDrawings[player].Distance.Size = getgenv().ESP.DistanceSize
+        ESPDrawings[player].Distance.Color = getgenv().ESP.DistanceColor
+        ESPDrawings[player].Distance.Outline = true
+        ESPDrawings[player].Distance.OutlineColor = Color3.new(0, 0, 0)
+        
+        ESPDrawings[player].Weapon.Font = 2
+        ESPDrawings[player].Weapon.Size = getgenv().ESP.WeaponSize
+        ESPDrawings[player].Weapon.Color = getgenv().ESP.WeaponColor
+        ESPDrawings[player].Weapon.Outline = true
+        ESPDrawings[player].Weapon.OutlineColor = Color3.new(0, 0, 0)
+        
+        ESPDrawings[player].Snapline.Thickness = getgenv().ESP.SnaplineThickness
+        ESPDrawings[player].Snapline.Color = getgenv().ESP.SnaplineColor
+        
+        ESPDrawings[player].HealthBar.Top.Filled = true
+        ESPDrawings[player].HealthBar.Top.Color = getgenv().ESP.HealthColor
+        ESPDrawings[player].HealthBar.Top.Thickness = 1
+        
+        ESPDrawings[player].HealthBar.Bottom.Filled = true
+        ESPDrawings[player].HealthBar.Bottom.Color = Color3.new(0.2, 0.2, 0.2)
+        ESPDrawings[player].HealthBar.Bottom.Thickness = 1
+        
+        ESPDrawings[player].Arrow.Filled = true
+        ESPDrawings[player].Arrow.Color = getgenv().ESP.ArrowColor
+        ESPDrawings[player].Arrow.Thickness = 1
+        ESPDrawings[player].Arrow.Visible = false
+    end
+    
+    local drawings = ESPDrawings[player]
+    
+    local screenPos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+    
+    if not onScreen then
+        if getgenv().ESP.Arrows then
+            drawings.Arrow.Visible = true
+            
+            local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+            local direction = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Unit
+            local arrowDistance = math.min(Camera.ViewportSize.X, Camera.ViewportSize.Y) * 0.4
+            
+            local arrowTip = screenCenter + direction * arrowDistance
+            local arrowSize = getgenv().ESP.ArrowSize
+            
+            local perp = Vector2.new(-direction.Y, direction.X)
+            local leftPoint = arrowTip - direction * arrowSize + perp * (arrowSize / 2)
+            local rightPoint = arrowTip - direction * arrowSize - perp * (arrowSize / 2)
+            
+            drawings.Arrow.PointA = arrowTip
+            drawings.Arrow.PointB = leftPoint
+            drawings.Arrow.PointC = rightPoint
+        else
+            drawings.Arrow.Visible = false
+        end
+        
+        drawings.Box.Visible = false
+        drawings.Name.Visible = false
+        drawings.Health.Visible = false
+        drawings.Distance.Visible = false
+        drawings.Weapon.Visible = false
+        drawings.Snapline.Visible = false
+        drawings.HealthBar.Top.Visible = false
+        drawings.HealthBar.Bottom.Visible = false
+        return
+    else
+        drawings.Arrow.Visible = false
+    end
+    
+    local boxSize = calculateBoxSize(distance)
+    local boxPos = Vector2.new(screenPos.X - boxSize.X / 2, screenPos.Y - boxSize.Y / 2)
+    
+    if getgenv().ESP.Box then
+        drawings.Box.Size = boxSize
+        drawings.Box.Position = boxPos
+        drawings.Box.Visible = true
+    else
+        drawings.Box.Visible = false
+    end
+    
+    if getgenv().ESP.Name then
+        drawings.Name.Text = player.Name
+        drawings.Name.Position = Vector2.new(boxPos.X + boxSize.X / 2, boxPos.Y - 20)
+        drawings.Name.Visible = true
+    else
+        drawings.Name.Visible = false
+    end
+    
+    if getgenv().ESP.Health then
+        local healthPercent = humanoid.Health / humanoid.MaxHealth
+        drawings.Health.Text = math.floor(humanoid.Health) .. "/" .. math.floor(humanoid.MaxHealth)
+        drawings.Health.Position = Vector2.new(boxPos.X + boxSize.X / 2, boxPos.Y + boxSize.Y + 5)
+        drawings.Health.Color = Color3.fromHSV(healthPercent * 0.3, 1, 1)
+        drawings.Health.Visible = true
+        
+        local healthBarWidth = 4
+        local healthBarX = boxPos.X - 10
+        local healthBarY = boxPos.Y
+        local healthBarHeight = boxSize.Y
+        
+        drawings.HealthBar.Bottom.Size = Vector2.new(healthBarWidth, healthBarHeight)
+        drawings.HealthBar.Bottom.Position = Vector2.new(healthBarX, healthBarY)
+        drawings.HealthBar.Bottom.Visible = true
+        
+        local healthHeight = healthBarHeight * healthPercent
+        drawings.HealthBar.Top.Size = Vector2.new(healthBarWidth, healthHeight)
+        drawings.HealthBar.Top.Position = Vector2.new(healthBarX, healthBarY + (healthBarHeight - healthHeight))
+        drawings.HealthBar.Top.Color = Color3.fromHSV(healthPercent * 0.3, 1, 1)
+        drawings.HealthBar.Top.Visible = true
+    else
+        drawings.Health.Visible = false
+        drawings.HealthBar.Top.Visible = false
+        drawings.HealthBar.Bottom.Visible = false
+    end
+    
+    if getgenv().ESP.Distance then
+        drawings.Distance.Text = math.floor(distance) .. " on visuals"
+        drawings.Distance.Position = Vector2.new(boxPos.X + boxSize.X / 2, boxPos.Y + boxSize.Y + 25)
+        drawings.Distance.Visible = true
+    else
+        drawings.Distance.Visible = false
+    end
+    
+    if getgenv().ESP.Weapon then
+        drawings.Weapon.Text = getPlayerWeapon(player)
+        drawings.Weapon.Position = Vector2.new(boxPos.X + boxSize.X / 2, boxPos.Y + boxSize.Y + 45)
+        drawings.Weapon.Visible = true
+    else
+        drawings.Weapon.Visible = false
+    end
+    
+    if getgenv().ESP.ShowSnaplines then
+        local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        drawings.Snapline.From = screenCenter
+        drawings.Snapline.To = Vector2.new(screenPos.X, screenPos.Y)
+        drawings.Snapline.Visible = true
+    else
+        drawings.Snapline.Visible = false
+    end
+end
+
+local function removeESP(player)
+    if ESPDrawings[player] then
+        for _, drawing in pairs(ESPDrawings[player]) do
+            if type(drawing) == "table" then
+                for _, subDrawing in pairs(drawing) do
+                    if subDrawing and typeof(subDrawing) == "Instance" then
+                        subDrawing:Remove()
+                    end
+                end
+            elseif drawing and typeof(drawing) == "Instance" then
+                drawing:Remove()
+            end
+        end
+        ESPDrawings[player] = nil
+    end
+end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if not getgenv().ESP.Enabled then
+        for player, drawings in pairs(ESPDrawings) do
+            removeESP(player)
+        end
+        return
+    end
+    
+    local playersToRemove = {}
+    for player, _ in pairs(ESPDrawings) do
+        playersToRemove[player] = true
+    end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer then
+            if player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+                local distance = (Players.LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                if distance <= getgenv().ESP.MaxDistance then
+                    updateESP(player)
+                    playersToRemove[player] = nil
+                end
+            end
+        end
+    end
+    
+    for player, _ in pairs(playersToRemove) do
+        removeESP(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    removeESP(player)
+end)
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if getgenv().ESP.Enabled then
+            task.wait(1)
+            updateESP(player)
+        end
+    end)
+end)
