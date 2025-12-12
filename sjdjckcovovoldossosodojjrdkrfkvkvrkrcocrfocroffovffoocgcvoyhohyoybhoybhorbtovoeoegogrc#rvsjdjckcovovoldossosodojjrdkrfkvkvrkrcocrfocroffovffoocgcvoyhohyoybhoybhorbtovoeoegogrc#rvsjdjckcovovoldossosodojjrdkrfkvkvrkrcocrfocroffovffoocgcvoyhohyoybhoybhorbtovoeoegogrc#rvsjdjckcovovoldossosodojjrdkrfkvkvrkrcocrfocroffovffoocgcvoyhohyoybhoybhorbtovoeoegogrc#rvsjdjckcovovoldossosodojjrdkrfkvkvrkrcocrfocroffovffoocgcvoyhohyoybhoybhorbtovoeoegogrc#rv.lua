@@ -781,7 +781,7 @@ local function wallbang()
         return startPos, targetPos
     end
     
-    local attempts = 50
+    local attempts = 500
     local bestShootPos = nil
     local bestHitPos = nil
     local wallbangRange = getgenv().Ragebot.WallbangRange or 30
@@ -830,8 +830,7 @@ local function wallbang()
     end
     
     if not bestShootPos then
-        bestShootPos = startPos
-        bestHitPos = targetPos
+        return nil, nil
     end
     
     return bestShootPos, bestHitPos
