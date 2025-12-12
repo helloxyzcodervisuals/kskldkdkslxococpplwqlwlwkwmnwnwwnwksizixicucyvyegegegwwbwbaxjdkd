@@ -2043,7 +2043,7 @@ legitMainSection:CreateToggle({
 legitFOVSection:CreateSlider({
     name = "FOV",
     min = 10,
-    max = 360,
+    max = 1000,
     default = 120,
     callback = function(v)
         getgenv().Legitbot.FOV = v
