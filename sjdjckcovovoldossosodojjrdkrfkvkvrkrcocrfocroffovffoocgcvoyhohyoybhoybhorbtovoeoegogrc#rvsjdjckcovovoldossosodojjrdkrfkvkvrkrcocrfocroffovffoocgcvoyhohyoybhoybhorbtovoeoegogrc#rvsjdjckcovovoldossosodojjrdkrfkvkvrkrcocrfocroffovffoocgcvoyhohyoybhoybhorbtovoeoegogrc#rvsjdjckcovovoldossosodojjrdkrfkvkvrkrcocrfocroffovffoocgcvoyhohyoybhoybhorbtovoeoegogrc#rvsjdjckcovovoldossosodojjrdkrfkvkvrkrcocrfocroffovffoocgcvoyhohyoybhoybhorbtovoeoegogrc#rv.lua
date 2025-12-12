@@ -756,6 +756,7 @@ local function checkClearPath(startPos, endPos)
     end
     return true
 end
+--[[
 local function wallbang()
     local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
     if not localHead then return nil end
@@ -835,6 +836,7 @@ local function wallbang()
     
     return bestShootPos, bestHitPos
 end
+--]]
 local function checkClearPath(startPos, endPos)
     local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
@@ -862,7 +864,85 @@ local function checkClearPath(startPos, endPos)
     return true
 end
 
+local function wallbang()
+    local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
+    if not localHead then return nil end
+    local target = getClosestTarget()
+    if not target then return nil end
+    
+    local startPos = localHead.Position
+    local targetPos = target.Position
+    
+    if not getgenv().Ragebot.Wallbang then
+        return startPos, targetPos
+    end
 
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    
+    local direction = targetPos - startPos
+    local distance = direction.Magnitude
+    local directRay = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
+    
+    if not directRay then
+        return startPos, targetPos
+    end
+    
+    local attempts = 500
+    local wallbangRange = getgenv().Ragebot.WallbangRange or 30
+    
+    local wallCount = 0
+    local checkRay = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
+    while checkRay do
+        wallCount = wallCount + 1
+        local newStart = checkRay.Position + (direction.Unit * 0.1)
+        if (newStart - startPos).Magnitude >= distance then
+            break
+        end
+        checkRay = Workspace:Raycast(newStart, (targetPos - newStart).Unit * (distance - (newStart - startPos).Magnitude), raycastParams)
+    end
+    
+    local useDeepRange = distance >= 500 and wallCount >= 3
+    
+    for i = 1, attempts do
+        local shootPosY, hitPosY
+        
+        if useDeepRange then
+            shootPosY = startPos.Y - math.random(18, 20)
+            hitPosY = targetPos.Y - math.random(18, 20)
+        else
+            shootPosY = startPos.Y + math.random(-wallbangRange, wallbangRange)
+            hitPosY = targetPos.Y + math.random(-wallbangRange, wallbangRange)
+        end
+        
+        local shootPos = Vector3.new(
+            startPos.X + math.random(-wallbangRange, wallbangRange),
+            shootPosY,
+            startPos.Z + math.random(-wallbangRange, wallbangRange)
+        )
+        
+        local hitPos = Vector3.new(
+            targetPos.X + math.random(-wallbangRange, wallbangRange),
+            hitPosY,
+            targetPos.Z + math.random(-wallbangRange, wallbangRange)
+        )
+        
+        local shootRay = Workspace:Raycast(startPos, (shootPos - startPos).Unit * (shootPos - startPos).Magnitude, raycastParams)
+        if shootRay then
+            continue
+        end
+        
+        local hitRay = Workspace:Raycast(shootPos, (hitPos - shootPos).Unit * (hitPos - shootPos).Magnitude, raycastParams)
+        if hitRay then
+            continue
+        end
+    
+        return shootPos, hitPos
+    end
+    
+    return startPos, targetPos
+end
 local function createTracer(startPos, endPos)
     if not getgenv().Ragebot.Tracers then return end
     
