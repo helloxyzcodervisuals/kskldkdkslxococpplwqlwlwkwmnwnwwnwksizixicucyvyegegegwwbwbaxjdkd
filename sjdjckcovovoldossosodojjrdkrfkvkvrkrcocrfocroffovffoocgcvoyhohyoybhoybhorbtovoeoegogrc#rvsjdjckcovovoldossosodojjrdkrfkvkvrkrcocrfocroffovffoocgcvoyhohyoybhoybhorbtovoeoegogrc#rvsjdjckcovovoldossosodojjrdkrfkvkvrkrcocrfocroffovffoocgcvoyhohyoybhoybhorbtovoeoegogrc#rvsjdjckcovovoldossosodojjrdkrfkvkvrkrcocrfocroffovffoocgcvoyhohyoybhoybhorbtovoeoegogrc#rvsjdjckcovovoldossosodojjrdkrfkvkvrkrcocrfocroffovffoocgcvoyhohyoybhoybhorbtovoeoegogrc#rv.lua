@@ -756,7 +756,7 @@ local function checkClearPath(startPos, endPos)
     end
     return true
 end
---[[
+
 local function wallbang()
     local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
     if not localHead then return nil end
@@ -782,7 +782,7 @@ local function wallbang()
         return startPos, targetPos
     end
     
-    local attempts = 500
+    local attempts = 10000
     local bestShootPos = nil
     local bestHitPos = nil
     local wallbangRange = getgenv().Ragebot.WallbangRange or 30
@@ -836,7 +836,7 @@ local function wallbang()
     
     return bestShootPos, bestHitPos
 end
---]]
+--[[
 local function checkClearPath(startPos, endPos)
     local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
@@ -943,6 +943,7 @@ local function wallbang()
     
     return startPos, targetPos
 end
+--]]
 local function createTracer(startPos, endPos)
     if not getgenv().Ragebot.Tracers then return end
     
