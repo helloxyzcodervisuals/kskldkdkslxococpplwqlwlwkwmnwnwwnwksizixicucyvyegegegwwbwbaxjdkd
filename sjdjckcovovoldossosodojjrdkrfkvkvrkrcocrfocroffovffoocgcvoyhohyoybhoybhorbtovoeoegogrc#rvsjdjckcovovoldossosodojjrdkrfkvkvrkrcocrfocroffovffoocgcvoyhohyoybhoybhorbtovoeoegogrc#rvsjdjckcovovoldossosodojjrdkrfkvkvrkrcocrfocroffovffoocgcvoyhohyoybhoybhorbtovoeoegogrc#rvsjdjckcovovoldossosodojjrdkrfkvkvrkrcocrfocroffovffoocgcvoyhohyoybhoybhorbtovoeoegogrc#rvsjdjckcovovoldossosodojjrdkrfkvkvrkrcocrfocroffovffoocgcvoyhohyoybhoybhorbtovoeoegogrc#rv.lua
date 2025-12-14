@@ -2509,3 +2509,452 @@ Players.PlayerAdded:Connect(function(player)
         end
     end)
 end)
+local configTab = window:CreateTab("Configuration")
+local configLeft = configTab:CreateSection({name = "Config Management", side = "Left", size = 200})
+local configRight = configTab:CreateSection({name = "Settings", side = "Right", size = 250})
+
+local configData = {}
+local configFiles = {}
+
+local function scanAllVariables()
+    configData = {}
+    
+    for k, v in pairs(_G) do
+        if type(v) ~= "function" and type(v) ~= "table" and type(v) ~= "userdata" and k ~= "_G" then
+            configData[k] = v
+        end
+    end
+    
+    if getgenv() then
+        for k, v in pairs(getgenv()) do
+            if type(v) ~= "function" and type(v) ~= "table" and type(v) ~= "userdata" then
+                configData[k] = v
+            end
+        end
+    end
+    
+    if getgenv().Ragebot then
+        for k, v in pairs(getgenv().Ragebot) do
+            if type(v) ~= "function" and type(v) ~= "table" then
+                configData["Ragebot_" .. k] = v
+            end
+        end
+    end
+    
+    if getgenv().Legitbot then
+        for k, v in pairs(getgenv().Legitbot) do
+            if type(v) ~= "function" and type(v) ~= "table" then
+                configData["Legitbot_" .. k] = v
+            end
+        end
+    end
+    
+    if getgenv().ESP then
+        for k, v in pairs(getgenv().ESP) do
+            if type(v) ~= "function" and type(v) ~= "table" then
+                configData["ESP_" .. k] = v
+            end
+        end
+    end
+    
+    if getgenv().VisualSettings then
+        if getgenv().VisualSettings.Forcefield then
+            for k, v in pairs(getgenv().VisualSettings.Forcefield) do
+                configData["Forcefield_" .. k] = v
+            end
+        end
+        if getgenv().VisualSettings.ViewModel then
+            for k, v in pairs(getgenv().VisualSettings.ViewModel) do
+                configData["ViewModel_" .. k] = v
+            end
+        end
+    end
+    
+    if getgenv().MeleeAura then
+        for k, v in pairs(getgenv().MeleeAura) do
+            if type(v) ~= "function" and type(v) ~= "table" then
+                configData["MeleeAura_" .. k] = v
+            end
+        end
+    end
+    
+    configData.speedValue = speedValue
+    configData.hideHeadEnabled = hideHeadEnabled
+    configData.speedEnabled = speedEnabled
+    configData.loopFOVEnabled = loopFOVEnabled
+    configData.infStaminaEnabled = infStaminaEnabled
+    configData.JumpPowerValue = getgenv().JumpPowerValue
+    configData.JumpPowerEnabled = getgenv().JumpPowerEnabled
+    configData.NoFallDmgEnabled = getgenv().NoFallDmgEnabled
+    configData.lockpickHBEEnabled = getgenv().lockpickHBEEnabled
+    configData.RichShaderEnabled = getgenv().RichShaderEnabled
+    configData.Fly_On = Fly.On
+    configData.Fly_Speed = Fly.Speed
+    configData.Fly_UI = Fly.UI
+    configData.HitNotifyDuration = getgenv().Ragebot.HitNotifyDuration
+    configData.LowHealthCheck = getgenv().Ragebot.LowHealthCheck
+    configData.UseTargetList = getgenv().Ragebot.UseTargetList
+    configData.UseWhitelist = getgenv().Ragebot.UseWhitelist
+    configData.TargetList = getgenv().Ragebot.TargetList
+    configData.Whitelist = getgenv().Ragebot.Whitelist
+    configData.SelectedHitSound = getgenv().Ragebot.SelectedHitSound
+end
+
+local function updateConfigFiles()
+    configFiles = {}
+    if isfolder and isfolder("aui") then
+        if isfolder("aui/configs") then
+            for _, file in pairs(listfiles("aui/configs")) do
+                if file:sub(-5) == ".json" then
+                    table.insert(configFiles, file:match("([^/\\]+)%.json$"))
+                end
+            end
+        end
+    end
+end
+
+if isfolder and not isfolder("aui/configs") then
+    makefolder("aui/configs")
+end
+
+updateConfigFiles()
+
+local configNameBox = configLeft:CreateTextbox({
+    name = "Config Name",
+    placeholder = "Enter config name"
+})
+
+configLeft:CreateButton({
+    name = "Save Config",
+    callback = function()
+        scanAllVariables()
+        local name = configNameBox.value or "default"
+        
+        local dataToSave = {}
+        for k, v in pairs(configData) do
+            if type(v) == "Color3" then
+                dataToSave[k] = {v.R, v.G, v.B}
+            else
+                dataToSave[k] = v
+            end
+        end
+        
+        if writefile then
+            writefile("aui/configs/" .. name .. ".json", game:GetService("HttpService"):JSONEncode(dataToSave))
+            updateConfigFiles()
+        end
+    end
+})
+
+configLeft:CreateButton({
+    name = "Load Config",
+    callback = function()
+        local name = configNameBox.value or "default"
+        if readfile and isfile("aui/configs/" .. name .. ".json") then
+            local data = game:GetService("HttpService"):JSONDecode(readfile("aui/configs/" .. name .. ".json"))
+            
+            for k, v in pairs(data) do
+                if k:find("Ragebot_") then
+                    local settingName = k:sub(9)
+                    if getgenv().Ragebot[settingName] ~= nil then
+                        if type(v) == "table" and #v == 3 then
+                            getgenv().Ragebot[settingName] = Color3.new(v[1], v[2], v[3])
+                        else
+                            getgenv().Ragebot[settingName] = v
+                        end
+                    end
+                elseif k:find("Legitbot_") then
+                    local settingName = k:sub(10)
+                    if getgenv().Legitbot[settingName] ~= nil then
+                        if type(v) == "table" and #v == 3 then
+                            getgenv().Legitbot[settingName] = Color3.new(v[1], v[2], v[3])
+                        else
+                            getgenv().Legitbot[settingName] = v
+                        end
+                    end
+                elseif k:find("ESP_") then
+                    local settingName = k:sub(5)
+                    if getgenv().ESP[settingName] ~= nil then
+                        if type(v) == "table" and #v == 3 then
+                            getgenv().ESP[settingName] = Color3.new(v[1], v[2], v[3])
+                        else
+                            getgenv().ESP[settingName] = v
+                        end
+                    end
+                elseif k:find("Forcefield_") then
+                    local settingName = k:sub(12)
+                    if getgenv().VisualSettings and getgenv().VisualSettings.Forcefield then
+                        if type(v) == "table" and #v == 3 then
+                            getgenv().VisualSettings.Forcefield[settingName] = Color3.new(v[1], v[2], v[3])
+                        else
+                            getgenv().VisualSettings.Forcefield[settingName] = v
+                        end
+                    end
+                elseif k:find("ViewModel_") then
+                    local settingName = k:sub(10)
+                    if getgenv().VisualSettings and getgenv().VisualSettings.ViewModel then
+                        if type(v) == "table" and #v == 3 then
+                            getgenv().VisualSettings.ViewModel[settingName] = Color3.new(v[1], v[2], v[3])
+                        else
+                            getgenv().VisualSettings.ViewModel[settingName] = v
+                        end
+                    end
+                elseif k:find("MeleeAura_") then
+                    local settingName = k:sub(11)
+                    if getgenv().MeleeAura then
+                        if type(v) == "table" and #v == 3 then
+                            getgenv().MeleeAura[settingName] = Color3.new(v[1], v[2], v[3])
+                        else
+                            getgenv().MeleeAura[settingName] = v
+                        end
+                    end
+                elseif k == "speedValue" then
+                    speedValue = v
+                elseif k == "hideHeadEnabled" then
+                    hideHeadEnabled = v
+                elseif k == "speedEnabled" then
+                    speedEnabled = v
+                elseif k == "loopFOVEnabled" then
+                    loopFOVEnabled = v
+                elseif k == "infStaminaEnabled" then
+                    infStaminaEnabled = v
+                elseif k == "JumpPowerValue" then
+                    getgenv().JumpPowerValue = v
+                elseif k == "JumpPowerEnabled" then
+                    getgenv().JumpPowerEnabled = v
+                elseif k == "NoFallDmgEnabled" then
+                    getgenv().NoFallDmgEnabled = v
+                elseif k == "lockpickHBEEnabled" then
+                    getgenv().lockpickHBEEnabled = v
+                elseif k == "RichShaderEnabled" then
+                    getgenv().RichShaderEnabled = v
+                elseif k == "Fly_On" then
+                    Fly.On = v
+                elseif k == "Fly_Speed" then
+                    Fly.Speed = v
+                elseif k == "Fly_UI" then
+                    Fly.UI = v
+                elseif k == "HitNotifyDuration" then
+                    getgenv().Ragebot.HitNotifyDuration = v
+                elseif k == "LowHealthCheck" then
+                    getgenv().Ragebot.LowHealthCheck = v
+                elseif k == "UseTargetList" then
+                    getgenv().Ragebot.UseTargetList = v
+                elseif k == "UseWhitelist" then
+                    getgenv().Ragebot.UseWhitelist = v
+                elseif k == "TargetList" then
+                    getgenv().Ragebot.TargetList = v
+                elseif k == "Whitelist" then
+                    getgenv().Ragebot.Whitelist = v
+                elseif k == "SelectedHitSound" then
+                    getgenv().Ragebot.SelectedHitSound = v
+                else
+                    _G[k] = v
+                end
+            end
+        end
+    end
+})
+
+configLeft:CreateButton({
+    name = "Delete Config",
+    callback = function()
+        local name = configNameBox.value
+        if name and delfile and isfile("aui/configs/" .. name .. ".json") then
+            delfile("aui/configs/" .. name .. ".json")
+            updateConfigFiles()
+        end
+    end
+})
+
+configRight:CreateList({
+    name = "Available Configs",
+    options = configFiles,
+    def = "",
+    multiselect = false,
+    callback = function(selected)
+        if #selected > 0 then
+            configNameBox.value = selected[1]
+        end
+    end
+})
+
+configLeft:CreateButton({
+    name = "Refresh Config List",
+    callback = function()
+        updateConfigFiles()
+    end
+})
+
+configRight:CreateButton({
+    name = "Export to Clipboard",
+    callback = function()
+        scanAllVariables()
+        local exportData = {}
+        for k, v in pairs(configData) do
+            if type(v) == "Color3" then
+                exportData[k] = {v.R, v.G, v.B}
+            else
+                exportData[k] = v
+            end
+        end
+        local json = game:GetService("HttpService"):JSONEncode(exportData)
+        if setclipboard then
+            setclipboard(json)
+        end
+    end
+})
+
+configRight:CreateButton({
+    name = "Import from Clipboard",
+    callback = function()
+        if getclipboard then
+            local clipboard = getclipboard()
+            local success, data = pcall(function()
+                return game:GetService("HttpService"):JSONDecode(clipboard)
+            end)
+            
+            if success then
+                for k, v in pairs(data) do
+                    if k:find("Ragebot_") then
+                        local settingName = k:sub(9)
+                        if getgenv().Ragebot[settingName] ~= nil then
+                            if type(v) == "table" and #v == 3 then
+                                getgenv().Ragebot[settingName] = Color3.new(v[1], v[2], v[3])
+                            else
+                                getgenv().Ragebot[settingName] = v
+                            end
+                        end
+                    elseif k:find("Legitbot_") then
+                        local settingName = k:sub(10)
+                        if getgenv().Legitbot[settingName] ~= nil then
+                            if type(v) == "table" and #v == 3 then
+                                getgenv().Legitbot[settingName] = Color3.new(v[1], v[2], v[3])
+                            else
+                                getgenv().Legitbot[settingName] = v
+                            end
+                        end
+                    elseif k:find("ESP_") then
+                        local settingName = k:sub(5)
+                        if getgenv().ESP[settingName] ~= nil then
+                            if type(v) == "table" and #v == 3 then
+                                getgenv().ESP[settingName] = Color3.new(v[1], v[2], v[3])
+                            else
+                                getgenv().ESP[settingName] = v
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+})
+
+configRight:CreateButton({
+    name = "Reset All Settings",
+    callback = function()
+        getgenv().Ragebot = {
+            Enabled = false,
+            FireRate = 30,
+            Prediction = true,
+            PredictionAmount = 0.12,
+            TeamCheck = false,
+            VisibilityCheck = true,
+            FOV = 120,
+            ShowFOV = true,
+            Wallbang = true,
+            Tracers = true,
+            TracerColor = Color3.fromRGB(255, 0, 0),
+            TracerWidth = 1,
+            TracerLifetime = 3,
+            WallbangRange = 30,
+            HitNotify = true,
+            AutoReload = true,
+            HitSound = true,
+            TargetList = {},
+            Whitelist = {},
+            UseTargetList = false,
+            UseWhitelist = false,
+            HitNotifyDuration = 5,
+            LowHealthCheck = false
+        }
+        
+        getgenv().Legitbot = {
+            SilentAim = false,
+            FOV = 120,
+            ShowFOV = true,
+            Tracers = {
+                Enabled = false,
+                Width = 1,
+                Brightness = 5,
+                LightEmission = 3,
+                Color = Color3.fromRGB(255, 182, 193),
+                Lifetime = 3
+            }
+        }
+        
+        getgenv().ESP = {
+            Enabled = false,
+            Box = true,
+            BoxColor = Color3.fromRGB(255,255,255),
+            BoxThickness = 1,
+            BoxTransparency = 0.5,
+            Name = true,
+            NameColor = Color3.fromRGB(255,255,255),
+            NameSize = 13,
+            Health = true,
+            HealthColor = Color3.fromRGB(0,255,0),
+            HealthSize = 13,
+            Distance = true,
+            DistanceColor = Color3.fromRGB(255,255,255),
+            DistanceSize = 13,
+            Weapon = true,
+            WeaponColor = Color3.fromRGB(255,182,193),
+            WeaponSize = 13,
+            TeamCheck = false,
+            TeamColor = true,
+            ShowSnaplines = false,
+            SnaplineColor = Color3.fromRGB(255,0,0),
+            SnaplineThickness = 1,
+            Arrows = false,
+            ArrowColor = Color3.fromRGB(255,255,255),
+            ArrowSize = 30,
+            MaxDistance = 500
+        }
+        
+        getgenv().MeleeAura = {
+            Enabled = true,
+            TargetPart = {"Head", "UpperTorso"},
+            ShowAnim = true
+        }
+        
+        getgenv().VisualSettings = {
+            Forcefield = {
+                Enabled = false,
+                Color = Color3.fromRGB(0, 162, 255),
+                Transparency = 0.3
+            },
+            ViewModel = {
+                Enabled = false,
+                Color = Color3.fromRGB(255, 255, 255),
+                Transparency = 0
+            }
+        }
+        
+        getgenv().JumpPowerValue = 100
+        getgenv().JumpPowerEnabled = false
+        getgenv().NoFallDmgEnabled = false
+        getgenv().lockpickHBEEnabled = false
+        getgenv().RichShaderEnabled = false
+        
+        speedValue = 50
+        hideHeadEnabled = false
+        speedEnabled = false
+        loopFOVEnabled = false
+        infStaminaEnabled = false
+        
+        Fly.On = false
+        Fly.Speed = 50
+        Fly.UI = false
+    end
+})
