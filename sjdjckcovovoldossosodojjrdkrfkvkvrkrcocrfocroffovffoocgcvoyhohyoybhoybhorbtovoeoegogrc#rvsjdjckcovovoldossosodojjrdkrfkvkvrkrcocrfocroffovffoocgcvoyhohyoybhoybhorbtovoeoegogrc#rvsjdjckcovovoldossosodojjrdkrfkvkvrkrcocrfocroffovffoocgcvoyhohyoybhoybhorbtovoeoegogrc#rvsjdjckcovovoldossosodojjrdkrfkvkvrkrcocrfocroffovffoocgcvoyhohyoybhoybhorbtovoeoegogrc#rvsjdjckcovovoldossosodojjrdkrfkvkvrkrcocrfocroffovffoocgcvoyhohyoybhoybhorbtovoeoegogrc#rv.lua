@@ -1,4 +1,213 @@
 if string.lower((getgenv() or _G).key or "") ~= "getskeetkey.gg" then return end
+local Watermark = {}
+
+function Watermark:Create()
+    local TS = game:GetService("TweenService")
+    local CG = game:GetService("CoreGui")
+    local UIS = game:GetService("UserInputService")
+    local HS = game:GetService("HttpService")
+    
+    if makefolder then
+        makefolder("aui")
+        makefolder("aui/fonts")
+    end
+    
+    if not isfile or (isfile and not isfile("aui/fonts/main.ttf")) then
+        if writefile then
+            writefile("aui/fonts/main.ttf", game:HttpGet("https://github.com/i77lhm/storage/raw/refs/heads/main/fonts/ProggyClean.ttf"))
+        end
+    end
+    
+    local font_data = {
+        name = "AUIFont",
+        faces = {
+            {
+                name = "Regular",
+                weight = 400,
+                style = "normal",
+                assetId = getcustomasset and getcustomasset("aui/fonts/main.ttf") or ""
+            }
+        }
+    }
+    
+    if writefile and not isfile("aui/fonts/main_encoded.ttf") then
+        writefile("aui/fonts/main_encoded.ttf", HS:JSONEncode(font_data))
+    end
+    
+    local AsyV2Font = Font.new(getcustomasset and getcustomasset("aui/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
+    
+    local theme = {
+        Accent = Color3.fromRGB(255, 150, 203),
+        Text = Color3.fromRGB(245, 200, 230),
+        WindowOutlineBackground = Color3.fromRGB(30, 25, 45),
+        WindowInlineBackground = Color3.fromRGB(40, 35, 60)
+    }
+    
+    local function cr(cls, props)
+        local obj = Instance.new(cls)
+        for p, v in pairs(props) do 
+            obj[p] = v 
+        end
+        return obj
+    end
+    
+    local function getTimeString()
+        local time = os.date("*t")
+        local hour = time.hour
+        local minute = time.min
+        local second = time.sec
+        local ampm = hour >= 12 and "P.M" or "A.M"
+        hour = hour % 12
+        if hour == 0 then hour = 12 end
+        return string.format("%d:%02d:%02d %s", hour, minute, second, ampm)
+    end
+    
+    local uid = tostring(math.random(10000, 99999))
+    local fixedWidth = 350
+    
+    local sg = cr("ScreenGui", {
+        Name = "WatermarkAsyV2",
+        Parent = CG,
+        ResetOnSpawn = false
+    })
+    
+    local main = cr("Frame", {
+        Parent = sg,
+        Size = UDim2.new(0, fixedWidth, 0, 22),
+        Position = UDim2.new(0, 150, 0, 40),
+        BackgroundColor3 = theme.WindowOutlineBackground,
+        BorderSizePixel = 0,
+        ClipsDescendants = true
+    })
+    
+    local outline = cr("Frame", {
+        Parent = main,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = theme.Accent,
+        BorderSizePixel = 0,
+        ZIndex = 0
+    })
+    
+    local inline = cr("Frame", {
+        Parent = outline,
+        Size = UDim2.new(1, -2, 1, -2),
+        Position = UDim2.new(0, 1, 0, 1),
+        BackgroundColor3 = theme.WindowInlineBackground,
+        BorderSizePixel = 0,
+        ZIndex = 1
+    })
+    
+    local bg = cr("Frame", {
+        Parent = inline,
+        Size = UDim2.new(1, -2, 1, -2),
+        Position = UDim2.new(0, 1, 0, 1),
+        BackgroundColor3 = theme.WindowOutlineBackground,
+        BorderSizePixel = 0,
+        ZIndex = 2
+    })
+    
+    local accentLine = cr("Frame", {
+        Parent = bg,
+        Size = UDim2.new(1, 0, 0, 2),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = theme.Accent,
+        BorderSizePixel = 0,
+        ZIndex = 3
+    })
+    
+    local label = cr("TextLabel", {
+        Parent = bg,
+        Size = UDim2.new(1, -12, 1, 0),
+        Position = UDim2.new(0, 6, 0, 0),
+        BackgroundTransparency = 1,
+        Text = string.format("gamesense | uid:%s | %s", uid, getTimeString()),
+        TextColor3 = theme.Text,
+        TextSize = 12,
+        FontFace = AsyV2Font,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 4,
+        TextTruncate = Enum.TextTruncate.AtEnd
+    })
+    
+    local dragButton = cr("TextButton", {
+        Parent = main,
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        AutoButtonColor = false,
+        ZIndex = 5
+    })
+    
+    local dragging = false
+    local dragInput
+    local dragStart
+    local startPos
+    
+    local function updateInput(input)
+        local delta = input.Position - dragStart
+        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+    
+    dragButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = main.Position
+        end
+    end)
+    
+    dragButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    
+    UIS.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            updateInput(input)
+        end
+    end)
+    
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    
+    local running = true
+    
+    task.spawn(function()
+        while running do
+            label.Text = string.format("gamesense | uid:%s | %s", uid, getTimeString())
+            task.wait(0.1)
+        end
+    end)
+    
+    local obj = {}
+    
+    function obj:Destroy()
+        running = false
+        sg:Destroy()
+    end
+    
+    function obj:SetVisible(visible)
+        main.Visible = visible
+    end
+    
+    function obj:GetUID()
+        return uid
+    end
+    
+    function obj:SetWidth(width)
+        fixedWidth = width
+        main.Size = UDim2.new(0, fixedWidth, 0, 22)
+    end
+    
+    return obj
+end
+
+Watermark:Create()
+return Watermark
 repeat
     task.wait()
 until game:IsLoaded()
