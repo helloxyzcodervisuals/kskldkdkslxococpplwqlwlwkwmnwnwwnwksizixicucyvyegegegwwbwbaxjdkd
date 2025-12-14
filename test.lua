@@ -20,7 +20,7 @@ local Config = {
     AttachCD = {["Fists"] = 0.35, ["BBaton"] = 0.5, ["__ZombieFists1"] = 0.35, ["__ZombieFists2"] = 0.37, ["__ZombieFists3"] = 0.22, ["__ZombieFists4"] = 0.4, ["__XFists"] = 0.35, ["Balisong"] = 0.3, ["Bat"] = 1.2, ["Bayonet"] = 0.6, ["BlackBayonet"] = 0.6, ["CandyCrowbar"] = 2.5, ["Chainsaw"] = 3, ["Crowbar"] = 1.2, ["Clippers"] = 0.6, ["CursedDagger"] = 0.8, ["DELTA-X04"] = 0.6, ["ERADICATOR"] = 2, ["ERADICATOR-II"] = 2, ["Fire-Axe"] = 1.6, ["GoldenAxe"] = 0.75, ["Golfclub"] = 1.2, ["Hatchet"] = 0.7, ["Katana"] = 0.6, ["Knuckledusters"] = 0.5, ["Machete"] = 0.7, ["Metal-Bat"] = 1.3, ["Nunchucks"] = 0.3, ["PhotonBlades"] = 0.8, ["Rambo"] = 0.8, ["ReforgedKatana"] = 0.85, ["Rendbreaker"] = 1.5, ["RoyalBroadsword"] = 1, ["Sabre"] = 0.7, ["Scythe"] = 1.2, ["Shiv"] = 0.5, ["Shovel"] = 2.5, ["SlayerSword"] = 1.5, ["Sledgehammer"] = 2.2, ["Taiga"] = 0.7, ["Tomahawk"] = 0.85, ["Wrench"] = 0.6, ["_BFists"] = 0.35, ["_FallenBlade"] = 1.3, ["_Sledge"] = 2.2, ["new_oldSlayerSword"] = 1.5},
     ValidMeleeTargetParts = {"Head", "UpperTorso", "LowerTorso", "LeftUpperArm", "RightUpperArm", "LeftUpperLeg", "RightUpperLeg"},
     danceAnimations = {billie = {"http://www.roblox.com/asset/?id=14849697861"}, chrono = {"http://www.roblox.com/asset/?id=14849705278"}, sponge = {"http://www.roblox.com/asset/?id=14849714833"}, twist = {"http://www.roblox.com/asset/?id=14849722929"}, goth = {"http://www.roblox.com/asset/?id=14849726322"}, soviet1 = {"http://www.roblox.com/asset/?id=14849731537"}, drip = {"http://www.roblox.com/asset/?id=14849735043"}, thriller = {"http://www.roblox.com/asset/?id=14849738091"}, shuffle = {"http://www.roblox.com/asset/?id=14849741153"}, stomp = {"http://www.roblox.com/asset/?id=14849744125"}, hustle = {"http://www.roblox.com/asset/?id=14849746902"}, soviet2 = {"http://www.roblox.com/asset/?id=14849749888"}},
-    hitSoundList = {name = "Hit Sound", options = {"Skeet", "XP Level", "Bell"}, def = "Skeet", multiselect = false, callback = function(v) Config.Ragebot.SelectedHitSound = v end},
+    hitSoundList = {text = "Hit Sound", Values = {"Skeet", "XP Level", "Bell"}, Default = "Skeet", callback = function(v) Config.Ragebot.SelectedHitSound = v end},
     HitFont = nil, hitSoundIds = {["Skeet"] = "rbxassetid://4817809188", ["XP Level"] = "rbxassetid://17148249625", ["Bell"] = "rbxassetid://6534948092"},
     remote1 = nil, remote2 = nil, module = nil, silentAimHook = nil, WatermarkConnection = nil, FrameTimer = tick(), FrameCounter = 0, FPS = 60
 }
@@ -1163,7 +1163,7 @@ CharacterVisuals:AddToggle('ForcefieldEnabled', {Text = 'Forcefield', Default = 
 CharacterVisuals:AddSlider('ForcefieldTransparency', {Text = 'FF Transparency', Min = 0, Max = 1, Default = 0.3, Rounding = 1, Callback = function(v) Config.VisualSettings.Forcefield.Transparency = v if Config.VisualSettings.Forcefield.Enabled then applyVisual("Forcefield") end end})
 Notifications:AddToggle('RagebotHitNotify', {Text = 'Hit Notify', Default = true, Callback = function(s) Config.Ragebot.HitNotify = s end})
 Notifications:AddSlider('RagebotHitNotifyDuration', {Text = 'Notify Duration', Min = 1, Max = 10, Default = 5, Rounding = 1, Callback = function(v) Config.Ragebot.HitNotifyDuration = v end})
-Notifications:AddList('HitSoundList', Config.hitSoundList)
+Notifications:AddDropdown('HitSoundList', Config.hitSoundList)
 
 local MiscLeft = Config.Tabs.Misc:AddLeftGroupbox('Character')
 local MiscRight = Config.Tabs.Misc:AddRightGroupbox('Exploits')
