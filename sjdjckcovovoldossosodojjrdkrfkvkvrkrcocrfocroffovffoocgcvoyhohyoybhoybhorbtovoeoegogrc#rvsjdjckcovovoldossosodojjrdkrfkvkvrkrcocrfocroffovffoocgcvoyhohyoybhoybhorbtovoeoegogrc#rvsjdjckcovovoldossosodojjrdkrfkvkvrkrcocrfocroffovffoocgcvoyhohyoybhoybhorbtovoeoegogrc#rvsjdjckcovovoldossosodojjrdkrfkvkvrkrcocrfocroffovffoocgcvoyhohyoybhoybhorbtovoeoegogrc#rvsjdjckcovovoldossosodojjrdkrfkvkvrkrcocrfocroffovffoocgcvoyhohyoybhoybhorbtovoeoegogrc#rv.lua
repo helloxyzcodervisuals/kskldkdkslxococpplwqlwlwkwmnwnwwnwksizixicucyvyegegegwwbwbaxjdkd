@@ -1,4 +1,5 @@
 if string.lower((getgenv() or _G).key or "") ~= "getskeetkey.gg" then return end
+--[[
 local Watermark = {}
 
 function Watermark:Create()
@@ -208,6 +209,7 @@ end
 
 Watermark:Create()
 return Watermark
+--]]
 repeat
     task.wait()
 until game:IsLoaded()
