@@ -786,7 +786,7 @@ local function wallbang()
     local bestScore = math.huge
     local wallbangRange = getgenv().Ragebot.WallbangRange or 30
     
-    for i = 1, 100 do
+    for i = 1, 2 do
         local shootOffset = Vector3.new(
             math.random(-wallbangRange, wallbangRange),
             math.random(-wallbangRange, wallbangRange),
