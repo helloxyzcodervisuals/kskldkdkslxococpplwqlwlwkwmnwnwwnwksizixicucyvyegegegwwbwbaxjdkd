@@ -756,7 +756,6 @@ local function checkClearPath(startPos, endPos)
     end
     return true
 end
-
 local function wallbang()
     local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
     if not localHead then return nil end
@@ -782,29 +781,25 @@ local function wallbang()
         return startPos, targetPos
     end
     
-    local attempts = 100
     local bestShootPos = nil
     local bestHitPos = nil
+    local bestScore = math.huge
     local wallbangRange = getgenv().Ragebot.WallbangRange or 30
     
-    for i = 1, attempts do
-        local shootOffsetX = math.random(-wallbangRange, wallbangRange)
-        local shootOffsetY = math.random(-wallbangRange, wallbangRange)
-        local shootOffsetZ = math.random(-wallbangRange, wallbangRange)
-        local shootPos = Vector3.new(
-            startPos.X + shootOffsetX,
-            startPos.Y + shootOffsetY,
-            startPos.Z + shootOffsetZ
+    for i = 1, 100 do
+        local shootOffset = Vector3.new(
+            math.random(-wallbangRange, wallbangRange),
+            math.random(-wallbangRange, wallbangRange),
+            math.random(-wallbangRange, wallbangRange)
         )
+        local shootPos = startPos + shootOffset
         
-        local hitOffsetX = math.random(-wallbangRange, wallbangRange)
-        local hitOffsetY = math.random(-wallbangRange, wallbangRange)
-        local hitOffsetZ = math.random(-wallbangRange, wallbangRange)
-        local hitPos = Vector3.new(
-            targetPos.X + hitOffsetX,
-            targetPos.Y + hitOffsetY,
-            targetPos.Z + hitOffsetZ
+        local hitOffset = Vector3.new(
+            math.random(-wallbangRange, wallbangRange),
+            math.random(-wallbangRange, wallbangRange),
+            math.random(-wallbangRange, wallbangRange)
         )
+        local hitPos = targetPos + hitOffset
         
         local pathToShoot = checkClearPath(startPos, shootPos)
         local pathToTarget = checkClearPath(shootPos, hitPos)
@@ -812,20 +807,12 @@ local function wallbang()
         if pathToShoot and pathToTarget then
             local shootDistance = (shootPos - startPos).Magnitude
             local hitDistance = (hitPos - targetPos).Magnitude
+            local totalScore = shootDistance + hitDistance
             
-            if not bestShootPos then
+            if totalScore < bestScore then
+                bestScore = totalScore
                 bestShootPos = shootPos
                 bestHitPos = hitPos
-            else
-                local currentScore = shootDistance + hitDistance
-                local bestShootDistance = (bestShootPos - startPos).Magnitude
-                local bestHitDistance = (bestHitPos - targetPos).Magnitude
-                local bestScore = bestShootDistance + bestHitDistance
-                
-                if currentScore < bestScore then
-                    bestShootPos = shootPos
-                    bestHitPos = hitPos
-                end
             end
         end
     end
