@@ -35,26 +35,137 @@ end
 local AsyV2Font = Font.new(getcustomasset and getcustomasset("aui/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
 
 local themes = {
-    PinkTokyoNight = {
-        Accent = Color3.fromRGB(0, 255, 150),
-        WindowOutlineBackground = Color3.fromRGB(10, 10, 10),
-        WindowInlineBackground = Color3.fromRGB(15, 15, 15),
-        WindowHolderBackground = Color3.fromRGB(20, 20, 20),
-        PageUnselected = Color3.fromRGB(25, 25, 25),
-        PageSelected = Color3.fromRGB(0, 200, 120),
-        SectionBackground = Color3.fromRGB(18, 18, 18),
-        SectionInnerBorder = Color3.fromRGB(0, 180, 100),
-        SectionOuterBorder = Color3.fromRGB(5, 5, 5),
-        WindowBorder = Color3.fromRGB(0, 160, 90),
+    CyberGlow = {
+        Accent = Color3.fromRGB(0, 255, 255),
+        WindowOutlineBackground = Color3.fromRGB(8, 8, 12),
+        WindowInlineBackground = Color3.fromRGB(12, 12, 18),
+        WindowHolderBackground = Color3.fromRGB(16, 16, 24),
+        PageUnselected = Color3.fromRGB(20, 20, 30),
+        PageSelected = Color3.fromRGB(0, 200, 255),
+        SectionBackground = Color3.fromRGB(10, 10, 15),
+        SectionInnerBorder = Color3.fromRGB(0, 180, 255),
+        SectionOuterBorder = Color3.fromRGB(5, 5, 10),
+        WindowBorder = Color3.fromRGB(0, 160, 220),
+        Text = Color3.fromRGB(220, 240, 255),
+        RiskyText = Color3.fromRGB(255, 50, 50),
+        ObjectBackground = Color3.fromRGB(15, 15, 22)
+    },
+    
+    CrimsonDark = {
+        Accent = Color3.fromRGB(220, 20, 60),
+        WindowOutlineBackground = Color3.fromRGB(15, 5, 8),
+        WindowInlineBackground = Color3.fromRGB(20, 8, 12),
+        WindowHolderBackground = Color3.fromRGB(25, 10, 15),
+        PageUnselected = Color3.fromRGB(30, 12, 18),
+        PageSelected = Color3.fromRGB(220, 20, 60),
+        SectionBackground = Color3.fromRGB(18, 6, 10),
+        SectionInnerBorder = Color3.fromRGB(180, 10, 50),
+        SectionOuterBorder = Color3.fromRGB(10, 3, 5),
+        WindowBorder = Color3.fromRGB(160, 5, 40),
+        Text = Color3.fromRGB(240, 200, 200),
+        RiskyText = Color3.fromRGB(255, 80, 80),
+        ObjectBackground = Color3.fromRGB(22, 8, 12)
+    },
+    
+    NeonPurple = {
+        Accent = Color3.fromRGB(180, 0, 255),
+        WindowOutlineBackground = Color3.fromRGB(10, 5, 15),
+        WindowInlineBackground = Color3.fromRGB(15, 8, 22),
+        WindowHolderBackground = Color3.fromRGB(20, 10, 28),
+        PageUnselected = Color3.fromRGB(25, 12, 35),
+        PageSelected = Color3.fromRGB(180, 0, 255),
+        SectionBackground = Color3.fromRGB(14, 7, 20),
+        SectionInnerBorder = Color3.fromRGB(160, 0, 230),
+        SectionOuterBorder = Color3.fromRGB(8, 4, 12),
+        WindowBorder = Color3.fromRGB(140, 0, 200),
+        Text = Color3.fromRGB(230, 200, 255),
+        RiskyText = Color3.fromRGB(255, 60, 100),
+        ObjectBackground = Color3.fromRGB(18, 9, 25)
+    },
+    
+    EmeraldNight = {
+        Accent = Color3.fromRGB(0, 255, 127),
+        WindowOutlineBackground = Color3.fromRGB(5, 12, 8),
+        WindowInlineBackground = Color3.fromRGB(8, 18, 12),
+        WindowHolderBackground = Color3.fromRGB(10, 24, 16),
+        PageUnselected = Color3.fromRGB(12, 30, 20),
+        PageSelected = Color3.fromRGB(0, 220, 110),
+        SectionBackground = Color3.fromRGB(7, 15, 10),
+        SectionInnerBorder = Color3.fromRGB(0, 190, 95),
+        SectionOuterBorder = Color3.fromRGB(3, 8, 5),
+        WindowBorder = Color3.fromRGB(0, 170, 85),
+        Text = Color3.fromRGB(200, 240, 220),
+        RiskyText = Color3.fromRGB(255, 70, 70),
+        ObjectBackground = Color3.fromRGB(9, 20, 14)
+    },
+    
+    GoldenAmber = {
+        Accent = Color3.fromRGB(255, 191, 0),
+        WindowOutlineBackground = Color3.fromRGB(15, 10, 5),
+        WindowInlineBackground = Color3.fromRGB(22, 15, 8),
+        WindowHolderBackground = Color3.fromRGB(28, 20, 10),
+        PageUnselected = Color3.fromRGB(35, 25, 12),
+        PageSelected = Color3.fromRGB(255, 191, 0),
+        SectionBackground = Color3.fromRGB(20, 14, 7),
+        SectionInnerBorder = Color3.fromRGB(230, 170, 0),
+        SectionOuterBorder = Color3.fromRGB(10, 7, 3),
+        WindowBorder = Color3.fromRGB(200, 150, 0),
+        Text = Color3.fromRGB(255, 240, 200),
+        RiskyText = Color3.fromRGB(255, 80, 80),
+        ObjectBackground = Color3.fromRGB(25, 18, 9)
+    },
+    
+    OceanBlue = {
+        Accent = Color3.fromRGB(64, 224, 208),
+        WindowOutlineBackground = Color3.fromRGB(5, 10, 15),
+        WindowInlineBackground = Color3.fromRGB(8, 15, 22),
+        WindowHolderBackground = Color3.fromRGB(10, 20, 30),
+        PageUnselected = Color3.fromRGB(12, 25, 38),
+        PageSelected = Color3.fromRGB(64, 224, 208),
+        SectionBackground = Color3.fromRGB(7, 13, 20),
+        SectionInnerBorder = Color3.fromRGB(54, 200, 185),
+        SectionOuterBorder = Color3.fromRGB(3, 8, 12),
+        WindowBorder = Color3.fromRGB(44, 180, 165),
+        Text = Color3.fromRGB(200, 230, 240),
+        RiskyText = Color3.fromRGB(255, 90, 90),
+        ObjectBackground = Color3.fromRGB(9, 18, 25)
+    },
+    
+    MatrixGreen = {
+        Accent = Color3.fromRGB(0, 255, 0),
+        WindowOutlineBackground = Color3.fromRGB(0, 10, 0),
+        WindowInlineBackground = Color3.fromRGB(0, 15, 0),
+        WindowHolderBackground = Color3.fromRGB(0, 20, 0),
+        PageUnselected = Color3.fromRGB(0, 25, 0),
+        PageSelected = Color3.fromRGB(0, 255, 0),
+        SectionBackground = Color3.fromRGB(0, 12, 0),
+        SectionInnerBorder = Color3.fromRGB(0, 200, 0),
+        SectionOuterBorder = Color3.fromRGB(0, 5, 0),
+        WindowBorder = Color3.fromRGB(0, 180, 0),
+        Text = Color3.fromRGB(200, 255, 200),
+        RiskyText = Color3.fromRGB(255, 50, 50),
+        ObjectBackground = Color3.fromRGB(0, 18, 0)
+    },
+    
+    VoidBlack = {
+        Accent = Color3.fromRGB(255, 69, 0),
+        WindowOutlineBackground = Color3.fromRGB(5, 5, 5),
+        WindowInlineBackground = Color3.fromRGB(10, 10, 10),
+        WindowHolderBackground = Color3.fromRGB(15, 15, 15),
+        PageUnselected = Color3.fromRGB(20, 20, 20),
+        PageSelected = Color3.fromRGB(255, 69, 0),
+        SectionBackground = Color3.fromRGB(8, 8, 8),
+        SectionInnerBorder = Color3.fromRGB(220, 50, 0),
+        SectionOuterBorder = Color3.fromRGB(3, 3, 3),
+        WindowBorder = Color3.fromRGB(200, 40, 0),
         Text = Color3.fromRGB(220, 220, 220),
-        RiskyText = Color3.fromRGB(255, 75, 75),
-        ObjectBackground = Color3.fromRGB(22, 22, 22)
+        RiskyText = Color3.fromRGB(255, 80, 80),
+        ObjectBackground = Color3.fromRGB(12, 12, 12)
     }
 }
-
 local themeobjects = {}
 local library = {
-    theme = themes.PinkTokyoNight,
+    theme = themes.NeonPurple,
     flags = {},
     open = true,
     connections = {},
