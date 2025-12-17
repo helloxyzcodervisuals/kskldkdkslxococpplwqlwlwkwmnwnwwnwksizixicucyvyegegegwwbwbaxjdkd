@@ -1293,6 +1293,7 @@ function library:addSlider(options)
 
     return setmetatable(cfg, library)
 end
+--[[
 function library:addToggle(options) 
     local cfg = {
         enabled = options.enabled or false,
@@ -1469,7 +1470,139 @@ function library:addToggle(options)
 
     return setmetatable(cfg, library)
 end
+--]]
+function library:addToggle(options) 
+    local cfg = {
+        enabled = options.enabled or false,
+        name = options.name or "Toggle",
+        flag = options.flag or tostring(random(1,9999999)),
+        default = options.default or false,
+        folding = options.folding or false, 
+        callback = options.callback or function() end,
+    }
 
+    local toggle = self:create("TextLabel", {
+        Parent = self.background or self.elements,
+        FontFace = library.font,
+        TextColor3 = rgb(151, 151, 151),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = "",
+        ZIndex = 2,
+        Size = dim2(1, -8, 0, 12),
+        BorderSizePixel = 0,
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        TextSize = 11,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local left_components = self:create("Frame", {
+        Parent = toggle,
+        BackgroundTransparency = 1,
+        Position = dim2(0, 3, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, 0, 0, 14),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    self:create("UIListLayout", {
+        Parent = left_components,
+        Padding = dim(0, 5),
+        FillDirection = Enum.FillDirection.Horizontal
+    })
+    
+    local toggle_box = self:create("TextButton", {
+        Parent = left_components,
+        Text = "",
+        Position = dim2(0, 0, 0, 2),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, 8, 0, 8),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(25, 25, 25),
+        LayoutOrder = -1,
+        AutoButtonColor = false
+    })
+    
+    local toggle_inner = self:create("Frame", {
+        Parent = toggle_box,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(45, 45, 45)
+    })
+    
+    local toggle_bg = self:create("Frame", {
+        Parent = toggle_inner,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = cfg.default and themes.preset.accent or rgb(15, 15, 15)
+    }); self:applyTheme(toggle_bg, "accent", "BackgroundColor3")
+    
+    local text = self:create("TextButton", {
+        Parent = left_components,
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.name,
+        BackgroundTransparency = 1,
+        Size = dim2(0, 0, 1, -1),
+        BorderSizePixel = 0,
+        AutomaticSize = Enum.AutomaticSize.X,
+        TextSize = 12,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+
+    cfg.background = self:create("Frame", {
+        Parent = toggle,
+        Visible = cfg.folding and cfg.default,
+        BorderColor3 = rgb(0, 0, 0),
+        LayoutOrder = 99,
+        Position = dim2(0, 0, 0, 15),
+        Size = dim2(1, self.background and 2 or -6, 0, 0),
+        BorderSizePixel = 0,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundColor3 = rgb(13, 13, 13)
+    })
+
+    self:create("UIListLayout", {
+        Parent = cfg.background,
+        Padding = dim(0, 3),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        FillDirection = Enum.FillDirection.Vertical
+    })
+
+    function cfg.set(bool) 
+        cfg.enabled = bool
+        toggle_bg.BackgroundColor3 = bool and themes.preset.accent or rgb(15, 15, 15)
+        cfg.callback(bool)
+
+        flags[cfg.flag] = bool
+
+        if cfg.folding then 
+            cfg.background.Visible = bool
+        end 
+    end 
+
+    cfg.set(cfg.default)
+
+    config_flags[cfg.flag] = cfg.set
+
+    local function onToggleClick()
+        cfg.set(not cfg.enabled)
+    end
+
+    toggle_box.MouseButton1Click:Connect(onToggleClick)
+    text.MouseButton1Click:Connect(onToggleClick)
+
+    return setmetatable(cfg, library)
+end
+--[[
 function library:addDropdown(options) 
     local cfg = {
         name = options.name or nil,
@@ -1857,6 +1990,263 @@ function library:addDropdown(options)
 
     return setmetatable(cfg, library)
 end
+--]]
+function library:addList(options) 
+    local cfg = {
+        name = options.name or nil,
+        flag = options.flag or tostring(random(1,9999999)),
+        items = options.items or {"1", "2", "3"},
+        callback = options.callback or function() end,
+        multi = options.multi or false, 
+        height = options.height or 100,
+        default = options.default or (cfg.multi and {}) or "",
+        selected_items = {},
+    }   
+
+    flags[cfg.flag] = cfg.multi and {} or ""
+
+    local list_container = self:create("TextLabel", {
+        Parent = self.background or self.elements,
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = "",
+        ZIndex = 2,
+        Size = dim2(1, -8, 0, 12),
+        BorderSizePixel = 0,
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        TextSize = 11,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local bottom_components = self:create("Frame", {
+        Parent = list_container,
+        Position = dim2(0, 15, 0, cfg.name and 11 or 0),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -6, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local list_frame = self:create("Frame", {
+        Parent = bottom_components,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -27, 0, cfg.height),
+        BorderSizePixel = 1,
+        BackgroundColor3 = rgb(25, 25, 25),
+        Position = dim2(0, 0, 0, 2),
+        ClipsDescendants = true
+    })
+    
+    local list_inline = self:create("Frame", {
+        Parent = list_frame,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(45, 45, 45)
+    })
+    
+    local list_bg = self:create("Frame", {
+        Parent = list_inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(15, 15, 15)
+    })
+    
+    local list_scroll = self:create("ScrollingFrame", {
+        Parent = list_bg,
+        ScrollBarImageColor3 = rgb(65, 65, 65),
+        ScrollBarThickness = 4,
+        BorderColor3 = rgb(0, 0, 0),
+        BackgroundTransparency = 1,
+        Size = dim2(1, 0, 1, 0),
+        BackgroundColor3 = rgb(255, 255, 255),
+        ZIndex = 5,
+        BorderSizePixel = 0,
+        CanvasSize = dim2(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ClipsDescendants = true
+    })
+    
+    local items_container = self:create("Frame", {
+        Parent = list_scroll,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -4, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255),
+        AutomaticSize = Enum.AutomaticSize.Y
+    })
+    
+    self:create("UIListLayout", {
+        Parent = items_container,
+        Padding = dim(0, 1),
+        SortOrder = Enum.SortOrder.LayoutOrder
+    })
+    
+    self:create("UIPadding", {
+        Parent = items_container,
+        PaddingTop = dim(0, 2),
+        PaddingBottom = dim(0, 2),
+        PaddingLeft = dim(0, 2),
+        PaddingRight = dim(0, 2)
+    })
+
+    if cfg.name then 
+        local left_components = self:create("Frame", {
+            Parent = list_container,
+            BackgroundTransparency = 1,
+            Position = dim2(0, 16, 0, 1),
+            BorderColor3 = rgb(0, 0, 0),
+            Size = dim2(0, 0, 0, 14),
+            BorderSizePixel = 0,
+            BackgroundColor3 = rgb(255, 255, 255)
+        })
+        
+        local name_text = self:create("TextLabel", {
+            Parent = left_components,
+            FontFace = library.font,
+            TextColor3 = rgb(180, 180, 180),
+            BorderColor3 = rgb(0, 0, 0),
+            Text = cfg.name,
+            BackgroundTransparency = 1,
+            Size = dim2(0, 0, 1, -1),
+            BorderSizePixel = 0,
+            AutomaticSize = Enum.AutomaticSize.X,
+            TextSize = 12,
+            BackgroundColor3 = rgb(255, 255, 255)
+        })
+        
+        self:create("UIListLayout", {
+            Parent = left_components,
+            Padding = dim(0, 5),
+            FillDirection = Enum.FillDirection.Horizontal
+        })
+        
+        self:create("UIPadding", {
+            Parent = left_components,
+            PaddingBottom = dim(0, 6)
+        })
+    end 
+
+    self:create("UIPadding", {
+        Parent = list_container,
+        PaddingLeft = dim(0, 1)
+    })
+
+    self:create("UIListLayout", {
+        Parent = bottom_components,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = dim(0, 3),
+        FillDirection = Enum.FillDirection.Vertical
+    })
+
+    cfg.option_instances = {}
+
+    function cfg.createItem(text_value)
+        local item = self:create("TextButton", {
+            Parent = items_container,
+            FontFace = library.font,
+            TextColor3 = rgb(160, 160, 160),
+            BorderColor3 = rgb(0, 0, 0),
+            Text = text_value,
+            Size = dim2(1, 0, 0, 16),
+            BackgroundColor3 = rgb(20, 20, 20),
+            BorderSizePixel = 0,
+            TextSize = 12,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            AutoButtonColor = false
+        })
+        
+        self:create("UIPadding", {
+            Parent = item,
+            PaddingLeft = dim(0, 5)
+        })
+        
+        insert(cfg.option_instances, item)
+        
+        return item
+    end
+    
+    function cfg.set(value)
+        local selected = {}
+        local isTable = type(value) == "table"
+        
+        for _, item in next, cfg.option_instances do
+            if item.Text == value or (isTable and find(value, item.Text)) then
+                insert(selected, item.Text)
+                item.BackgroundColor3 = themes.preset.accent
+                item.TextColor3 = rgb(255, 255, 255)
+            else
+                item.BackgroundColor3 = rgb(20, 20, 20)
+                item.TextColor3 = rgb(160, 160, 160)
+            end
+        end
+        
+        cfg.selected_items = selected
+        
+        if isTable then
+            flags[cfg.flag] = selected
+        else
+            flags[cfg.flag] = #selected > 0 and selected[1] or ""
+        end
+        
+        cfg.callback(flags[cfg.flag])
+    end
+    
+    function cfg.refreshItems(new_items)
+        for _, item in next, cfg.option_instances do
+            item:Destroy()
+        end
+        
+        cfg.option_instances = {}
+        cfg.items = new_items
+        
+        for _, item_text in next, new_items do
+            local item_instance = cfg.createItem(item_text)
+            
+            item_instance.MouseButton1Click:Connect(function()
+                if cfg.multi then
+                    local selected_index = find(cfg.selected_items, item_text)
+                    
+                    if selected_index then
+                        remove(cfg.selected_items, selected_index)
+                    else
+                        insert(cfg.selected_items, item_text)
+                    end
+                    
+                    cfg.set(cfg.selected_items)
+                else
+                    cfg.set(item_text)
+                end
+            end)
+        end
+    end
+    
+    cfg.refreshItems(cfg.items)
+    
+    if cfg.multi then
+        if type(cfg.default) == "table" and #cfg.default > 0 then
+            cfg.set(cfg.default)
+        end
+    else
+        if cfg.default and find(cfg.items, cfg.default) then
+            cfg.set(cfg.default)
+        elseif #cfg.items > 0 then
+            cfg.set(cfg.items[1])
+        end
+    end
+
+    config_flags[cfg.flag] = cfg.set
+
+    return setmetatable(cfg, library)
+end
+
 --[[
 function library:addDropdown(options) 
     local cfg = {
