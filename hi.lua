@@ -622,7 +622,7 @@ function library:window(properties)
 
     return setmetatable(cfg, library)
 end
-
+--[[
 function library:tab(properties)
     local cfg = {
         name = properties.name or "visuals", 
@@ -752,7 +752,154 @@ function library:tab(properties)
 
     return setmetatable(cfg, library)    
 end
+--]]
+function library:tab(properties)
+    local cfg = {
+        name = properties.name or "visuals", 
+    } 
 
+    local outline = self:create("TextButton", {
+        Parent = self.tab_holder,
+        FontFace = library.font,
+        TextColor3 = rgb(0, 0, 0),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = "",
+        AutoButtonColor = false,
+        Size = dim2(0, 0, 0, 30),
+        BorderSizePixel = 0,
+        TextSize = 14,
+        BackgroundColor3 = rgb(0, 0, 0)
+    })
+    
+    local inline = self:create("Frame", {
+        Parent = outline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(41, 41, 41)
+    })
+    
+    local background = self:create("Frame", {
+        Parent = inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local gradient = self:create("UIGradient", {
+        Parent = background,
+        Rotation = 90,
+        Color = rgbseq{
+            rgbkey(0, rgb(41, 41, 41)), 
+            rgbkey(1, rgb(16, 16, 16))
+        }
+    })
+    
+    local text = self:create("TextLabel", {
+        Parent = background,
+        FontFace = library.font,
+        TextColor3 = rgb(140, 140, 140),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.name,
+        BackgroundTransparency = 1,
+        Position = dim2(0, 0, 0, -1),
+        Size = dim2(1, 0, 1, 0),
+        BorderSizePixel = 0,
+        TextSize = 12,
+        BackgroundColor3 = rgb(255, 255, 255)
+    }); self:applyTheme(text, "accent", "TextColor3")
+
+    cfg["page"] = self:create("ScrollingFrame", {
+        Parent = self.page_holder,
+        Visible = false, 
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(13, 13, 13),
+        BackgroundTransparency = 1,
+        ScrollBarImageColor3 = rgb(65, 65, 65),
+        ScrollBarThickness = 4,
+        ScrollBarImageTransparency = 0,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        CanvasSize = dim2(0, 0, 0, 0),
+        ClipsDescendants = true
+    })
+    
+    local page_content = self:create("Frame", {
+        Parent = cfg["page"],
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(13, 13, 13),
+        AutomaticSize = Enum.AutomaticSize.Y
+    })
+    
+    self:create("UIListLayout", {
+        Parent = page_content,
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalFlex = Enum.UIFlexAlignment.Fill,
+        Padding = dim(0, 11),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        VerticalFlex = Enum.UIFlexAlignment.Fill
+    })
+    
+    self:create("UIPadding", {
+        Parent = page_content,
+        PaddingTop = dim(0, 11),
+        PaddingBottom = dim(0, 11),
+        PaddingRight = dim(0, 11),
+        PaddingLeft = dim(0, 11)
+    })
+
+    cfg["page_content"] = page_content
+
+    function cfg.open_tab() 
+        self:closeCurrentElement() 
+
+        if self.selected_tab then 
+            self.selected_tab[1].TextColor3 = rgb(160,160,160)
+            self.selected_tab[2].Visible = false 
+            self.selected_tab[3].Color = rgbseq{
+                rgbkey(0, rgb(41, 41, 41)),
+                rgbkey(1, rgb(16, 16, 16))
+            }
+
+            self.selected_tab = nil 
+        end 
+
+        text.TextColor3 = themes.preset.accent
+        cfg["page"].Visible = true 
+        gradient.Color = rgbseq{
+            rgbkey(0, rgb(41, 41, 41)),
+            rgbkey(1, rgb(25, 25, 25))
+        }
+        self.selected_tab = {text, cfg["page"], gradient}
+    end 
+
+    local function onTabClick()
+        if isTouch() then
+            cfg.open_tab()
+        end
+    end
+
+    outline.MouseButton1Click:Connect(function()
+        cfg.open_tab()
+    end)
+    
+    if isTouch() then
+        outline.TouchTap:Connect(onTabClick)
+    end
+
+    if not self.selected_tab then 
+        cfg.open_tab(true) 
+    end 
+
+    return setmetatable(cfg, library)    
+end
 function library:column(properties)
     local cfg = {
         fill = properties.fill or properties.Fill or false, 
