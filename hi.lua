@@ -767,12 +767,55 @@ function library:column(properties)
         BackgroundColor3 = rgb(12, 12, 12)
     })
     
-    self:create("UIListLayout", {
+    local column_scroll = self:create("ScrollingFrame", {
         Parent = cfg["column"],
+        ScrollBarImageColor3 = rgb(65, 65, 65),
+        Active = true,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollBarThickness = 4,
+        BorderColor3 = rgb(0, 0, 0),
+        BackgroundTransparency = 1,
+        Size = dim2(1, 0, 1, 0),
+        BackgroundColor3 = rgb(255, 255, 255),
+        ZIndex = 5,
+        BorderSizePixel = 0,
+        CanvasSize = dim2(0, 0, 0, 0),
+        ScrollingEnabled = true
+    })
+    
+    local content_frame = self:create("Frame", {
+        Parent = column_scroll,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255),
+        AutomaticSize = Enum.AutomaticSize.Y
+    })
+    
+    self:create("UIListLayout", {
+        Parent = content_frame,
         Padding = dim(0, 12),
         SortOrder = Enum.SortOrder.LayoutOrder, 
         VerticalFlex = cfg.fill and Enum.UIFlexAlignment.Fill or Enum.UIFlexAlignment.None
     })
+
+    cfg["content_frame"] = content_frame
+
+    run.RenderStepped:Connect(function()
+        if column_scroll then
+            local maxScroll = column_scroll.CanvasSize.Y.Offset - column_scroll.AbsoluteWindowSize.Y
+            if maxScroll > 0 then
+                local currentScroll = column_scroll.CanvasPosition.Y
+                local newScroll = currentScroll + 1
+                
+                --if newScroll > maxScroll then
+                --    newScroll = 0
+                --end
+                
+                column_scroll.CanvasPosition = Vector2.new(0, newScroll)
+            end
+        end
+    end)
 
     return setmetatable(cfg, library)
 end
@@ -785,7 +828,7 @@ function library:section(properties)
     }   
 
     local outline = self:create("Frame", {
-        Parent = self.column,
+        Parent = self.content_frame,
         BorderColor3 = rgb(0, 0, 0),
         Size = self.fill and dim2(1, 0, 0, 0) or cfg.size,
         BorderSizePixel = 0,
