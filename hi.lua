@@ -777,6 +777,7 @@ function library:column(properties)
     return setmetatable(cfg, library)
 end
 
+
 function library:section(properties)
     local cfg = {
         name = properties.name or properties.Name or "section", 
@@ -848,7 +849,8 @@ function library:section(properties)
         BackgroundColor3 = rgb(255, 255, 255),
         ZIndex = 5,
         BorderSizePixel = 0,
-        CanvasSize = dim2(0, 0, 0, 0)
+        CanvasSize = dim2(0, 0, 0, 0),
+        ScrollingEnabled = true
     })
     
     cfg["elements"] = self:create("Frame", {
@@ -904,8 +906,30 @@ function library:section(properties)
         BackgroundColor3 = rgb(19, 19, 19)
     })
 
-    elements_scroll:GetPropertyChangedSignal("AbsoluteCanvasSize"):Connect(function()
-        scrollbar_fill.Visible = elements_scroll.AbsoluteCanvasSize.Y > background.AbsoluteSize.Y and true or false 
+    local function updateScrollbarVisibility()
+        if elements_scroll and background then
+            local needsScroll = elements_scroll.CanvasSize.Y.Offset > elements_scroll.AbsoluteWindowSize.Y
+            scrollbar_fill.Visible = needsScroll
+        end
+    end
+
+    elements_scroll:GetPropertyChangedSignal("CanvasSize"):Connect(updateScrollbarVisibility)
+    elements_scroll:GetPropertyChangedSignal("AbsoluteWindowSize"):Connect(updateScrollbarVisibility)
+
+    run.RenderStepped:Connect(function()
+        if elements_scroll then
+            local maxScroll = elements_scroll.CanvasSize.Y.Offset - elements_scroll.AbsoluteWindowSize.Y
+            if maxScroll > 0 then
+                local currentScroll = elements_scroll.CanvasPosition.Y
+                local newScroll = currentScroll + 1
+                
+                if newScroll > maxScroll then
+                    newScroll = 0
+                end
+                
+                elements_scroll.CanvasPosition = Vector2.new(0, newScroll)
+            end
+        end
     end)
 
     return setmetatable(cfg, library)
