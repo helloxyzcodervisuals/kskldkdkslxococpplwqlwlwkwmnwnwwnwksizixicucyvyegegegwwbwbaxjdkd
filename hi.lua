@@ -414,7 +414,7 @@ library.lerp = LPH_NO_VIRTUALIZE(function(start, finish, t)
     t = t or 1 / 8
     return start * (1 - t) + finish * t
 end)
-
+--[[
 function library:window(properties)
     local cfg = {
         name = properties.name or properties.Name or os.date('<font color="rgb(170,85,235)">obelus</font> | %b %d %Y | %H:%M'),
@@ -538,6 +538,228 @@ function library:window(properties)
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ClipsDescendants = true,
         ScrollingDirection = Enum.ScrollingDirection.Y
+    })
+    
+    local page_inline = self:create("Frame", {
+        Parent = page_scroll,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(51, 51, 51)
+    })
+    
+    cfg["page_holder"] = self:create("Frame", {
+        Parent = page_inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(13, 13, 13),
+        AutomaticSize = Enum.AutomaticSize.Y
+    })
+    
+    
+    
+    
+    function cfg.toggle_menu(bool)
+        if not cfg.is_closing_menu then
+            cfg.is_closing_menu = true
+    
+            if bool == true then
+                for element, original_transparency in next, old_data do
+                    self:tween(element, {
+                        BackgroundTransparency = original_transparency,
+                    })
+                end
+    
+                for element, original_transparency in next, text_data do
+                    self:tween(element, {
+                        TextTransparency = original_transparency,
+                    })
+                end
+    
+                for element, original_transparency in next, image_data do
+                    self:tween(element, {
+                        ImageTransparency = original_transparency,
+                    })
+                end
+
+                for element, original_transparency in next, scroll_data do
+                    self:tween(element, {
+                        ScrollBarImageTransparency = original_transparency,
+                    })
+                end
+                
+            else
+                for _, element in next, library.gui:GetDescendants() do
+                    if not element:IsA("GuiObject") then
+                        continue
+                    end
+    
+                    old_data[element] = element.BackgroundTransparency
+                    self:tween(element, {
+                        BackgroundTransparency = 1,
+                    })
+    
+                    if element:IsA("TextLabel") or element:IsA("TextButton") or element:IsA("TextBox") then
+                        text_data[element] = element.TextTransparency
+                        self:tween(element, {
+                            TextTransparency = 1,
+                        })
+                    end
+    
+                    if element:IsA("ImageLabel") or element:IsA("ImageButton") then
+                        image_data[element] = element.ImageTransparency
+                        self:tween(element, {
+                            ImageTransparency = 1,
+                        })
+                    end
+
+                    if element:IsA("ScrollingFrame") then 
+                        scroll_data[element] = element.ScrollBarImageTransparency
+                        self:tween(element, {
+                            ScrollBarImageTransparency = 1,
+                        })
+                    end 
+                end
+            end
+            
+            task.delay(0.5, function()
+                cfg.is_closing_menu = false 
+            end)
+        end
+    end
+
+    return setmetatable(cfg, library)
+end
+--]]
+--mod fix
+function library:window(properties)
+    local cfg = {
+        name = properties.name or properties.Name or os.date('<font color="rgb(170,85,235)">obelus</font> | %b %d %Y | %H:%M'),
+        size = properties.size or properties.Size or dim2(0, 516, 0, 563),
+        selected_tab, 
+        is_closing_menu = false,
+    }
+
+    library.gui = self:create("ScreenGui", {
+        Parent = coregui,
+        Enabled = true,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        IgnoreGuiInset = true,
+    })
+
+    local outline = self:create("Frame", {
+        Parent = library.gui,
+        Position = dim2(0.5, 0 - (cfg.size.X.Offset / 2), 0.5, 0 - (cfg.size.X.Offset / 2)),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = cfg.size,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(0, 0, 0)
+    }); outline.Position = dim_offset(outline.AbsolutePosition.X, outline.AbsolutePosition.Y)
+
+    self:draggify(outline)
+    self:makeResizable(outline)
+    
+    local inline = self:create("Frame", {
+        Parent = outline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(48, 48, 48)
+    })
+    
+    local background = self:create("Frame", {
+        Parent = inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+    
+    local title_holder = self:create("Frame", {
+        Parent = background,
+        BackgroundTransparency = 1,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 0, 29),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local ui_title = self:create("TextLabel", {
+        Parent = title_holder,
+        FontFace = library.font,
+        TextColor3 = rgb(135, 135, 135),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.name,
+        Size = dim2(1, 0, 0, 24),
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        BorderSizePixel = 0,
+        RichText = true,
+        TextSize = 12,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local accent_line = self:create("Frame", {
+        Parent = title_holder,
+        Position = dim2(0, 0, 1, -6),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 0, 2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = themes.preset.accent
+    }); self:applyTheme(accent_line, "accent", "BackgroundColor3")
+    
+    self:create("UIGradient", {
+        Parent = accent_line,
+        Rotation = 90,
+        Color = rgbseq{rgbkey(0, rgb(255, 255, 255)), rgbkey(1, rgb(109, 109, 109))}
+    })
+    
+    cfg["tab_holder"] = self:create("Frame", {
+        Parent = background,
+        BackgroundTransparency = 1,
+        Position = dim2(0, 0, 0, 30),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 0, 30),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    self:create("UIListLayout", {
+        Parent = cfg["tab_holder"],
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalFlex = Enum.UIFlexAlignment.Fill,
+        Padding = dim(0, -1),
+        SortOrder = Enum.SortOrder.LayoutOrder
+    })
+    
+    self:create("UIPadding", {
+        Parent = background,
+        PaddingBottom = dim(0, 11),
+        PaddingRight = dim(0, 9),
+        PaddingLeft = dim(0, 9)
+    })
+    
+    local page_scroll = self:create("ScrollingFrame", {
+        Parent = background,
+        Position = dim2(0, 0, 0, 66),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 1, -66),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(0, 0, 0),
+        ScrollBarImageColor3 = rgb(120, 120, 120),
+        ScrollBarThickness = 8,
+        ScrollBarImageTransparency = 0,
+        CanvasSize = dim2(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ClipsDescendants = true,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        VerticalScrollBarInset = Enum.ScrollBarInset.Always,
+        Active = true
     })
     
     local page_inline = self:create("Frame", {
