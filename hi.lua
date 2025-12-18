@@ -2928,5 +2928,540 @@ function library:addButton(options)
         PaddingBottom = dim(0, 6)
     })
 end
+function library:addColorpicker(options)
+    local cfg = {
+        name = options.name or "Colorpicker",
+        flag = options.flag or tostring(random(1, 9999999)),
+        default = options.default or themes.preset.accent,
+        callback = options.callback or function() end,
+        
+        open = false,
+        hue = 0,
+        saturation = 1,
+        value = 1,
+    }
+    
+    local h, s, v = cfg.default:ToHSV()
+    cfg.hue = h
+    cfg.saturation = s
+    cfg.value = v
 
+    local colorpicker_container = self:create("TextLabel", {
+        Parent = self.background or self.elements,
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = "",
+        ZIndex = 2,
+        Size = dim2(1, -8, 0, 12),
+        BorderSizePixel = 0,
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        TextSize = 11,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local bottom_components = self:create("Frame", {
+        Parent = colorpicker_container,
+        Position = dim2(0, 15, 0, cfg.name and 11 or 0),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -6, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local colorpicker_button = self:create("TextButton", {
+        Parent = bottom_components,
+        AutoButtonColor = false,
+        Text = "",
+        Position = dim2(0, 0, 0, 2),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, 30, 0, 16),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(25, 25, 25)
+    })
+    
+    local color_display = self:create("Frame", {
+        Parent = colorpicker_button,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = cfg.default
+    })
+    
+    local color_name = self:create("TextButton", {
+        Parent = bottom_components,
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.name,
+        BackgroundTransparency = 1,
+        Position = dim2(0, 35, 0, 2),
+        Size = dim2(0, 0, 1, -2),
+        BorderSizePixel = 0,
+        AutomaticSize = Enum.AutomaticSize.X,
+        TextSize = 12,
+        BackgroundColor3 = rgb(255, 255, 255),
+        AutoButtonColor = false
+    })
+    
+    self:create("UIPadding", {
+        Parent = colorpicker_container,
+        PaddingLeft = dim(0, 1)
+    })
+    
+    self:create("UIListLayout", {
+        Parent = bottom_components,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = dim(0, 3),
+        FillDirection = Enum.FillDirection.Vertical
+    })
+
+    if cfg.name then 
+        local left_components = self:create("Frame", {
+            Parent = colorpicker_container,
+            BackgroundTransparency = 1,
+            Position = dim2(0, 16, 0, 1),
+            BorderColor3 = rgb(0, 0, 0),
+            Size = dim2(0, 0, 0, 14),
+            BorderSizePixel = 0,
+            BackgroundColor3 = rgb(255, 255, 255)
+        })
+        
+        local name_text = self:create("TextLabel", {
+            Parent = left_components,
+            FontFace = library.font,
+            TextColor3 = rgb(180, 180, 180),
+            BorderColor3 = rgb(0, 0, 0),
+            Text = cfg.name,
+            BackgroundTransparency = 1,
+            Size = dim2(0, 0, 1, -1),
+            BorderSizePixel = 0,
+            AutomaticSize = Enum.AutomaticSize.X,
+            TextSize = 12,
+            BackgroundColor3 = rgb(255, 255, 255)
+        })
+        
+        self:create("UIListLayout", {
+            Parent = left_components,
+            Padding = dim(0, 5),
+            FillDirection = Enum.FillDirection.Horizontal
+        })
+        
+        self:create("UIPadding", {
+            Parent = left_components,
+            PaddingBottom = dim(0, 6)
+        })
+    end
+
+    local colorpicker_holder = self:create("Frame", {
+        Parent = library.gui,
+        Size = dim2(0, 180, 0, 180),
+        Position = dim2(0, colorpicker_button.AbsolutePosition.X, 0, colorpicker_button.AbsolutePosition.Y + 20),
+        BorderColor3 = rgb(0, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(20, 20, 20),
+        Visible = false,
+        ZIndex = 999,
+        ClipsDescendants = true
+    })
+    
+    local holder_inline = self:create("Frame", {
+        Parent = colorpicker_holder,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(40, 40, 40)
+    })
+    
+    local holder_bg = self:create("Frame", {
+        Parent = holder_inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(20, 20, 20)
+    })
+    
+    local saturation_value_picker = self:create("Frame", {
+        Parent = holder_bg,
+        Position = dim2(0, 10, 0, 10),
+        Size = dim2(0, 120, 0, 120),
+        BorderColor3 = rgb(0, 0, 0),
+        BorderSizePixel = 1,
+        BackgroundColor3 = rgb(255, 255, 255),
+        ZIndex = 2
+    })
+    
+    local current_hue_color = Color3.fromHSV(cfg.hue, 1, 1)
+    
+    local saturation_gradient = self:create("UIGradient", {
+        Parent = saturation_value_picker,
+        Color = rgbseq{
+            rgbkey(0, rgb(255, 255, 255)),
+            rgbkey(1, current_hue_color)
+        },
+        Rotation = 0
+    })
+    
+    local value_gradient = self:create("UIGradient", {
+        Parent = saturation_value_picker,
+        Color = rgbseq{
+            rgbkey(0, rgb(0, 0, 0, 0)),
+            rgbkey(1, rgb(0, 0, 0))
+        },
+        Transparency = numseq{
+            numkey(0, 0),
+            numkey(1, 0.5)
+        },
+        Rotation = 90
+    })
+    
+    local saturation_value_button = self:create("TextButton", {
+        Parent = saturation_value_picker,
+        Size = dim2(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Text = "",
+        AutoButtonColor = false,
+        ZIndex = 3
+    })
+    
+    local saturation_value_cursor = self:create("Frame", {
+        Parent = saturation_value_picker,
+        AnchorPoint = vec2(0.5, 0.5),
+        Position = dim2(cfg.saturation, -3, 1 - cfg.value, -3),
+        Size = dim2(0, 6, 0, 6),
+        BorderColor3 = rgb(255, 255, 255),
+        BorderSizePixel = 1,
+        BackgroundColor3 = rgb(0, 0, 0),
+        ZIndex = 4
+    })
+    
+    local hue_picker = self:create("Frame", {
+        Parent = holder_bg,
+        Position = dim2(0, 140, 0, 10),
+        Size = dim2(0, 20, 0, 120),
+        BorderColor3 = rgb(0, 0, 0),
+        BorderSizePixel = 1,
+        BackgroundColor3 = rgb(255, 255, 255),
+        ZIndex = 2
+    })
+    
+    local hue_gradient = self:create("UIGradient", {
+        Parent = hue_picker,
+        Color = rgbseq{
+            rgbkey(0.00, rgb(255, 0, 0)),
+            rgbkey(0.17, rgb(255, 255, 0)),
+            rgbkey(0.33, rgb(0, 255, 0)),
+            rgbkey(0.50, rgb(0, 255, 255)),
+            rgbkey(0.67, rgb(0, 0, 255)),
+            rgbkey(0.83, rgb(255, 0, 255)),
+            rgbkey(1.00, rgb(255, 0, 0))
+        },
+        Rotation = 90
+    })
+    
+    local hue_button = self:create("TextButton", {
+        Parent = hue_picker,
+        Size = dim2(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Text = "",
+        AutoButtonColor = false,
+        ZIndex = 3
+    })
+    
+    local hue_cursor = self:create("Frame", {
+        Parent = hue_picker,
+        AnchorPoint = vec2(0.5, 0),
+        Position = dim2(0.5, 0, cfg.hue, 0),
+        Size = dim2(0, 22, 0, 3),
+        BorderColor3 = rgb(255, 255, 255),
+        BorderSizePixel = 1,
+        BackgroundColor3 = rgb(0, 0, 0),
+        ZIndex = 4
+    })
+    
+    local preview_color = self:create("Frame", {
+        Parent = holder_bg,
+        Position = dim2(0, 10, 0, 140),
+        Size = dim2(0, 60, 0, 30),
+        BorderColor3 = rgb(0, 0, 0),
+        BorderSizePixel = 1,
+        BackgroundColor3 = cfg.default,
+        ZIndex = 2
+    })
+    
+    local hex_input = self:create("TextBox", {
+        Parent = holder_bg,
+        Position = dim2(0, 80, 0, 140),
+        Size = dim2(0, 80, 0, 30),
+        BorderColor3 = rgb(0, 0, 0),
+        BorderSizePixel = 1,
+        BackgroundColor3 = rgb(30, 30, 30),
+        FontFace = library.font,
+        TextColor3 = rgb(200, 200, 200),
+        Text = cfg.default:ToHex(),
+        TextSize = 12,
+        PlaceholderText = "Hex Color",
+        ClearTextOnFocus = false,
+        ZIndex = 2
+    })
+    
+    local rgb_label = self:create("TextLabel", {
+        Parent = holder_bg,
+        Position = dim2(0, 10, 0, 145),
+        Size = dim2(0, 60, 0, 10),
+        BorderColor3 = rgb(0, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(20, 20, 20),
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        Text = "RGB:",
+        TextSize = 10,
+        ZIndex = 2,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local rgb_value = self:create("TextLabel", {
+        Parent = holder_bg,
+        Position = dim2(0, 10, 0, 155),
+        Size = dim2(0, 60, 0, 10),
+        BorderColor3 = rgb(0, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(20, 20, 20),
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        Text = string.format("%d, %d, %d", 
+            math.floor(cfg.default.R * 255),
+            math.floor(cfg.default.G * 255),
+            math.floor(cfg.default.B * 255)
+        ),
+        TextSize = 10,
+        ZIndex = 2,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+
+    local function updateFromHSV(h, s, v)
+        cfg.hue = h
+        cfg.saturation = s
+        cfg.value = v
+        
+        local new_color = Color3.fromHSV(h, s, v)
+        color_display.BackgroundColor3 = new_color
+        preview_color.BackgroundColor3 = new_color
+        hex_input.Text = new_color:ToHex()
+        rgb_value.Text = string.format("%d, %d, %d", 
+            math.floor(new_color.R * 255),
+            math.floor(new_color.G * 255),
+            math.floor(new_color.B * 255)
+        )
+        
+        flags[cfg.flag] = new_color
+        cfg.callback(new_color)
+        
+        local hue_color = Color3.fromHSV(h, 1, 1)
+        saturation_gradient.Color = rgbseq{
+            rgbkey(0, rgb(255, 255, 255)),
+            rgbkey(1, hue_color)
+        }
+        
+        saturation_value_cursor.Position = dim2(s, -3, 1 - v, -3)
+        hue_cursor.Position = dim2(0.5, 0, h, 0)
+    end
+
+    local function updateFromHex(hex_string)
+        local success, color = pcall(function()
+            return Color3.fromHex(hex_string)
+        end)
+        
+        if success then
+            local h, s, v = color:ToHSV()
+            updateFromHSV(h, s, v)
+        else
+            hex_input.Text = color_display.BackgroundColor3:ToHex()
+        end
+    end
+
+    local function setVisible(bool)
+        colorpicker_holder.Visible = bool
+        library.colorpicker_open = bool
+        
+        if bool then
+            self:closeCurrentElement(cfg)
+            library.current_element_open = cfg
+            
+            colorpicker_holder.Position = dim2(
+                0, colorpicker_button.AbsolutePosition.X,
+                0, colorpicker_button.AbsolutePosition.Y + 20
+            )
+        end
+    end
+
+    local function onSaturationValueClick(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            
+            local mousePos = getInputPosition(input)
+            local relativeX = (mousePos.X - saturation_value_picker.AbsolutePosition.X) / saturation_value_picker.AbsoluteSize.X
+            local relativeY = (mousePos.Y - saturation_value_picker.AbsolutePosition.Y) / saturation_value_picker.AbsoluteSize.Y
+            
+            relativeX = math.clamp(relativeX, 0, 1)
+            relativeY = math.clamp(relativeY, 0, 1)
+            
+            updateFromHSV(cfg.hue, relativeX, 1 - relativeY)
+        end
+    end
+
+    local function onSaturationValueDrag(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            
+            if not library.colorpicker_open then return end
+            
+            local mousePos = getInputPosition(input)
+            local relativeX = (mousePos.X - saturation_value_picker.AbsolutePosition.X) / saturation_value_picker.AbsoluteSize.X
+            local relativeY = (mousePos.Y - saturation_value_picker.AbsolutePosition.Y) / saturation_value_picker.AbsoluteSize.Y
+            
+            relativeX = math.clamp(relativeX, 0, 1)
+            relativeY = math.clamp(relativeY, 0, 1)
+            
+            updateFromHSV(cfg.hue, relativeX, 1 - relativeY)
+        end
+    end
+
+    local function onHueClick(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            
+            local mousePos = getInputPosition(input)
+            local relativeY = (mousePos.Y - hue_picker.AbsolutePosition.Y) / hue_picker.AbsoluteSize.Y
+            
+            relativeY = math.clamp(relativeY, 0, 1)
+            updateFromHSV(relativeY, cfg.saturation, cfg.value)
+        end
+    end
+
+    local function onHueDrag(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            
+            if not library.colorpicker_open then return end
+            
+            local mousePos = getInputPosition(input)
+            local relativeY = (mousePos.Y - hue_picker.AbsolutePosition.Y) / hue_picker.AbsoluteSize.Y
+            
+            relativeY = math.clamp(relativeY, 0, 1)
+            updateFromHSV(relativeY, cfg.saturation, cfg.value)
+        end
+    end
+
+    local function onColorpickerClick()
+        if library.colorpicker_open and cfg.open then
+            setVisible(false)
+            cfg.open = false
+        else
+            setVisible(true)
+            cfg.open = true
+        end
+    end
+
+    saturation_value_button.MouseButton1Down:Connect(function()
+        onSaturationValueClick({UserInputType = Enum.UserInputType.MouseButton1, Position = uis:GetMouseLocation()})
+        
+        local connection
+        connection = uis.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement then
+                onSaturationValueDrag(input)
+            end
+        end)
+        
+        local releaseConnection
+        releaseConnection = uis.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                connection:Disconnect()
+                releaseConnection:Disconnect()
+            end
+        end)
+    end)
+
+    hue_button.MouseButton1Down:Connect(function()
+        onHueClick({UserInputType = Enum.UserInputType.MouseButton1, Position = uis:GetMouseLocation()})
+        
+        local connection
+        connection = uis.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement then
+                onHueDrag(input)
+            end
+        end)
+        
+        local releaseConnection
+        releaseConnection = uis.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                connection:Disconnect()
+                releaseConnection:Disconnect()
+            end
+        end)
+    end)
+
+    colorpicker_button.MouseButton1Click:Connect(onColorpickerClick)
+    color_name.MouseButton1Click:Connect(onColorpickerClick)
+    
+    if isTouch() then
+        colorpicker_button.TouchTap:Connect(onColorpickerClick)
+        color_name.TouchTap:Connect(onColorpickerClick)
+        
+        saturation_value_button.TouchTap:Connect(function()
+            onSaturationValueClick({UserInputType = Enum.UserInputType.Touch, Position = uis:GetTouches()[1].Position})
+        end)
+        
+        hue_button.TouchTap:Connect(function()
+            onHueClick({UserInputType = Enum.UserInputType.Touch, Position = uis:GetTouches()[1].Position})
+        end)
+    end
+
+    hex_input.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            updateFromHex(hex_input.Text)
+        else
+            hex_input.Text = color_display.BackgroundColor3:ToHex()
+        end
+    end)
+
+    self:connection(uis.InputBegan, function(input, gameProcessed)
+        if not cfg.open or gameProcessed then return end
+        
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            
+            local mousePos = uis:GetMouseLocation()
+            local isInHolder = self:mouseInFrame(colorpicker_holder)
+            local isInButton = self:mouseInFrame(colorpicker_button)
+            local isInText = self:mouseInFrame(color_name)
+            
+            if not isInHolder and not isInButton and not isInText then
+                setVisible(false)
+                cfg.open = false
+            end
+        end
+    end)
+
+    colorpicker_button:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
+        if cfg.open then
+            colorpicker_holder.Position = dim2(
+                0, colorpicker_button.AbsolutePosition.X,
+                0, colorpicker_button.AbsolutePosition.Y + 20
+            )
+        end
+    end)
+
+    updateFromHSV(cfg.hue, cfg.saturation, cfg.value)
+
+    return setmetatable(cfg, library)
+end
 return library
