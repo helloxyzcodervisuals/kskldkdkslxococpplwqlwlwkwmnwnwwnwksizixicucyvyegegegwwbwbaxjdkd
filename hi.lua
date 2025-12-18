@@ -754,7 +754,7 @@ function library:window(properties)
         ScrollBarImageColor3 = rgb(120, 120, 120),
         ScrollBarThickness = 8,
         ScrollBarImageTransparency = 0,
-        CanvasSize = dim2(0, 0, 0, 0),
+        CanvasSize = dim2(0, 0, 0, 99999999),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ClipsDescendants = true,
         ScrollingDirection = Enum.ScrollingDirection.Y,
@@ -775,7 +775,7 @@ function library:window(properties)
         Parent = page_inline,
         Position = dim2(0, 1, 0, 1),
         BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, -2, 1, -2),
+        Size = dim2(1, 0, 0, 2000),
         BorderSizePixel = 0,
         BackgroundColor3 = rgb(13, 13, 13),
         AutomaticSize = Enum.AutomaticSize.Y
