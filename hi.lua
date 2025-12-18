@@ -622,7 +622,6 @@ function library:window(properties)
 
     return setmetatable(cfg, library)
 end
-
 function library:tab(properties)
     local cfg = {
         name = properties.name or "visuals", 
@@ -682,7 +681,7 @@ function library:tab(properties)
         BackgroundColor3 = rgb(255, 255, 255)
     }); self:applyTheme(text, "accent", "TextColor3")
 
-    cfg["page_scroll"] = self:create("ScrollingFrame", {
+    cfg["page_container"] = self:create("ScrollingFrame", {
         Parent = self.page_holder,
         Visible = false, 
         Position = dim2(0, 1, 0, 1),
@@ -700,7 +699,7 @@ function library:tab(properties)
     })
     
     cfg["page"] = self:create("Frame", {
-        Parent = cfg["page_scroll"],
+        Parent = cfg["page_container"],
         BorderColor3 = rgb(0, 0, 0),
         Size = dim2(1, 0, 0, 0),
         BorderSizePixel = 0,
@@ -740,12 +739,12 @@ function library:tab(properties)
         end 
 
         text.TextColor3 = themes.preset.accent
-        cfg["page_scroll"].Visible = true 
+        cfg["page_container"].Visible = true 
         gradient.Color = rgbseq{
             rgbkey(0, rgb(41, 41, 41)),
             rgbkey(1, rgb(25, 25, 25))
         }
-        self.selected_tab = {text, cfg["page_scroll"], gradient}
+        self.selected_tab = {text, cfg["page_container"], gradient}
     end 
 
     local function onTabClick()
@@ -768,6 +767,7 @@ function library:tab(properties)
 
     return setmetatable(cfg, library)    
 end
+
 
 
 function library:column(properties)
