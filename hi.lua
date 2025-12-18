@@ -524,17 +524,24 @@ function library:window(properties)
         PaddingLeft = dim(0, 9)
     })
     
-    local page_holder = self:create("Frame", {
+    local page_scroll = self:create("ScrollingFrame", {
         Parent = background,
         Position = dim2(0, 0, 0, 66),
         BorderColor3 = rgb(0, 0, 0),
         Size = dim2(1, 0, 1, -66),
         BorderSizePixel = 0,
-        BackgroundColor3 = rgb(0, 0, 0)
+        BackgroundColor3 = rgb(0, 0, 0),
+        ScrollBarImageColor3 = rgb(65, 65, 65),
+        ScrollBarThickness = 4,
+        ScrollBarImageTransparency = 0.7,
+        CanvasSize = dim2(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ClipsDescendants = true,
+        ScrollingDirection = Enum.ScrollingDirection.Y
     })
     
-    local inline = self:create("Frame", {
-        Parent = page_holder,
+    local page_inline = self:create("Frame", {
+        Parent = page_scroll,
         Position = dim2(0, 1, 0, 1),
         BorderColor3 = rgb(0, 0, 0),
         Size = dim2(1, -2, 1, -2),
@@ -543,13 +550,17 @@ function library:window(properties)
     })
     
     cfg["page_holder"] = self:create("Frame", {
-        Parent = inline,
+        Parent = page_inline,
         Position = dim2(0, 1, 0, 1),
         BorderColor3 = rgb(0, 0, 0),
         Size = dim2(1, -2, 1, -2),
         BorderSizePixel = 0,
-        BackgroundColor3 = rgb(13, 13, 13)
-    }) 
+        BackgroundColor3 = rgb(13, 13, 13),
+        AutomaticSize = Enum.AutomaticSize.Y
+    })
+    
+    
+    
     
     function cfg.toggle_menu(bool)
         if not cfg.is_closing_menu then
@@ -681,29 +692,14 @@ function library:tab(properties)
         BackgroundColor3 = rgb(255, 255, 255)
     }); self:applyTheme(text, "accent", "TextColor3")
 
-    cfg["page_scroll"] = self:create("ScrollingFrame", {
+    cfg["page"] = self:create("Frame", {
         Parent = self.page_holder,
         Visible = false, 
+        Position = dim2(0, 1, 0, 1),
         BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, 0, 1, 0),
+        Size = dim2(1, -2, 1, -2),
         BorderSizePixel = 0,
-        BackgroundColor3 = rgb(13, 13, 13),
-        ScrollBarImageColor3 = rgb(65, 65, 65),
-        ScrollBarThickness = 4,
-        ScrollBarImageTransparency = 0.7,
-        CanvasSize = dim2(0, 0, 0, 0),
-        AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        ClipsDescendants = true,
-        ScrollingDirection = Enum.ScrollingDirection.Y
-    })
-    
-    cfg["page"] = self:create("Frame", {
-        Parent = cfg["page_scroll"],
-        BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, 0, 0, 0),
-        BorderSizePixel = 0,
-        BackgroundColor3 = rgb(13, 13, 13),
-        AutomaticSize = Enum.AutomaticSize.Y
+        BackgroundColor3 = rgb(13, 13, 13)
     })
     
     self:create("UIListLayout", {
@@ -738,12 +734,12 @@ function library:tab(properties)
         end 
 
         text.TextColor3 = themes.preset.accent
-        cfg["page_scroll"].Visible = true 
+        cfg["page"].Visible = true 
         gradient.Color = rgbseq{
             rgbkey(0, rgb(41, 41, 41)),
             rgbkey(1, rgb(25, 25, 25))
         }
-        self.selected_tab = {text, cfg["page_scroll"], gradient}
+        self.selected_tab = {text, cfg["page"], gradient}
     end 
 
     local function onTabClick()
@@ -766,7 +762,6 @@ function library:tab(properties)
 
     return setmetatable(cfg, library)    
 end
-
 
 
 function library:column(properties)
