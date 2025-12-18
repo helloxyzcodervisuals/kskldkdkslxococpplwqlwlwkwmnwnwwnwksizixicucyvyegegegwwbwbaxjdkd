@@ -682,14 +682,30 @@ function library:tab(properties)
         BackgroundColor3 = rgb(255, 255, 255)
     }); self:applyTheme(text, "accent", "TextColor3")
 
-    cfg["page"] = self:create("Frame", {
+    cfg["page_scroll"] = self:create("ScrollingFrame", {
         Parent = self.page_holder,
         Visible = false, 
         Position = dim2(0, 1, 0, 1),
         BorderColor3 = rgb(0, 0, 0),
         Size = dim2(1, -2, 1, -2),
         BorderSizePixel = 0,
-        BackgroundColor3 = rgb(13, 13, 13)
+        BackgroundColor3 = rgb(13, 13, 13),
+        ScrollBarImageColor3 = rgb(65, 65, 65),
+        ScrollBarThickness = 4,
+        ScrollBarImageTransparency = 0.7,
+        CanvasSize = dim2(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ClipsDescendants = true,
+        ScrollingDirection = Enum.ScrollingDirection.Y
+    })
+    
+    cfg["page"] = self:create("Frame", {
+        Parent = cfg["page_scroll"],
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(13, 13, 13),
+        AutomaticSize = Enum.AutomaticSize.Y
     })
     
     self:create("UIListLayout", {
@@ -724,12 +740,12 @@ function library:tab(properties)
         end 
 
         text.TextColor3 = themes.preset.accent
-        cfg["page"].Visible = true 
+        cfg["page_scroll"].Visible = true 
         gradient.Color = rgbseq{
             rgbkey(0, rgb(41, 41, 41)),
             rgbkey(1, rgb(25, 25, 25))
         }
-        self.selected_tab = {text, cfg["page"], gradient}
+        self.selected_tab = {text, cfg["page_scroll"], gradient}
     end 
 
     local function onTabClick()
@@ -753,6 +769,7 @@ function library:tab(properties)
     return setmetatable(cfg, library)    
 end
 
+
 function library:column(properties)
     local cfg = {
         fill = properties.fill or properties.Fill or false, 
@@ -762,7 +779,7 @@ function library:column(properties)
         Parent = self.page,
         BackgroundTransparency = 1,
         BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(0, 100, 0, 100),
+        Size = dim2(1, -22, 0, 100),
         BorderSizePixel = 0,
         BackgroundColor3 = rgb(12, 12, 12)
     })
