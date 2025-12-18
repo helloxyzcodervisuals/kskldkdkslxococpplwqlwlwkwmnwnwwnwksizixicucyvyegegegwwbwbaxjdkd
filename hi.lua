@@ -681,12 +681,11 @@ function library:tab(properties)
         BackgroundColor3 = rgb(255, 255, 255)
     }); self:applyTheme(text, "accent", "TextColor3")
 
-    cfg["page_container"] = self:create("ScrollingFrame", {
+    cfg["page_scroll"] = self:create("ScrollingFrame", {
         Parent = self.page_holder,
         Visible = false, 
-        Position = dim2(0, 1, 0, 1),
         BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, -2, 1, -2),
+        Size = dim2(1, 0, 1, 0),
         BorderSizePixel = 0,
         BackgroundColor3 = rgb(13, 13, 13),
         ScrollBarImageColor3 = rgb(65, 65, 65),
@@ -699,7 +698,7 @@ function library:tab(properties)
     })
     
     cfg["page"] = self:create("Frame", {
-        Parent = cfg["page_container"],
+        Parent = cfg["page_scroll"],
         BorderColor3 = rgb(0, 0, 0),
         Size = dim2(1, 0, 0, 0),
         BorderSizePixel = 0,
@@ -739,12 +738,12 @@ function library:tab(properties)
         end 
 
         text.TextColor3 = themes.preset.accent
-        cfg["page_container"].Visible = true 
+        cfg["page_scroll"].Visible = true 
         gradient.Color = rgbseq{
             rgbkey(0, rgb(41, 41, 41)),
             rgbkey(1, rgb(25, 25, 25))
         }
-        self.selected_tab = {text, cfg["page_container"], gradient}
+        self.selected_tab = {text, cfg["page_scroll"], gradient}
     end 
 
     local function onTabClick()
