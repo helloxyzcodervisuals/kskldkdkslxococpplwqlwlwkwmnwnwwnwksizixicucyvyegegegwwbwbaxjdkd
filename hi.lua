@@ -1929,7 +1929,7 @@ function library:column(properties)
 
     return setmetatable(cfg, library)
 end
-
+--[[
 function library:section(properties)
     local cfg = {
         name = properties.name or properties.Name or "section", 
@@ -2068,6 +2068,156 @@ function library:section(properties)
         totalHeight = totalHeight + 50 + 32
         cfg["elements"].Size = dim2(1, -16, 0, totalHeight)
         --outline.Size = dim2(1, 0, 0, totalHeight + 4)
+    end
+
+    cfg["elements"].ChildAdded:Connect(updateSectionHeight)
+    cfg["elements"].ChildRemoved:Connect(updateSectionHeight)
+    updateSectionHeight()
+
+    elements_scroll:GetPropertyChangedSignal("AbsoluteCanvasSize"):Connect(function()
+        scrollbar_fill.Visible = elements_scroll.AbsoluteCanvasSize.Y > background.AbsoluteSize.Y and true or false 
+    end)
+
+    return setmetatable(cfg, library)
+end
+--]]
+function library:section(properties)
+    local cfg = {
+        name = properties.name or properties.Name or "section", 
+        size = properties.size or properties.Size or dim2(1, 0, 1, -12)
+    }   
+
+    local outline = self:create("Frame", {
+        Parent = self.column,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = self.fill and dim2(1, 0, 0, 0) or cfg.size,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+    
+    local inline = self:create("Frame", {
+        Parent = outline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+    
+    local background = self:create("Frame", {
+        Parent = inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+
+    local scrollbar_fill = self:create("Frame", {
+        Parent = background,
+        Visible = false, 
+        Size = dim2(0, 5, 1, 0),
+        Position = dim2(1, -5, 0, 0),
+        BorderColor3 = rgb(0, 0, 0),
+        ZIndex = 4,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(25, 25, 25)
+    })
+    
+    local shadow = self:create("Frame", {
+        Parent = background,
+        Size = dim2(1, -5, 0, 21),
+        Position = dim2(0, 0, 1, -21),
+        BorderColor3 = rgb(0, 0, 0),
+        ZIndex = 999,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+    
+    local UIGradient = self:create("UIGradient", {
+        Parent = shadow,
+        Rotation = -90,
+        Transparency = numseq{numkey(0, 0), numkey(1, 1)}
+    })
+    
+    local elements_scroll = self:create("ScrollingFrame", {
+        Parent = background,
+        ScrollBarImageColor3 = rgb(65, 65, 65),
+        Active = true,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollBarThickness = 4,
+        BorderColor3 = rgb(0, 0, 0),
+        BackgroundTransparency = 1,
+        Size = dim2(1, 0, 1, 0),
+        BackgroundColor3 = rgb(12, 12, 12),
+        ZIndex = 5,
+        BorderSizePixel = 0,
+        CanvasSize = dim2(0, 0, 0, 0)
+    })
+    
+    cfg["elements"] = self:create("Frame", {
+        Parent = elements_scroll,
+        Position = dim2(0, 8, 0, 16),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -16, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+    
+    self:create("UIListLayout", {
+        Parent = cfg["elements"],
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        Padding = dim(0, 3)
+    })
+    
+    local empty_space = self:create("Frame", {
+        Parent = cfg["elements"],
+        LayoutOrder = 9999999,
+        BackgroundTransparency = 1,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, 0, 0, 50),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+    
+    local section_title = self:create("TextLabel", {
+        Parent = outline,
+        FontFace = library.font,
+        TextColor3 = rgb(205, 205, 205),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.name,
+        AutomaticSize = Enum.AutomaticSize.XY,
+        AnchorPoint = vec2(0, 0.5),
+        Position = dim2(0, 14, 0, 3),
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        BorderSizePixel = 0,
+        ZIndex = 2,
+        TextSize = 12,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+
+    local section_filler = self:create("Frame", {
+        Parent = outline,
+        AnchorPoint = vec2(0, 0.5),
+        Position = dim2(0, 13, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, section_title.TextBounds.X, 0, 3),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+
+    local function updateSectionHeight()
+        local totalHeight = 0
+        for _, child in ipairs(cfg["elements"]:GetChildren()) do
+            if child:IsA("GuiObject") and child ~= empty_space then
+                totalHeight = totalHeight + child.AbsoluteSize.Y + 3
+            end
+        end
+        
+        totalHeight = totalHeight + 50 + 32
+        cfg["elements"].Size = dim2(1, -16, 0, totalHeight)
     end
 
     cfg["elements"].ChildAdded:Connect(updateSectionHeight)
