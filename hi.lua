@@ -634,6 +634,7 @@ function library:window(properties)
     return setmetatable(cfg, library)
 end
 --]]
+--[[
 function library:window(properties)
     local cfg = {
         name = properties.name or properties.Name or os.date('<font color="rgb(170,85,235)">obelus</font> | %b %d %Y | %H:%M'),
@@ -1228,6 +1229,7 @@ function library:section(properties)
     return setmetatable(cfg, library)
 end
 --]]
+--[[
 function library:section(properties)
     local cfg = {
         name = properties.name or properties.Name or "section"
@@ -1363,6 +1365,7 @@ function library:section(properties)
 
     return setmetatable(cfg, library)
 end
+--]]
 --[[
 function library:addToggle(options) 
     local cfg = {
@@ -1541,6 +1544,542 @@ function library:addToggle(options)
     return setmetatable(cfg, library)
 end
 --]]
+function library:window(properties)
+    local cfg = {
+        name = properties.name or properties.Name or os.date('<font color="rgb(170,85,235)">obelus</font> | %b %d %Y | %H:%M'),
+        size = properties.size or properties.Size or dim2(0, 516, 0, 563),
+        selected_tab, 
+        is_closing_menu = false,
+    }
+
+    library.gui = self:create("ScreenGui", {
+        Parent = coregui,
+        Enabled = true,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        IgnoreGuiInset = true,
+    })
+
+    local outline = self:create("Frame", {
+        Parent = library.gui,
+        Position = dim2(0.5, 0 - (cfg.size.X.Offset / 2), 0.5, 0 - (cfg.size.X.Offset / 2)),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = cfg.size,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(0, 0, 0)
+    }); outline.Position = dim_offset(outline.AbsolutePosition.X, outline.AbsolutePosition.Y)
+
+    self:draggify(outline)
+    self:makeResizable(outline)
+    
+    local inline = self:create("Frame", {
+        Parent = outline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(48, 48, 48)
+    })
+    
+    local background = self:create("Frame", {
+        Parent = inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+    
+    local title_holder = self:create("Frame", {
+        Parent = background,
+        BackgroundTransparency = 1,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 0, 29),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local ui_title = self:create("TextLabel", {
+        Parent = title_holder,
+        FontFace = library.font,
+        TextColor3 = rgb(135, 135, 135),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.name,
+        Size = dim2(1, 0, 0, 24),
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        BorderSizePixel = 0,
+        RichText = true,
+        TextSize = 12,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local accent_line = self:create("Frame", {
+        Parent = title_holder,
+        Position = dim2(0, 0, 1, -6),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 0, 2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = themes.preset.accent
+    }); self:applyTheme(accent_line, "accent", "BackgroundColor3")
+    
+    self:create("UIGradient", {
+        Parent = accent_line,
+        Rotation = 90,
+        Color = rgbseq{rgbkey(0, rgb(255, 255, 255)), rgbkey(1, rgb(109, 109, 109))}
+    })
+    
+    cfg["tab_holder"] = self:create("Frame", {
+        Parent = background,
+        BackgroundTransparency = 1,
+        Position = dim2(0, 0, 0, 30),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 0, 30),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    self:create("UIListLayout", {
+        Parent = cfg["tab_holder"],
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalFlex = Enum.UIFlexAlignment.Fill,
+        Padding = dim(0, -1),
+        SortOrder = Enum.SortOrder.LayoutOrder
+    })
+    
+    self:create("UIPadding", {
+        Parent = background,
+        PaddingBottom = dim(0, 11),
+        PaddingRight = dim(0, 9),
+        PaddingLeft = dim(0, 9)
+    })
+    
+    local page_scroll = self:create("ScrollingFrame", {
+        Parent = background,
+        Position = dim2(0, 0, 0, 66),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, 0, 1, -66),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(0, 0, 0),
+        ScrollBarImageColor3 = rgb(120, 120, 120),
+        ScrollBarThickness = 8,
+        ScrollBarImageTransparency = 0,
+        CanvasSize = dim2(0, 0, 0, 99999999),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ClipsDescendants = true,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        VerticalScrollBarInset = Enum.ScrollBarInset.Always,
+        Active = true
+    })
+    
+    local page_inline = self:create("Frame", {
+        Parent = page_scroll,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(51, 51, 51)
+    })
+    
+    cfg["page_holder"] = self:create("Frame", {
+        Parent = page_inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(13, 13, 13)
+    })
+    
+    
+    
+    
+    function cfg.toggle_menu(bool)
+        if not cfg.is_closing_menu then
+            cfg.is_closing_menu = true
+    
+            if bool == true then
+                for element, original_transparency in next, old_data do
+                    self:tween(element, {
+                        BackgroundTransparency = original_transparency,
+                    })
+                end
+    
+                for element, original_transparency in next, text_data do
+                    self:tween(element, {
+                        TextTransparency = original_transparency,
+                    })
+                end
+    
+                for element, original_transparency in next, image_data do
+                    self:tween(element, {
+                        ImageTransparency = original_transparency,
+                    })
+                end
+
+                for element, original_transparency in next, scroll_data do
+                    self:tween(element, {
+                        ScrollBarImageTransparency = original_transparency,
+                    })
+                end
+            else
+                for _, element in next, library.gui:GetDescendants() do
+                    if not element:IsA("GuiObject") then
+                        continue
+                    end
+    
+                    old_data[element] = element.BackgroundTransparency
+                    self:tween(element, {
+                        BackgroundTransparency = 1,
+                    })
+    
+                    if element:IsA("TextLabel") or element:IsA("TextButton") or element:IsA("TextBox") then
+                        text_data[element] = element.TextTransparency
+                        self:tween(element, {
+                            TextTransparency = 1,
+                        })
+                    end
+    
+                    if element:IsA("ImageLabel") or element:IsA("ImageButton") then
+                        image_data[element] = element.ImageTransparency
+                        self:tween(element, {
+                            ImageTransparency = 1,
+                        })
+                    end
+
+                    if element:IsA("ScrollingFrame") then 
+                        scroll_data[element] = element.ScrollBarImageTransparency
+                        self:tween(element, {
+                            ScrollBarImageTransparency = 1,
+                        })
+                    end 
+                end
+            end
+            
+            task.delay(0.5, function()
+                cfg.is_closing_menu = false 
+            end)
+        end
+    end
+
+    return setmetatable(cfg, library)
+end
+
+function library:tab(properties)
+    local cfg = {
+        name = properties.name or "visuals", 
+    } 
+
+    local outline = self:create("TextButton", {
+        Parent = self.tab_holder,
+        FontFace = library.font,
+        TextColor3 = rgb(0, 0, 0),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = "",
+        AutoButtonColor = false,
+        Size = dim2(0, 0, 0, 30),
+        BorderSizePixel = 0,
+        TextSize = 14,
+        BackgroundColor3 = rgb(0, 0, 0)
+    })
+    
+    local inline = self:create("Frame", {
+        Parent = outline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(41, 41, 41)
+    })
+    
+    local background = self:create("Frame", {
+        Parent = inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local gradient = self:create("UIGradient", {
+        Parent = background,
+        Rotation = 90,
+        Color = rgbseq{
+            rgbkey(0, rgb(41, 41, 41)), 
+            rgbkey(1, rgb(16, 16, 16))
+        }
+    })
+    
+    local text = self:create("TextLabel", {
+        Parent = background,
+        FontFace = library.font,
+        TextColor3 = rgb(140, 140, 140),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.name,
+        BackgroundTransparency = 1,
+        Position = dim2(0, 0, 0, -1),
+        Size = dim2(1, 0, 1, 0),
+        BorderSizePixel = 0,
+        TextSize = 12,
+        BackgroundColor3 = rgb(255, 255, 255)
+    }); self:applyTheme(text, "accent", "TextColor3")
+
+    cfg["page"] = self:create("Frame", {
+        Parent = self.page_holder,
+        Visible = false, 
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(13, 13, 13)
+    })
+    
+    self:create("UIListLayout", {
+        Parent = cfg["page"],
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalFlex = Enum.UIFlexAlignment.Fill,
+        Padding = dim(0, 11),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        VerticalFlex = Enum.UIFlexAlignment.Fill
+    })
+    
+    self:create("UIPadding", {
+        Parent = cfg["page"],
+        PaddingTop = dim(0, 11),
+        PaddingBottom = dim(0, 11),
+        PaddingRight = dim(0, 11),
+        PaddingLeft = dim(0, 11)
+    })
+
+    function cfg.open_tab() 
+        self:closeCurrentElement() 
+
+        if self.selected_tab then 
+            self.selected_tab[1].TextColor3 = rgb(160,160,160)
+            self.selected_tab[2].Visible = false 
+            self.selected_tab[3].Color = rgbseq{
+                rgbkey(0, rgb(41, 41, 41)),
+                rgbkey(1, rgb(16, 16, 16))
+            }
+
+            self.selected_tab = nil 
+        end 
+
+        text.TextColor3 = themes.preset.accent
+        cfg["page"].Visible = true 
+        gradient.Color = rgbseq{
+            rgbkey(0, rgb(41, 41, 41)),
+            rgbkey(1, rgb(25, 25, 25))
+        }
+        self.selected_tab = {text, cfg["page"], gradient}
+    end 
+
+    local function onTabClick()
+        if isTouch() then
+            cfg.open_tab()
+        end
+    end
+
+    outline.MouseButton1Click:Connect(function()
+        cfg.open_tab()
+    end)
+    
+    if isTouch() then
+        outline.TouchTap:Connect(onTabClick)
+    end
+
+    if not self.selected_tab then 
+        cfg.open_tab(true) 
+    end 
+
+    return setmetatable(cfg, library)    
+end
+
+function library:column(properties)
+    local cfg = {
+        fill = properties.fill or properties.Fill or false, 
+    }
+
+    cfg["column"] = self:create("Frame", {
+        Parent = self.page,
+        BackgroundTransparency = 1,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -22, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+    
+    self:create("UIListLayout", {
+        Parent = cfg["column"],
+        Padding = dim(0, 1),
+        SortOrder = Enum.SortOrder.LayoutOrder, 
+        VerticalFlex = cfg.fill and Enum.UIFlexAlignment.Fill or Enum.UIFlexAlignment.None
+    })
+
+    local function updateColumnHeight()
+        local totalHeight = 0
+        for _, child in ipairs(cfg["column"]:GetChildren()) do
+            if child:IsA("GuiObject") then
+                totalHeight = totalHeight + child.AbsoluteSize.Y + 1
+            end
+        end
+        cfg["column"].Size = dim2(1, -22, 0, totalHeight)
+    end
+
+    cfg["column"].ChildAdded:Connect(updateColumnHeight)
+    cfg["column"].ChildRemoved:Connect(updateColumnHeight)
+
+    return setmetatable(cfg, library)
+end
+
+function library:section(properties)
+    local cfg = {
+        name = properties.name or properties.Name or "section", 
+        size = properties.size or properties.Size or dim2(1, 0, 1, -12)
+    }   
+
+    local outline = self:create("Frame", {
+        Parent = self.column,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = self.fill and dim2(1, 0, 0, 0) or cfg.size,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
+    })
+    
+    local inline = self:create("Frame", {
+        Parent = outline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(45, 45, 45)
+    })
+    
+    local background = self:create("Frame", {
+        Parent = inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(19, 19, 19)
+    })
+
+    local scrollbar_fill = self:create("Frame", {
+        Parent = background,
+        Visible = false, 
+        Size = dim2(0, 5, 1, 0),
+        Position = dim2(1, -5, 0, 0),
+        BorderColor3 = rgb(0, 0, 0),
+        ZIndex = 4,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(45, 45, 45)
+    })
+    
+    local shadow = self:create("Frame", {
+        Parent = background,
+        Size = dim2(1, -5, 0, 21),
+        Position = dim2(0, 0, 1, -21),
+        BorderColor3 = rgb(0, 0, 0),
+        ZIndex = 999,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(19, 19, 19)
+    })
+    
+    local UIGradient = self:create("UIGradient", {
+        Parent = shadow,
+        Rotation = -90,
+        Transparency = numseq{numkey(0, 0), numkey(1, 1)}
+    })
+    
+    local elements_scroll = self:create("ScrollingFrame", {
+        Parent = background,
+        ScrollBarImageColor3 = rgb(65, 65, 65),
+        Active = true,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollBarThickness = 4,
+        BorderColor3 = rgb(0, 0, 0),
+        BackgroundTransparency = 1,
+        Size = dim2(1, 0, 1, 0),
+        BackgroundColor3 = rgb(255, 255, 255),
+        ZIndex = 5,
+        BorderSizePixel = 0,
+        CanvasSize = dim2(0, 0, 0, 0)
+    })
+    
+    cfg["elements"] = self:create("Frame", {
+        Parent = elements_scroll,
+        Position = dim2(0, 8, 0, 16),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -16, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    self:create("UIListLayout", {
+        Parent = cfg["elements"],
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        Padding = dim(0, 3)
+    })
+    
+    local empty_space = self:create("Frame", {
+        Parent = cfg["elements"],
+        LayoutOrder = 9999999,
+        BackgroundTransparency = 1,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, 0, 0, 50),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local section_title = self:create("TextLabel", {
+        Parent = outline,
+        FontFace = library.font,
+        TextColor3 = rgb(205, 205, 205),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.name,
+        AutomaticSize = Enum.AutomaticSize.XY,
+        AnchorPoint = vec2(0, 0.5),
+        Position = dim2(0, 14, 0, 3),
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        BorderSizePixel = 0,
+        ZIndex = 2,
+        TextSize = 12,
+        BackgroundColor3 = rgb(19, 19, 19)
+    })
+
+    local section_filler = self:create("Frame", {
+        Parent = outline,
+        AnchorPoint = vec2(0, 0.5),
+        Position = dim2(0, 13, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, section_title.TextBounds.X, 0, 3),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(19, 19, 19)
+    })
+
+    local function updateSectionHeight()
+        local totalHeight = 0
+        for _, child in ipairs(cfg["elements"]:GetChildren()) do
+            if child:IsA("GuiObject") and child ~= empty_space then
+                totalHeight = totalHeight + child.AbsoluteSize.Y + 3
+            end
+        end
+        
+        totalHeight = totalHeight + 50 + 32
+        cfg["elements"].Size = dim2(1, -16, 0, totalHeight)
+        outline.Size = dim2(1, 0, 0, totalHeight + 4)
+    end
+
+    cfg["elements"].ChildAdded:Connect(updateSectionHeight)
+    cfg["elements"].ChildRemoved:Connect(updateSectionHeight)
+    updateSectionHeight()
+
+    elements_scroll:GetPropertyChangedSignal("AbsoluteCanvasSize"):Connect(function()
+        scrollbar_fill.Visible = elements_scroll.AbsoluteCanvasSize.Y > background.AbsoluteSize.Y and true or false 
+    end)
+
+    return setmetatable(cfg, library)
+end
 function library:addSlider(options) 
     local cfg = {
         name = options.name or nil,
