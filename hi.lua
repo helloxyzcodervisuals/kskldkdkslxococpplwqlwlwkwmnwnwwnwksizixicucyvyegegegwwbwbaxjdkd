@@ -4639,4 +4639,154 @@ function library:addColorpicker(options)
     
     return setmetatable(cfg, library)
 end
+function library:addTextbox(options)
+    local cfg = {
+        name = options.name or "Textbox",
+        placeholder = options.placeholder or "",
+        flag = options.flag or tostring(random(1, 9999999)),
+        callback = options.callback or function(text) end,
+        default = options.default or "",
+        ignore = options.ignore or false,
+        value = options.default or "",
+    }
+
+    local textbox_container = self:create("TextLabel", {
+        Parent = self.background or self.elements,
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = "",
+        ZIndex = 2,
+        Size = dim2(1, -8, 0, 12),
+        BorderSizePixel = 0,
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        TextSize = 11,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local bottom_components = self:create("Frame", {
+        Parent = textbox_container,
+        Position = dim2(0, 15, 0, cfg.name and 11 or 0),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -6, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local textbox_frame = self:create("Frame", {
+        Parent = bottom_components,
+        Position = dim2(0, 0, 0, 2),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -27, 1, 20),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(1, 1, 1)
+    })
+    
+    local inline = self:create("Frame", {
+        Parent = textbox_frame,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(45, 45, 45)
+    })
+    
+    local background = self:create("Frame", {
+        Parent = inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(25, 25, 25)
+    })
+    
+    local textbox = self:create("TextBox", {
+        Parent = background,
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.value,
+        PlaceholderText = cfg.placeholder,
+        Size = dim2(1, -12, 1, 0),
+        BackgroundTransparency = 1,
+        Position = dim2(0, 6, 0, 0),
+        BorderSizePixel = 0,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ClearTextOnFocus = false,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    self:create("UIPadding", {
+        Parent = textbox_container,
+        PaddingLeft = dim(0, 1)
+    })
+    
+    self:create("UIListLayout", {
+        Parent = bottom_components,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = dim(0, 3),
+        FillDirection = Enum.FillDirection.Vertical
+    })
+
+    if cfg.name then 
+        local left_components = self:create("Frame", {
+            Parent = textbox_container,
+            BackgroundTransparency = 1,
+            Position = dim2(0, 16, 0, 1),
+            BorderColor3 = rgb(0, 0, 0),
+            Size = dim2(0, 0, 0, 14),
+            BorderSizePixel = 0,
+            BackgroundColor3 = rgb(255, 255, 255)
+        })
+        
+        local name_text = self:create("TextLabel", {
+            Parent = left_components,
+            FontFace = library.font,
+            TextColor3 = rgb(180, 180, 180),
+            BorderColor3 = rgb(0, 0, 0),
+            Text = cfg.name,
+            BackgroundTransparency = 1,
+            Size = dim2(0, 0, 1, -1),
+            BorderSizePixel = 0,
+            AutomaticSize = Enum.AutomaticSize.X,
+            TextSize = 12,
+            BackgroundColor3 = rgb(255, 255, 255)
+        })
+        
+        self:create("UIListLayout", {
+            Parent = left_components,
+            Padding = dim(0, 5),
+            FillDirection = Enum.FillDirection.Horizontal
+        })
+        
+        self:create("UIPadding", {
+            Parent = left_components,
+            PaddingBottom = dim(0, 6)
+        })
+    end
+
+    function cfg.set(value)
+        cfg.value = value
+        textbox.Text = value
+        flags[cfg.flag] = value
+        cfg.callback(value)
+    end
+
+    cfg.set(cfg.default)
+    config_flags[cfg.flag] = cfg.set
+
+    textbox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            cfg.set(textbox.Text)
+        else
+            textbox.Text = cfg.value
+        end
+    end)
+
+    return setmetatable(cfg, library)
+end
 return library
