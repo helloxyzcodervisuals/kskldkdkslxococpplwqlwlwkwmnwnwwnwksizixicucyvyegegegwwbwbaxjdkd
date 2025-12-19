@@ -984,24 +984,30 @@ function library:tab(properties)
     return setmetatable(cfg, library)    
 end
 
+function library:column(properties)
+    local cfg = {
+        fill = properties.fill or properties.Fill or false, 
+    }
 
-function library:column(parent)
-    local column = self:create("Frame", {
-        Parent = parent,
-        Size = dim2(1, 0, 0, 0),
+    cfg["column"] = self:create("Frame", {
+        Parent = self.page,
         BackgroundTransparency = 1,
-        BorderSizePixel = 0
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -22, 0, 100),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12)
     })
-
+    
     self:create("UIListLayout", {
-        Parent = column,
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        HorizontalAlignment = Enum.HorizontalAlignment.Center,
-        Padding = dim(0, 1)
+        Parent = cfg["column"],
+        Padding = dim(0, 1),
+        SortOrder = Enum.SortOrder.LayoutOrder, 
+        VerticalFlex = cfg.fill and Enum.UIFlexAlignment.Fill or Enum.UIFlexAlignment.None
     })
 
     return setmetatable(cfg, library)
 end
+
 --[[
 function library:section(properties)
     local cfg = {
