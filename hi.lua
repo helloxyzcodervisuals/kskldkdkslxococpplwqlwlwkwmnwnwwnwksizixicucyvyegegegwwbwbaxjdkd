@@ -812,7 +812,6 @@ function library:window(properties)
                         ScrollBarImageTransparency = original_transparency,
                     })
                 end
-                
             else
                 for _, element in next, library.gui:GetDescendants() do
                     if not element:IsA("GuiObject") then
@@ -1273,7 +1272,7 @@ function library:section(properties)
                 outline.Size = dim2(1, 0, 0, elements_height + 4)
             end
         end
-    })
+    end)
 
     cfg["elements"].ChildRemoved:Connect(function(child)
         task.wait(0.01)
@@ -1292,7 +1291,7 @@ function library:section(properties)
                 outline.Size = dim2(1, 0, 0, 0)
             end
         end
-    })
+    end)
 
     return setmetatable(cfg, library)
 end
