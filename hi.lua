@@ -993,7 +993,7 @@ function library:column(properties)
         Parent = self.page,
         BackgroundTransparency = 1,
         BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, -22, 0, 100),
+        Size = dim2(1, 0, 0, 1),
         BorderSizePixel = 0,
         BackgroundColor3 = rgb(12, 12, 12)
     })
