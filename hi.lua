@@ -241,29 +241,29 @@ function library:mouseInFrame(uiobject)
     return (y_cond and x_cond)
 end
 
+ 
 function library:draggify(frame, handle)
     local dragging = false 
-    local start_size = frame.Position
-    local start 
+    local startPos
+    local frameStartPos
     
     handle = handle or frame
     
     local function beginDrag(input)
         if isTouch() and input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            start = input.Position
-            start_size = frame.Position
+            startPos = input.Position
+            frameStartPos = frame.Position
         elseif not isTouch() and input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
-            start = input.Position
-            start_size = frame.Position
+            startPos = input.Position
+            frameStartPos = frame.Position
         end
     end
     
     local function endDrag(input)
-        if isTouch() and input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        elseif not isTouch() and input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if (isTouch() and input.UserInputType == Enum.UserInputType.Touch) or
+           (not isTouch() and input.UserInputType == Enum.UserInputType.MouseButton1) then
             dragging = false
         end
     end
@@ -276,29 +276,19 @@ function library:draggify(frame, handle)
         if dragging then
             local inputType = isTouch() and Enum.UserInputType.Touch or Enum.UserInputType.MouseMovement
             if input.UserInputType == inputType then
-                local viewport_x = camera.ViewportSize.X
-                local viewport_y = camera.ViewportSize.Y
-
-                local current_position = dim2(
-                    0,
-                    clamp(
-                        start_size.X.Offset + (input.Position.X - start.X),
-                        0,
-                        viewport_x - frame.Size.X.Offset
-                    ),
-                    0,
-                    math.clamp(
-                        start_size.Y.Offset + (input.Position.Y - start.Y),
-                        0,
-                        viewport_y - frame.Size.Y.Offset
-                    )
+                local deltaX = input.Position.X - startPos.X
+                local deltaY = input.Position.Y - startPos.Y
+                
+                frame.Position = UDim2.new(
+                    frameStartPos.X.Scale,
+                    frameStartPos.X.Offset + deltaX,
+                    frameStartPos.Y.Scale,
+                    frameStartPos.Y.Offset + deltaY
                 )
-
-                frame.Position = current_position
             end
         end
     end)
-end 
+end
 
 function library:makeResizable(frame) 
     local Frame = self:create("TextButton", {
@@ -313,26 +303,24 @@ function library:makeResizable(frame)
     })
 
     local resizing = false 
-    local start_size 
-    local start 
-    local og_size = frame.Size  
+    local startSize 
+    local startPos 
 
     local function beginResize(input)
         if isTouch() and input.UserInputType == Enum.UserInputType.Touch then
             resizing = true
-            start = input.Position
-            start_size = frame.Size
+            startPos = input.Position
+            startSize = frame.Size
         elseif not isTouch() and input.UserInputType == Enum.UserInputType.MouseButton1 then
             resizing = true
-            start = input.Position
-            start_size = frame.Size
+            startPos = input.Position
+            startSize = frame.Size
         end
     end
     
     local function endResize(input)
-        if isTouch() and input.UserInputType == Enum.UserInputType.Touch then
-            resizing = false
-        elseif not isTouch() and input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if (isTouch() and input.UserInputType == Enum.UserInputType.Touch) or
+           (not isTouch() and input.UserInputType == Enum.UserInputType.MouseButton1) then
             resizing = false
         end
     end
@@ -344,24 +332,15 @@ function library:makeResizable(frame)
         if resizing then
             local inputType = isTouch() and Enum.UserInputType.Touch or Enum.UserInputType.MouseMovement
             if input.UserInputType == inputType then
-                local viewport_x = camera.ViewportSize.X
-                local viewport_y = camera.ViewportSize.Y
-
-                local current_size = dim2(
-                    start_size.X.Scale,
-                    math.clamp(
-                        start_size.X.Offset + (input.Position.X - start.X),
-                        og_size.X.Offset,
-                        viewport_x
-                    ),
-                    start_size.Y.Scale,
-                    math.clamp(
-                        start_size.Y.Offset + (input.Position.Y - start.Y),
-                        og_size.Y.Offset,
-                        viewport_y
-                    )
+                local deltaX = input.Position.X - startPos.X
+                local deltaY = input.Position.Y - startPos.Y
+                
+                frame.Size = UDim2.new(
+                    startSize.X.Scale,
+                    startSize.X.Offset + deltaX,
+                    startSize.Y.Scale,
+                    startSize.Y.Offset + deltaY
                 )
-                frame.Size = current_size
             end
         end
     end)
