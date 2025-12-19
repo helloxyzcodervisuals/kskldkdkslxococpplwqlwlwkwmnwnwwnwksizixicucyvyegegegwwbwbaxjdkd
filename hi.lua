@@ -927,7 +927,7 @@ function library:tab(properties)
         Parent = cfg["page"],
         FillDirection = Enum.FillDirection.Horizontal,
         HorizontalFlex = Enum.UIFlexAlignment.Fill,
-        Padding = dim(0, 11),
+        Padding = dim(0, 1),
         SortOrder = Enum.SortOrder.LayoutOrder,
         VerticalFlex = Enum.UIFlexAlignment.Fill
     })
