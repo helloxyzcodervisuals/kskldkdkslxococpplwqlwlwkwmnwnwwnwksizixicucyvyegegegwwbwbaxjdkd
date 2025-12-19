@@ -11,7 +11,7 @@ local coregui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 local debris = game:GetService("Debris")
 local tween_service = game:GetService("TweenService")
 local sound_service = game:GetService("SoundService")
-
+--Var
 local vec2 = Vector2.new
 local vec3 = Vector3.new
 local dim2 = UDim2.new
