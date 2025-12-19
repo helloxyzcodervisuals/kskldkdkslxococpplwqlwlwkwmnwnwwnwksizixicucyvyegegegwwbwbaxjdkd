@@ -2067,7 +2067,7 @@ function library:section(properties)
         
         totalHeight = totalHeight + 50 + 32
         cfg["elements"].Size = dim2(1, -16, 0, totalHeight)
-        outline.Size = dim2(1, 0, 0, totalHeight + 4)
+        --outline.Size = dim2(1, 0, 0, totalHeight + 4)
     end
 
     cfg["elements"].ChildAdded:Connect(updateSectionHeight)
