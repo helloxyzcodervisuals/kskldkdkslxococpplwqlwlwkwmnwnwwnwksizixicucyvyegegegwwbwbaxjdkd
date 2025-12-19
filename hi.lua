@@ -1257,7 +1257,7 @@ function library:section(properties)
     section_layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         local total_height = section_layout.AbsoluteContentSize.Y + 4
         outline.Size = dim2(1, 0, 0, total_height)
-    })
+    end)
 
     cfg["elements"].ChildAdded:Connect(function(child)
         task.wait(0.01)
