@@ -739,9 +739,9 @@ function library:window(properties)
     
     self:create("UIPadding", {
         Parent = background,
-        PaddingBottom = dim(0, 11),
-        PaddingRight = dim(0, 9),
-        PaddingLeft = dim(0, 9)
+        PaddingBottom = dim(0, 1),
+        PaddingRight = dim(0, 1),
+        PaddingLeft = dim(0, 1)
     })
     
     local page_scroll = self:create("ScrollingFrame", {
@@ -934,10 +934,10 @@ function library:tab(properties)
     
     self:create("UIPadding", {
         Parent = cfg["page"],
-        PaddingTop = dim(0, 11),
-        PaddingBottom = dim(0, 11),
-        PaddingRight = dim(0, 11),
-        PaddingLeft = dim(0, 11)
+        PaddingTop = dim(0, 1),
+        PaddingBottom = dim(0, 1),
+        PaddingRight = dim(0, 1),
+        PaddingLeft = dim(0, 1)
     })
 
     function cfg.open_tab() 
