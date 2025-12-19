@@ -1009,17 +1009,16 @@ function library:column(properties)
 
     return setmetatable(cfg, library)
 end
-
 function library:section(properties)
     local cfg = {
         name = properties.name or properties.Name or "section", 
-        size = properties.size or properties.Size or dim2(1, 0, 1, -12)
+        size = properties.size or properties.Size 
     }   
 
     local outline = self:create("Frame", {
         Parent = self.column,
         BorderColor3 = rgb(0, 0, 0),
-        Size = self.fill and dim2(1, 0, 0, 0) or cfg.size,
+        Size = cfg.size,
         BorderSizePixel = 0,
         BackgroundColor3 = rgb(12, 12, 12)
     })
@@ -1090,10 +1089,11 @@ function library:section(properties)
         BorderColor3 = rgb(0, 0, 0),
         Size = dim2(1, -16, 0, 0),
         BorderSizePixel = 0,
-        BackgroundColor3 = rgb(255, 255, 255)
+        BackgroundColor3 = rgb(255, 255, 255),
+        AutomaticSize = Enum.AutomaticSize.Y
     })
     
-    self:create("UIListLayout", {
+    local elementsLayout = self:create("UIListLayout", {
         Parent = cfg["elements"],
         SortOrder = Enum.SortOrder.LayoutOrder,
         HorizontalAlignment = Enum.HorizontalAlignment.Center,
@@ -1139,6 +1139,12 @@ function library:section(properties)
 
     elements_scroll:GetPropertyChangedSignal("AbsoluteCanvasSize"):Connect(function()
         scrollbar_fill.Visible = elements_scroll.AbsoluteCanvasSize.Y > background.AbsoluteSize.Y and true or false 
+    end)
+
+    elementsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        local contentHeight = elementsLayout.AbsoluteContentSize.Y
+        local outlineHeight = 30 + contentHeight + 50
+        outline.Size = dim2(1, 0, 0, outlineHeight)
     end)
 
     return setmetatable(cfg, library)
