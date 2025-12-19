@@ -2928,6 +2928,7 @@ function library:addButton(options)
         PaddingBottom = dim(0, 6)
     })
 end
+--[[
 function library:addColorpicker(options)
     local cfg = {
         name = options.name or "Colorpicker",
@@ -3462,6 +3463,271 @@ function library:addColorpicker(options)
 
     updateFromHSV(cfg.hue, cfg.saturation, cfg.value)
 
+    return setmetatable(cfg, library)
+end
+--]]
+function library:addColorpicker(options)
+    local cfg = {
+        name = options.name or "Colorpicker",
+        flag = options.flag or tostring(random(1, 9999999)),
+        default = options.default or themes.preset.accent,
+        callback = options.callback or function() end,
+        open = false
+    }
+    
+    local h, s, v = cfg.default:ToHSV()
+    cfg.hue = h
+    cfg.saturation = s
+    cfg.value = v
+
+    local container = self:create("TextLabel", {
+        Parent = self.background or self.elements,
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        Text = "",
+        ZIndex = 2,
+        Size = dim2(1, -8, 0, 12),
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        TextSize = 11,
+    })
+    
+    local bottom = self:create("Frame", {
+        Parent = container,
+        Position = dim2(0, 15, 0, cfg.name and 11 or 0),
+        Size = dim2(1, -6, 0, 0),
+        BackgroundTransparency = 1,
+    })
+    
+    local button = self:create("TextButton", {
+        Parent = bottom,
+        Text = "",
+        Position = dim2(0, 0, 0, 2),
+        Size = dim2(0, 30, 0, 16),
+        BackgroundColor3 = rgb(25, 25, 25),
+        AutoButtonColor = false
+    })
+    
+    local color_display = self:create("Frame", {
+        Parent = button,
+        Position = dim2(0, 1, 0, 1),
+        Size = dim2(1, -2, 1, -2),
+        BackgroundColor3 = cfg.default
+    })
+    
+    local name_btn = self:create("TextButton", {
+        Parent = bottom,
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        Text = cfg.name,
+        BackgroundTransparency = 1,
+        Position = dim2(0, 35, 0, 2),
+        Size = dim2(0, 0, 1, -2),
+        AutomaticSize = Enum.AutomaticSize.X,
+        TextSize = 12,
+        AutoButtonColor = false
+    })
+    
+    local holder = self:create("Frame", {
+        Parent = library.gui,
+        Size = dim2(0, 180, 0, 180),
+        Position = dim2(0, button.AbsolutePosition.X, 0, button.AbsolutePosition.Y + 20),
+        BackgroundColor3 = rgb(20, 20, 20),
+        Visible = false,
+        ZIndex = 999,
+    })
+    
+    local sv_picker = self:create("Frame", {
+        Parent = holder,
+        Position = dim2(0, 10, 0, 10),
+        Size = dim2(0, 120, 0, 120),
+        BackgroundColor3 = rgb(255, 255, 255),
+    })
+    
+    local hue_color = Color3.fromHSV(cfg.hue, 1, 1)
+    local sat_gradient = self:create("UIGradient", {
+        Parent = sv_picker,
+        Color = rgbseq{
+            rgbkey(0, rgb(255, 255, 255)),
+            rgbkey(1, hue_color)
+        },
+    })
+    
+    local val_gradient = self:create("UIGradient", {
+        Parent = sv_picker,
+        Color = rgbseq{rgbkey(0, rgb(0, 0, 0, 0)), rgbkey(1, rgb(0, 0, 0))},
+        Transparency = numseq{numkey(0, 0), numkey(1, 0.5)},
+        Rotation = 90
+    })
+    
+    local sv_cursor = self:create("Frame", {
+        Parent = sv_picker,
+        AnchorPoint = vec2(0.5, 0.5),
+        Position = dim2(cfg.saturation, -3, 1 - cfg.value, -3),
+        Size = dim2(0, 6, 0, 6),
+        BorderColor3 = rgb(255, 255, 255),
+        BackgroundColor3 = rgb(0, 0, 0),
+    })
+    
+    local hue_picker = self:create("Frame", {
+        Parent = holder,
+        Position = dim2(0, 140, 0, 10),
+        Size = dim2(0, 20, 0, 120),
+        BackgroundColor3 = rgb(255, 255, 255),
+    })
+    
+    local hue_gradient = self:create("UIGradient", {
+        Parent = hue_picker,
+        Color = rgbseq{
+            rgbkey(0.00, rgb(255, 0, 0)),
+            rgbkey(0.17, rgb(255, 255, 0)),
+            rgbkey(0.33, rgb(0, 255, 0)),
+            rgbkey(0.50, rgb(0, 255, 255)),
+            rgbkey(0.67, rgb(0, 0, 255)),
+            rgbkey(0.83, rgb(255, 0, 255)),
+            rgbkey(1.00, rgb(255, 0, 0))
+        },
+        Rotation = 90
+    })
+    
+    local hue_cursor = self:create("Frame", {
+        Parent = hue_picker,
+        AnchorPoint = vec2(0.5, 0),
+        Position = dim2(0.5, 0, cfg.hue, 0),
+        Size = dim2(0, 22, 0, 3),
+        BorderColor3 = rgb(255, 255, 255),
+        BackgroundColor3 = rgb(0, 0, 0),
+    })
+
+    local function updateColor(h, s, v)
+        cfg.hue = h
+        cfg.saturation = s
+        cfg.value = v
+        
+        local new_color = Color3.fromHSV(h, s, v)
+        color_display.BackgroundColor3 = new_color
+        
+        local hue_color = Color3.fromHSV(h, 1, 1)
+        sat_gradient.Color = rgbseq{
+            rgbkey(0, rgb(255, 255, 255)),
+            rgbkey(1, hue_color)
+        }
+        
+        sv_cursor.Position = dim2(s, -3, 1 - v, -3)
+        hue_cursor.Position = dim2(0.5, 0, h, 0)
+        
+        flags[cfg.flag] = new_color
+        cfg.callback(new_color)
+    end
+
+    local function showPicker()
+        holder.Visible = true
+        cfg.open = true
+        holder.Position = dim2(0, button.AbsolutePosition.X, 0, button.AbsolutePosition.Y + 20)
+    end
+
+    local function hidePicker()
+        holder.Visible = false
+        cfg.open = false
+    end
+
+    button.MouseButton1Click:Connect(showPicker)
+    name_btn.MouseButton1Click:Connect(showPicker)
+    
+    if isTouch() then
+        button.TouchTap:Connect(showPicker)
+        name_btn.TouchTap:Connect(showPicker)
+    end
+    
+    local function handleSVPicker(input)
+        local mouse = input.Position
+        local x = (mouse.X - sv_picker.AbsolutePosition.X) / sv_picker.AbsoluteSize.X
+        local y = (mouse.Y - sv_picker.AbsolutePosition.Y) / sv_picker.AbsoluteSize.Y
+        
+        x = math.clamp(x, 0, 1)
+        y = math.clamp(y, 0, 1)
+        
+        updateColor(cfg.hue, x, 1 - y)
+    end
+    
+    local function handleHuePicker(input)
+        local mouse = input.Position
+        local y = (mouse.Y - hue_picker.AbsolutePosition.Y) / hue_picker.AbsoluteSize.Y
+        
+        y = math.clamp(y, 0, 1)
+        
+        updateColor(y, cfg.saturation, cfg.value)
+    end
+    
+    sv_picker.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            handleSVPicker(input)
+            
+            local move
+            move = uis.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                    handleSVPicker(input)
+                end
+            end)
+            
+            local release
+            release = uis.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    move:Disconnect()
+                    release:Disconnect()
+                end
+            end)
+        end
+    end)
+    
+    hue_picker.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            handleHuePicker(input)
+            
+            local move
+            move = uis.InputChanged:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                    handleHuePicker(input)
+                end
+            end)
+            
+            local release
+            release = uis.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    move:Disconnect()
+                    release:Disconnect()
+                end
+            end)
+        end
+    end)
+    
+    uis.InputBegan:Connect(function(input)
+        if not cfg.open then return end
+        
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            local mouse = input.Position
+            local inHolder = 
+                holder.AbsolutePosition.X <= mouse.X and 
+                mouse.X <= holder.AbsolutePosition.X + holder.AbsoluteSize.X and
+                holder.AbsolutePosition.Y <= mouse.Y and 
+                mouse.Y <= holder.AbsolutePosition.Y + holder.AbsoluteSize.Y
+            
+            local inButton = 
+                button.AbsolutePosition.X <= mouse.X and 
+                mouse.X <= button.AbsolutePosition.X + button.AbsoluteSize.X and
+                button.AbsolutePosition.Y <= mouse.Y and 
+                mouse.Y <= button.AbsolutePosition.Y + button.AbsoluteSize.Y
+            
+            if not inHolder and not inButton then
+                hidePicker()
+            end
+        end
+    end)
+    
+    updateColor(cfg.hue, cfg.saturation, cfg.value)
+    
     return setmetatable(cfg, library)
 end
 return library
