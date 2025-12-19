@@ -1143,155 +1143,85 @@ function library:section(properties)
     return setmetatable(cfg, library)
 end
 --]]
+  
 function library:section(properties)
     local cfg = {
-        name = properties.name or properties.Name or "section", 
-    }   
+        name = properties.name or properties.Name or "section"
+    }
 
     local outline = self:create("Frame", {
         Parent = self.column,
         BorderColor3 = rgb(0, 0, 0),
         Size = dim2(1, 0, 0, 0),
         BorderSizePixel = 0,
-        BackgroundColor3 = rgb(12, 12, 12),
-        AutomaticSize = Enum.AutomaticSize.Y,
-        LayoutOrder = #self.column:GetChildren()
+        BackgroundColor3 = rgb(12, 12, 12)
     })
-    
+
     local inline = self:create("Frame", {
         Parent = outline,
         Position = dim2(0, 1, 0, 1),
+        Size = dim2(1, -2, 0, 0),
         BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, -2, 1, -2),
         BorderSizePixel = 0,
-        BackgroundColor3 = rgb(45, 45, 45),
-        AutomaticSize = Enum.AutomaticSize.Y
+        BackgroundColor3 = rgb(45, 45, 45)
     })
-    
+
     local background = self:create("Frame", {
         Parent = inline,
         Position = dim2(0, 1, 0, 1),
+        Size = dim2(1, -2, 0, 0),
         BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, -2, 1, -2),
-        BorderSizePixel = 0,
-        BackgroundColor3 = rgb(19, 19, 19),
-        AutomaticSize = Enum.AutomaticSize.Y
-    })
-
-    local shadow = self:create("Frame", {
-        Parent = background,
-        Size = dim2(1, -5, 0, 21),
-        Position = dim2(0, 0, 1, -21),
-        BorderColor3 = rgb(0, 0, 0),
-        ZIndex = 999,
         BorderSizePixel = 0,
         BackgroundColor3 = rgb(19, 19, 19)
     })
-    
-    local UIGradient = self:create("UIGradient", {
-        Parent = shadow,
-        Rotation = -90,
-        Transparency = numseq{numkey(0, 0), numkey(1, 1)}
-    })
-    
-    cfg["elements"] = self:create("Frame", {
-        Parent = background,
-        Position = dim2(0, 8, 0, 16),
-        BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, -16, 0, 0),
-        BorderSizePixel = 0,
-        BackgroundColor3 = rgb(255, 255, 255),
-        AutomaticSize = Enum.AutomaticSize.Y
-    })
-    
-    self:create("UIListLayout", {
-        Parent = cfg["elements"],
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        HorizontalAlignment = Enum.HorizontalAlignment.Center,
-        Padding = dim(0, 3)
-    })
-    
-    local empty_space = self:create("Frame", {
-        Parent = cfg["elements"],
-        LayoutOrder = 9999999,
-        BackgroundTransparency = 1,
-        BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(0, 0, 0, 6),
-        BorderSizePixel = 0,
-        BackgroundColor3 = rgb(255, 255, 255)
-    })
-    
+
     local section_title = self:create("TextLabel", {
         Parent = outline,
         FontFace = library.font,
         TextColor3 = rgb(205, 205, 205),
-        BorderColor3 = rgb(0, 0, 0),
         Text = cfg.name,
         AutomaticSize = Enum.AutomaticSize.XY,
         AnchorPoint = vec2(0, 0.5),
-        Position = dim2(0, 14, 0, 3),
+        Position = dim2(0, 14, 0, 10),
         BackgroundTransparency = 1,
-        TextXAlignment = Enum.TextXAlignment.Left,
         BorderSizePixel = 0,
         ZIndex = 2,
         TextSize = 12,
         BackgroundColor3 = rgb(19, 19, 19)
     })
 
-    local section_filler = self:create("Frame", {
-        Parent = outline,
-        AnchorPoint = vec2(0, 0.5),
-        Position = dim2(0, 13, 0, 1),
-        BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(0, section_title.TextBounds.X, 0, 3),
+    cfg.elements = self:create("Frame", {
+        Parent = background,
+        Position = dim2(0, 8, 0, 24),
+        Size = dim2(1, -16, 0, 0),
         BorderSizePixel = 0,
-        BackgroundColor3 = rgb(19, 19, 19)
+        BackgroundTransparency = 1
     })
 
-    local section_layout = self:create("UIListLayout", {
-        Parent = outline,
+    local layout = self:create("UIListLayout", {
+        Parent = cfg.elements,
         SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = dim(0, 2)
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        Padding = dim(0, 3)
     })
 
-    section_layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        local total_height = section_layout.AbsoluteContentSize.Y + 4
-        outline.Size = dim2(1, 0, 0, total_height)
-    end)
+    local TOP_PADDING = 24
 
-    cfg["elements"].ChildAdded:Connect(function(child)
-        task.wait(0.01)
-        local elements_layout = cfg["elements"]:FindFirstChild("UIListLayout")
-        if elements_layout then
-            local elements_height = elements_layout.AbsoluteContentSize.Y + 22
-            local background_height = background.AbsoluteSize.Y
-            
-            if elements_height > background_height then
-                background.Size = dim2(1, -2, 0, elements_height)
-                inline.Size = dim2(1, -2, 0, elements_height + 2)
-                outline.Size = dim2(1, 0, 0, elements_height + 4)
+    local function recalc()
+        local height = 0
+
+        for _, child in ipairs(cfg.elements:GetChildren()) do
+            if child:IsA("GuiObject") and child ~= layout and child.Visible then
+                height += child.AbsoluteSize.Y + layout.Padding.Offset
             end
         end
-    end)
 
-    cfg["elements"].ChildRemoved:Connect(function(child)
-        task.wait(0.01)
-        local elements_layout = cfg["elements"]:FindFirstChild("UIListLayout")
-        if elements_layout then
-            local elements_height = elements_layout.AbsoluteContentSize.Y + 22
-            local background_height = background.AbsoluteSize.Y
-            
-            if elements_height > background_height then
-                background.Size = dim2(1, -2, 0, elements_height)
-                inline.Size = dim2(1, -2, 0, elements_height + 2)
-                outline.Size = dim2(1, 0, 0, elements_height + 4)
-            else
-                background.Size = dim2(1, -2, 1, -2)
-                inline.Size = dim2(1, -2, 1, -2)
-                outline.Size = dim2(1, 0, 0, 0)
-            end
-        end
-    end)
+        cfg.elements.Size = dim2(1, -16, 0, height)
+        background.Size = dim2(1, -2, 0, height + TOP_PADDING)
+    end
+
+    cfg.elements.ChildAdded:Connect(recalc)
+    cfg.elements.ChildRemoved:Connect(recalc)
 
     return setmetatable(cfg, library)
 end
