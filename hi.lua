@@ -634,7 +634,6 @@ function library:window(properties)
     return setmetatable(cfg, library)
 end
 --]]
---mod fix
 function library:window(properties)
     local cfg = {
         name = properties.name or properties.Name or os.date('<font color="rgb(170,85,235)">obelus</font> | %b %d %Y | %H:%M'),
@@ -739,9 +738,9 @@ function library:window(properties)
     
     self:create("UIPadding", {
         Parent = background,
-        PaddingBottom = dim(0, 1),
-        PaddingRight = dim(0, 1),
-        PaddingLeft = dim(0, 1)
+        PaddingBottom = dim(0, 11),
+        PaddingRight = dim(0, 9),
+        PaddingLeft = dim(0, 9)
     })
     
     local page_scroll = self:create("ScrollingFrame", {
@@ -775,7 +774,7 @@ function library:window(properties)
         Parent = page_inline,
         Position = dim2(0, 1, 0, 1),
         BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, 0, 0, 2000),
+        Size = dim2(1, -2, 0, 0),
         BorderSizePixel = 0,
         BackgroundColor3 = rgb(13, 13, 13),
         AutomaticSize = Enum.AutomaticSize.Y
@@ -854,6 +853,8 @@ function library:window(properties)
 
     return setmetatable(cfg, library)
 end
+
+
 function library:tab(properties)
     local cfg = {
         name = properties.name or "visuals", 
@@ -993,9 +994,10 @@ function library:column(properties)
         Parent = self.page,
         BackgroundTransparency = 1,
         BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, 0, 0, 1),
+        Size = self.fill and dim2(1, 0, 0, 0) or dim2(1, -22, 0, 0),
         BorderSizePixel = 0,
-        BackgroundColor3 = rgb(12, 12, 12)
+        BackgroundColor3 = rgb(12, 12, 12),
+        AutomaticSize = Enum.AutomaticSize.Y
     })
     
     self:create("UIListLayout", {
@@ -1143,7 +1145,7 @@ function library:section(properties)
     return setmetatable(cfg, library)
 end
 --]]
-  
+ --[[
 function library:section(properties)
     local cfg = {
         name = properties.name or properties.Name or "section"
@@ -1222,6 +1224,142 @@ function library:section(properties)
 
     cfg.elements.ChildAdded:Connect(recalc)
     cfg.elements.ChildRemoved:Connect(recalc)
+
+    return setmetatable(cfg, library)
+end
+--]]
+function library:section(properties)
+    local cfg = {
+        name = properties.name or properties.Name or "section"
+    }
+
+    local outline = self:create("Frame", {
+        Parent = self.column,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = self.fill and dim2(1, 0, 0, 0) or cfg.size,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(12, 12, 12),
+        AutomaticSize = Enum.AutomaticSize.Y
+    })
+    
+    local inline = self:create("Frame", {
+        Parent = outline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(45, 45, 45)
+    })
+    
+    local background = self:create("Frame", {
+        Parent = inline,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(19, 19, 19),
+        AutomaticSize = Enum.AutomaticSize.Y
+    })
+
+    local scrollbar_fill = self:create("Frame", {
+        Parent = background,
+        Visible = false, 
+        Size = dim2(0, 5, 1, 0),
+        Position = dim2(1, -5, 0, 0),
+        BorderColor3 = rgb(0, 0, 0),
+        ZIndex = 4,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(45, 45, 45)
+    })
+    
+    local shadow = self:create("Frame", {
+        Parent = background,
+        Size = dim2(1, -5, 0, 21),
+        Position = dim2(0, 0, 1, -21),
+        BorderColor3 = rgb(0, 0, 0),
+        ZIndex = 999,
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(19, 19, 19)
+    })
+    
+    local UIGradient = self:create("UIGradient", {
+        Parent = shadow,
+        Rotation = -90,
+        Transparency = numseq{numkey(0, 0), numkey(1, 1)}
+    })
+    
+    local elements_scroll = self:create("ScrollingFrame", {
+        Parent = background,
+        ScrollBarImageColor3 = rgb(65, 65, 65),
+        Active = true,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollBarThickness = 4,
+        BorderColor3 = rgb(0, 0, 0),
+        BackgroundTransparency = 1,
+        Size = dim2(1, 0, 1, 0),
+        BackgroundColor3 = rgb(255, 255, 255),
+        ZIndex = 5,
+        BorderSizePixel = 0,
+        CanvasSize = dim2(0, 0, 0, 0)
+    })
+    
+    cfg["elements"] = self:create("Frame", {
+        Parent = elements_scroll,
+        Position = dim2(0, 8, 0, 16),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -16, 0, 0),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255),
+        AutomaticSize = Enum.AutomaticSize.Y
+    })
+    
+    self:create("UIListLayout", {
+        Parent = cfg["elements"],
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        Padding = dim(0, 3)
+    })
+    
+    local empty_space = self:create("Frame", {
+        Parent = cfg["elements"],
+        LayoutOrder = 9999999,
+        BackgroundTransparency = 1,
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, 0, 0, 50),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local section_title = self:create("TextLabel", {
+        Parent = outline,
+        FontFace = library.font,
+        TextColor3 = rgb(205, 205, 205),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.name,
+        AutomaticSize = Enum.AutomaticSize.XY,
+        AnchorPoint = vec2(0, 0.5),
+        Position = dim2(0, 14, 0, 3),
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        BorderSizePixel = 0,
+        ZIndex = 2,
+        TextSize = 12,
+        BackgroundColor3 = rgb(19, 19, 19)
+    })
+
+    local section_filler = self:create("Frame", {
+        Parent = outline,
+        AnchorPoint = vec2(0, 0.5),
+        Position = dim2(0, 13, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, section_title.TextBounds.X, 0, 3),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(19, 19, 19)
+    })
+
+    elements_scroll:GetPropertyChangedSignal("AbsoluteCanvasSize"):Connect(function()
+        scrollbar_fill.Visible = elements_scroll.AbsoluteCanvasSize.Y > background.AbsoluteSize.Y and true or false 
+    end)
 
     return setmetatable(cfg, library)
 end
