@@ -2025,7 +2025,7 @@ function library:section(properties)
         LayoutOrder = 9999999,
         BackgroundTransparency = 1,
         BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(0, 0, 0, 50),
+        Size = dim2(0, 0, 0, 0),
         BorderSizePixel = 0,
         BackgroundColor3 = rgb(255, 255, 255)
     })
