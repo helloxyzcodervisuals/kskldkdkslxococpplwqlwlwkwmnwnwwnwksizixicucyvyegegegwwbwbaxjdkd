@@ -1590,3 +1590,276 @@ UI:CreateElement("button", section_whitelist, {name = "clear whitelist", callbac
 local section_controls = UI:CreateElement("section", column1_lists, {name = "controls"})
 UI:CreateElement("toggle", section_controls, {name = "use target list", flag = "lists_usetargetlist", default = false, callback = function(value) getgenv().CONFIG.Ragebot.UseTargetList = value end})
 UI:CreateElement("toggle", section_controls, {name = "use whitelist", flag = "lists_usewhitelist", default = false, callback = function(value) getgenv().CONFIG.Ragebot.UseWhitelist = value end})
+local tab_config = UI:CreateElement("tab", window, {name = "configuration"})
+local column1_config = UI:CreateElement("column", tab_config, {fill = true})
+local column2_config = UI:CreateElement("column", tab_config, {fill = true})
+
+local section_save = UI:CreateElement("section", column1_config, {name = "save/load"})
+
+UI:CreateElement("button", section_save, {name = "save config", callback = function()
+    if writefile then
+        local allConfigs = {}
+        
+        local genv = getgenv()
+        for key, value in pairs(genv) do
+            if type(value) == "table" then
+                allConfigs[key] = value
+            elseif type(value) == "Color3" then
+                allConfigs[key] = {R = value.R, G = value.G, B = value.B, __type = "Color3"}
+            else
+                allConfigs[key] = value
+            end
+        end
+        
+        allConfigs["Arrow"] = {
+            Enabled = Arrow.Enabled,
+            DistFromCenter = Arrow.DistFromCenter,
+            TriangleHeight = Arrow.TriangleHeight,
+            TriangleWidth = Arrow.TriangleWidth,
+            TriangleTransparency = Arrow.TriangleTransparency,
+            TriangleThickness = Arrow.TriangleThickness,
+            TriangleColor = {
+                R = Arrow.TriangleColor.R,
+                G = Arrow.TriangleColor.G,
+                B = Arrow.TriangleColor.B,
+                __type = "Color3"
+            },
+            AntiAliasing = Arrow.AntiAliasing
+        }
+        
+        writefile("aui_config.json", game:GetService("HttpService"):JSONEncode(allConfigs))
+        warn("Configuration saved!")
+    else
+        warn("Writefile not supported")
+    end
+end})
+
+UI:CreateElement("button", section_save, {name = "load config", callback = function()
+    if readfile and isfile and isfile("aui_config.json") then
+        local success, data = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(readfile("aui_config.json"))
+        end)
+        
+        if success and data then
+            for key, value in pairs(data) do
+                if key == "Arrow" then
+                    Arrow.Enabled = value.Enabled
+                    Arrow.DistFromCenter = value.DistFromCenter
+                    Arrow.TriangleHeight = value.TriangleHeight
+                    Arrow.TriangleWidth = value.TriangleWidth
+                    Arrow.TriangleTransparency = value.TriangleTransparency
+                    Arrow.TriangleThickness = value.TriangleThickness
+                    if value.TriangleColor and value.TriangleColor.__type == "Color3" then
+                        Arrow.TriangleColor = Color3.fromRGB(value.TriangleColor.R, value.TriangleColor.G, value.TriangleColor.B)
+                    end
+                    Arrow.AntiAliasing = value.AntiAliasing
+                else
+                    if type(value) == "table" and value.__type == "Color3" then
+                        getgenv()[key] = Color3.fromRGB(value.R, value.G, value.B)
+                    else
+                        getgenv()[key] = value
+                    end
+                end
+            end
+            
+            warn("Configuration loaded!")
+        else
+            warn("Failed to load config")
+        end
+    else
+        warn("Config file not found")
+    end
+end})
+
+UI:CreateElement("button", section_save, {name = "reset to default", callback = function()
+    getgenv().CONFIG = {
+        Ragebot = {
+            Enabled = false,
+            RapidFire = false,
+            FireRate = 30,
+            Prediction = true,
+            PredictionAmount = 0.12,
+            TeamCheck = false,
+            VisibilityCheck = true,
+            FOV = 120,
+            ShowFOV = true,
+            Wallbang = true,
+            Tracers = true,
+            TracerColor = Color3.fromRGB(255, 0, 0),
+            TracerWidth = 1,
+            TracerLifetime = 3,
+            ShootRange = 15,
+            HitRange = 15,
+            HitNotify = true,
+            AutoReload = true,
+            HitSound = true,
+            HitColor = Color3.fromRGB(255, 182, 193),
+            UseTargetList = false,
+            UseWhitelist = false,
+            HitNotifyDuration = 5,
+            LowHealthCheck = false,
+            SelectedHitSound = "skeet"
+        },
+        Misc = {
+            SpeedEnabled = false,
+            SpeedValue = 50,
+            JumpPowerEnabled = false,
+            JumpPowerValue = 100,
+            LoopFOVEnabled = false,
+            HideHeadEnabled = false,
+            InfStaminaEnabled = false,
+            NoFallDmgEnabled = false,
+            SpeedConnection = nil,
+            FOVConnection = nil,
+            JumpPowerConnection = nil,
+            NoFallHook = nil,
+            InfStaminaHook = nil
+        },
+        Visualize = {
+            ESP = {
+                Enabled = false,
+                BoxColor = Color3.fromRGB(78, 150, 50),
+                OutlineColor = Color3.fromRGB(78, 150, 50),
+                TextColor = Color3.fromRGB(255, 255, 255),
+                MaxDistance = 1000
+            },
+            ForcefieldColor = Color3.fromRGB(255, 255, 255),
+            ForcefieldTransparency = 0.5,
+            LocalForcefieldEnabled = false,
+            ArrowEnabled = false,
+            ArrowColor = Color3.fromRGB(255, 255, 255),
+            ArrowDistance = 80,
+            ArrowSize = 16,
+            ArrowThickness = 1,
+            ArrowAA = false
+        }
+    }
+    
+    getgenv().Lists = {
+        TargetList = {},
+        Whitelist = {}
+    }
+    
+    Arrow.Enabled = false
+    Arrow.DistFromCenter = 80
+    Arrow.TriangleHeight = 16
+    Arrow.TriangleWidth = 16
+    Arrow.TriangleTransparency = 0
+    Arrow.TriangleThickness = 1
+    Arrow.TriangleColor = Color3.fromRGB(255, 255, 255)
+    Arrow.AntiAliasing = false
+    
+    warn("Configuration reset to default!")
+end})
+
+local section_manage = UI:CreateElement("section", column2_config, {name = "manage"})
+
+UI:CreateElement("textbox", section_manage, {name = "config name", placeholder = "enter config name", callback = function(text)
+    getgenv().currentConfigName = text
+end})
+
+UI:CreateElement("button", section_manage, {name = "save as preset", callback = function()
+    if writefile and getgenv().currentConfigName then
+        local name = getgenv().currentConfigName
+        if name ~= "" then
+            local allConfigs = {}
+            
+            local genv = getgenv()
+            for key, value in pairs(genv) do
+                if type(value) == "table" then
+                    allConfigs[key] = value
+                elseif type(value) == "Color3" then
+                    allConfigs[key] = {R = value.R, G = value.G, B = value.B, __type = "Color3"}
+                else
+                    allConfigs[key] = value
+                end
+            end
+            
+            allConfigs["Arrow"] = {
+                Enabled = Arrow.Enabled,
+                DistFromCenter = Arrow.DistFromCenter,
+                TriangleHeight = Arrow.TriangleHeight,
+                TriangleWidth = Arrow.TriangleWidth,
+                TriangleTransparency = Arrow.TriangleTransparency,
+                TriangleThickness = Arrow.TriangleThickness,
+                TriangleColor = {
+                    R = Arrow.TriangleColor.R,
+                    G = Arrow.TriangleColor.G,
+                    B = Arrow.TriangleColor.B,
+                    __type = "Color3"
+                },
+                AntiAliasing = Arrow.AntiAliasing
+            }
+            
+            writefile("aui_preset_" .. name .. ".json", game:GetService("HttpService"):JSONEncode(allConfigs))
+            warn("Preset saved as: " .. name)
+        end
+    end
+end})
+
+UI:CreateElement("button", section_manage, {name = "delete preset", callback = function()
+    if delfile and getgenv().currentConfigName then
+        local name = getgenv().currentConfigName
+        if name ~= "" then
+            local filename = "aui_preset_" .. name .. ".json"
+            if isfile(filename) then
+                delfile(filename)
+                warn("Preset deleted: " .. name)
+            end
+        end
+    end
+end})
+
+local section_list = UI:CreateElement("section", column2_config, {name = "presets list"})
+
+UI:CreateElement("button", section_list, {name = "refresh presets", callback = function()
+    local presetButtons = {}
+    
+    if isfile then
+        for _, file in pairs(listfiles("")) do
+            if file:find("aui_preset_") and file:find("%.json$") then
+                local name = file:match("aui_preset_(.+)%.json")
+                local btn = UI:CreateElement("button", section_list, {
+                    name = name,
+                    callback = function()
+                        if readfile then
+                            local success, data = pcall(function()
+                                return game:GetService("HttpService"):JSONDecode(readfile(file))
+                            end)
+                            
+                            if success and data then
+                                for key, value in pairs(data) do
+                                    if key == "Arrow" then
+                                        Arrow.Enabled = value.Enabled
+                                        Arrow.DistFromCenter = value.DistFromCenter
+                                        Arrow.TriangleHeight = value.TriangleHeight
+                                        Arrow.TriangleWidth = value.TriangleWidth
+                                        Arrow.TriangleTransparency = value.TriangleTransparency
+                                        Arrow.TriangleThickness = value.TriangleThickness
+                                        if value.TriangleColor and value.TriangleColor.__type == "Color3" then
+                                            Arrow.TriangleColor = Color3.fromRGB(value.TriangleColor.R, value.TriangleColor.G, value.TriangleColor.B)
+                                        end
+                                        Arrow.AntiAliasing = value.AntiAliasing
+                                    else
+                                        if type(value) == "table" and value.__type == "Color3" then
+                                            getgenv()[key] = Color3.fromRGB(value.R, value.G, value.B)
+                                        else
+                                            getgenv()[key] = value
+                                        end
+                                    end
+                                end
+                                
+                                warn("Preset loaded: " .. name)
+                            end
+                        end
+                    end
+                })
+                table.insert(presetButtons, btn)
+            end
+        end
+    end
+    
+    if #presetButtons == 0 then
+        warn("No presets found")
+    end
+end})
