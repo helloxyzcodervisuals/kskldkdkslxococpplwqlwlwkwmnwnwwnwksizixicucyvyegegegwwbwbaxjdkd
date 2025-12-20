@@ -413,16 +413,44 @@ local function checkClearPath(startPos, endPos)
     return true
 end
 
+local cachedBestPositions = {
+    shootPos = nil,
+    hitPos = nil,
+    target = nil
+}
+
 local function wallbang()
     local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
     if not localHead then return nil end
+    
     local target = getClosestTarget()
-    if not target then return nil end
+    if not target then 
+        cachedBestPositions.shootPos = nil
+        cachedBestPositions.hitPos = nil
+        cachedBestPositions.target = nil
+        return nil, nil
+    end
+    
+    if cachedBestPositions.shootPos and cachedBestPositions.target == target then
+        local raycastParams = RaycastParams.new()
+        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+        raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+        
+        local path1 = checkClearPath(localHead.Position, cachedBestPositions.shootPos)
+        local path2 = checkClearPath(cachedBestPositions.shootPos, cachedBestPositions.hitPos)
+        
+        if path1 and path2 then
+            return cachedBestPositions.shootPos, cachedBestPositions.hitPos
+        end
+    end
     
     local startPos = localHead.Position
     local targetPos = target.Position
     
     if not getgenv().CONFIG.Ragebot.Wallbang then
+        cachedBestPositions.shootPos = startPos
+        cachedBestPositions.hitPos = targetPos
+        cachedBestPositions.target = target
         return startPos, targetPos
     end
 
@@ -435,6 +463,9 @@ local function wallbang()
     local directRay = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
     
     if not directRay then
+        cachedBestPositions.shootPos = startPos
+        cachedBestPositions.hitPos = targetPos
+        cachedBestPositions.target = target
         return startPos, targetPos
     end
     
@@ -442,7 +473,7 @@ local function wallbang()
     local bestHitPos = nil
     local bestScore = math.huge
     
-    for i = 1, 150 do
+    for i = 1, 70 do
         local shootOffset = Vector3.new(
             math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange),
             math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange),
@@ -474,8 +505,15 @@ local function wallbang()
     end
     
     if not bestShootPos then
+        cachedBestPositions.shootPos = nil
+        cachedBestPositions.hitPos = nil
+        cachedBestPositions.target = nil
         return nil, nil
     end
+    
+    cachedBestPositions.shootPos = bestShootPos
+    cachedBestPositions.hitPos = bestHitPos
+    cachedBestPositions.target = target
     
     return bestShootPos, bestHitPos
 end
