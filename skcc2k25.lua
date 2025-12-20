@@ -412,7 +412,7 @@ local function checkClearPath(startPos, endPos)
     end
     return true
 end
-local cachedBestPositions = {
+--local cachedBestPositions = {
 local cachedBestPositions = {
     shootPos = nil,
     hitPos = nil,
