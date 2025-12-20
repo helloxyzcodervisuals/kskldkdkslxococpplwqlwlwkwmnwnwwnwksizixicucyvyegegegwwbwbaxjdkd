@@ -423,16 +423,23 @@ local function wallbang()
     local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
     if not localHead then return nil end
     
-    local target, targetPart = getClosestTarget()
+    local target = getClosestTarget()
     if not target then 
         cachedBestPositions.shootPos = nil
         cachedBestPositions.hitPos = nil
         cachedBestPositions.target = nil
-        cachedBestPositions.targetPart = nil
         return nil, nil
     end
     
-    local targetPos = targetPart.Position
+    local targetHead = target and target:FindFirstChild("Head")
+    if not targetHead then
+        cachedBestPositions.shootPos = nil
+        cachedBestPositions.hitPos = nil
+        cachedBestPositions.target = nil
+        return nil, nil
+    end
+    
+    local targetPos = targetHead.Position
     
     if cachedBestPositions.shootPos and cachedBestPositions.target == target then
         local raycastParams = RaycastParams.new()
@@ -458,7 +465,6 @@ local function wallbang()
         cachedBestPositions.shootPos = startPos
         cachedBestPositions.hitPos = targetPos
         cachedBestPositions.target = target
-        cachedBestPositions.targetPart = targetPart
         return startPos, targetPos
     end
 
@@ -474,7 +480,6 @@ local function wallbang()
         cachedBestPositions.shootPos = startPos
         cachedBestPositions.hitPos = targetPos
         cachedBestPositions.target = target
-        cachedBestPositions.targetPart = targetPart
         return startPos, targetPos
     end
     
@@ -528,14 +533,12 @@ local function wallbang()
         cachedBestPositions.shootPos = nil
         cachedBestPositions.hitPos = nil
         cachedBestPositions.target = nil
-        cachedBestPositions.targetPart = nil
         return nil, nil
     end
     
     cachedBestPositions.shootPos = bestShootPos
     cachedBestPositions.hitPos = bestHitPos
     cachedBestPositions.target = target
-    cachedBestPositions.targetPart = targetPart
     
     return bestShootPos, bestHitPos
 end
