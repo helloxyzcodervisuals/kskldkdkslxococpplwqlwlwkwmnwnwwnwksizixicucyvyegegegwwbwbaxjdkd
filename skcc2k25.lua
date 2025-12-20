@@ -412,7 +412,6 @@ local function checkClearPath(startPos, endPos)
     end
     return true
 end
---local cachedBestPositions = {
 local cachedBestPositions = {
     shootPos = nil,
     hitPos = nil,
@@ -429,19 +428,6 @@ local function wallbang()
         cachedBestPositions.hitPos = nil
         cachedBestPositions.target = nil
         return nil, nil
-    end
-    
-    if cachedBestPositions.shootPos and cachedBestPositions.target == target then
-        local raycastParams = RaycastParams.new()
-        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-        raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-        
-        local path1 = checkClearPath(localHead.Position, cachedBestPositions.shootPos)
-        local path2 = checkClearPath(cachedBestPositions.shootPos, cachedBestPositions.hitPos)
-        
-        if path1 and path2 then
-            return cachedBestPositions.shootPos, cachedBestPositions.hitPos
-        end
     end
     
     local startPos = localHead.Position
@@ -469,6 +455,22 @@ local function wallbang()
         return startPos, targetPos
     end
     
+    if cachedBestPositions.shootPos and cachedBestPositions.target == target then
+        local cachedShootDistance = (cachedBestPositions.shootPos - startPos).Magnitude
+        local cachedHitDistance = (cachedBestPositions.hitPos - targetPos).Magnitude
+        
+        if cachedShootDistance <= getgenv().CONFIG.Ragebot.ShootRange or 
+           cachedHitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+            
+            local pathToShoot = checkClearPath(startPos, cachedBestPositions.shootPos)
+            local pathToTarget = checkClearPath(cachedBestPositions.shootPos, cachedBestPositions.hitPos)
+            
+            if pathToShoot and pathToTarget then
+                return cachedBestPositions.shootPos, cachedBestPositions.hitPos
+            end
+        end
+    end
+    
     local bestShootPos = nil
     local bestHitPos = nil
     local bestScore = math.huge
@@ -488,18 +490,21 @@ local function wallbang()
         )
         local hitPos = targetPos + hitOffset
         
-        local pathToShoot = checkClearPath(startPos, shootPos)
-        local pathToTarget = checkClearPath(shootPos, hitPos)
-    
-        if pathToShoot and pathToTarget then
-            local shootDistance = (shootPos - startPos).Magnitude
-            local hitDistance = (hitPos - targetPos).Magnitude
-            local totalScore = shootDistance + hitDistance
-            
-            if totalScore < bestScore then
-                bestScore = totalScore
-                bestShootPos = shootPos
-                bestHitPos = hitPos
+        local shootDistance = (shootPos - startPos).Magnitude
+        local hitDistance = (hitPos - targetPos).Magnitude
+        
+        if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange or hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+            local pathToShoot = checkClearPath(startPos, shootPos)
+            local pathToTarget = checkClearPath(shootPos, hitPos)
+        
+            if pathToShoot and pathToTarget then
+                local totalScore = shootDistance + hitDistance
+                
+                if totalScore < bestScore then
+                    bestScore = totalScore
+                    bestShootPos = shootPos
+                    bestHitPos = hitPos
+                end
             end
         end
     end
