@@ -1358,7 +1358,13 @@ UI:CreateElement("toggle", section_visual, {name = "hide head", flag = "misc_hid
 local section_other = UI:CreateElement("section", column2_misc, {name = "other"})
 UI:CreateElement("toggle", section_other, {name = "inf stamina", flag = "misc_infstamina", default = false, callback = function(value) getgenv().CONFIG.Misc.InfStaminaEnabled = value if value then enableInfStamina() else disableInfStamina() end end})
 UI:CreateElement("toggle", section_other, {name = "no fall damage", flag = "misc_nofall", default = false, callback = function(value) getgenv().CONFIG.Misc.NoFallDmgEnabled = value if value then enableNoFallDmg() else disableNoFallDmg() end end})
+local section_chat = UI:CreateElement("section", column2_misc, {name = "chat"})
 
+UI:CreateElement("toggle", section_chat, {name = "enable chat", default = true, callback = function(value)
+    if game:GetService("TextChatService"):FindFirstChild("ChatWindowConfiguration") then
+        game:GetService("TextChatService").ChatWindowConfiguration.Enabled = value
+    end
+end})
 local tab_visualize = UI:CreateElement("tab", window, {name = "visualize"})
 local column1_visualize = UI:CreateElement("column", tab_visualize, {fill = true})
 local column2_visualize = UI:CreateElement("column", tab_visualize, {fill = true})
