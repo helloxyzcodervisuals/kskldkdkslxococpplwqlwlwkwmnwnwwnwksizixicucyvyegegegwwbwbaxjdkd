@@ -752,17 +752,18 @@ local function disableLoopFOV()
         getgenv().CONFIG.Misc.FOVConnection = nil
     end
 end
-local neckMotorRestoreData = {}
 local animationTrack = nil
+local runserviceConnection = nil
+local originalC0 = nil
+local originalC1 = nil
 
 local function hideHeadFE()
     if not game.Players.LocalPlayer.Character then return end
     
     local char = game.Players.LocalPlayer.Character
-    local head = char:FindFirstChild("Head")
     local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
     
-    if not head or not torso then return end
+    if not torso then return end
     
     local hum = char:WaitForChild("Humanoid")
     local anim = Instance.new("Animation")
@@ -776,52 +777,58 @@ local function hideHeadFE()
     
     local originalNeck = torso:FindFirstChild("Neck")
     if originalNeck and originalNeck:IsA("Motor6D") then
-        neckMotorRestoreData[char] = {
-            C0 = originalNeck.C0,
-            C1 = originalNeck.C1,
-            Transform = originalNeck.Transform
-        }
+        originalC0 = originalNeck.C0
+        originalC1 = originalNeck.C1
         
-        local animPose = head.CFrame:ToObjectSpace(torso.CFrame)
-        originalNeck.C0 = animPose
-        originalNeck.C1 = CFrame.new()
-        originalNeck.Transform = CFrame.new()
+        if runserviceConnection then
+            runserviceConnection:Disconnect()
+        end
+        
+        runserviceConnection = game:GetService("RunService").Heartbeat:Connect(function()
+            if originalNeck and originalNeck.Parent then
+                originalNeck.C0 = originalC0
+                originalNeck.C1 = originalC1
+            end
+        end)
     end
     
     hum.Died:Connect(function()
+        if runserviceConnection then
+            runserviceConnection:Disconnect()
+            runserviceConnection = nil
+        end
+        
         animationTrack:Stop()
         if getgenv().CONFIG.Misc.HideHeadEnabled then
             wait(0.1)
             if hum and hum.Parent then
                 animationTrack:Play()
                 animationTrack:AdjustSpeed(0)
+                
+                if originalNeck and originalNeck:IsA("Motor6D") then
+                    if not runserviceConnection then
+                        runserviceConnection = game:GetService("RunService").Heartbeat:Connect(function()
+                            if originalNeck and originalNeck.Parent then
+                                originalNeck.C0 = originalC0
+                                originalNeck.C1 = originalC1
+                            end
+                        end)
+                    end
+                end
             end
         end
     end)
 end
 
 local function showHeadFE()
-    if not game.Players.LocalPlayer.Character then return end
-    
-    local char = game.Players.LocalPlayer.Character
-    local head = char:FindFirstChild("Head")
-    local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-    if not head or not torso then return end
-    
     if animationTrack then
         animationTrack:Stop()
         animationTrack = nil
     end
     
-    local restoreData = neckMotorRestoreData[char]
-    if restoreData then
-        local neck = torso:FindFirstChild("Neck")
-        if neck and neck:IsA("Motor6D") then
-            neck.C0 = restoreData.C0
-            neck.C1 = restoreData.C1
-            neck.Transform = restoreData.Transform
-        end
-        neckMotorRestoreData[char] = nil
+    if runserviceConnection then
+        runserviceConnection:Disconnect()
+        runserviceConnection = nil
     end
 end
 
