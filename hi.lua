@@ -1536,6 +1536,7 @@ function library:window(properties)
         Enabled = true,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         IgnoreGuiInset = true,
+        Name = "skeet"
     })
 
     local outline = self:create("Frame", {
