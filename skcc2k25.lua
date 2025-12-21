@@ -753,38 +753,75 @@ local function disableLoopFOV()
     end
 end
 
+local neckMotorRestoreData = {}
+local animationTrack = nil
+
 local function hideHeadFE()
     if not game.Players.LocalPlayer.Character then return end
-    local head = game.Players.LocalPlayer.Character:FindFirstChild("Head")
-    local torso = game.Players.LocalPlayer.Character:FindFirstChild("Torso") or game.Players.LocalPlayer.Character:FindFirstChild("UpperTorso")
+    
+    local char = game.Players.LocalPlayer.Character
+    local head = char:FindFirstChild("Head")
+    local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    
     if not head or not torso then return end
-    local neckMotor = Instance.new("Motor6D")
-    neckMotor.Name = "Neck"
-    neckMotor.Part0 = torso
-    neckMotor.Part1 = head
-    neckMotor.C0 = CFrame.new(0, -0.5, 0.5)
-    neckMotor.Parent = head
-    head.LocalTransparencyModifier = 0
-    for _, accessory in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
-        if accessory:IsA("Accessory") then
-            local handle = accessory:FindFirstChild("Handle")
-            if handle then handle.LocalTransparencyModifier = 0 end
-        end
+    
+    local hum = char:WaitForChild("Humanoid")
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://68339848"
+    
+    local animator = hum:WaitForChild("Animator")
+    animationTrack = animator:LoadAnimation(anim)
+    
+    animationTrack:Play()
+    animationTrack:AdjustSpeed(0)
+    
+    local originalNeck = head:FindFirstChild("Neck")
+    if originalNeck and originalNeck:IsA("Motor6D") then
+        neckMotorRestoreData[char] = {
+            C0 = originalNeck.C0,
+            C1 = originalNeck.C1,
+            Transform = originalNeck.Transform
+        }
+        
+        local animPose = head.CFrame:ToObjectSpace(torso.CFrame)
+        originalNeck.C0 = animPose
+        originalNeck.C1 = CFrame.new()
+        originalNeck.Transform = CFrame.new()
     end
+    
+    hum.Died:Connect(function()
+        animationTrack:Stop()
+        if getgenv().CONFIG.Misc.HideHeadEnabled then
+            wait(0.1)
+            if hum and hum.Parent then
+                animationTrack:Play()
+                animationTrack:AdjustSpeed(0)
+            end
+        end
+    end)
 end
 
 local function showHeadFE()
     if not game.Players.LocalPlayer.Character then return end
-    local head = game.Players.LocalPlayer.Character:FindFirstChild("Head")
+    
+    local char = game.Players.LocalPlayer.Character
+    local head = char:FindFirstChild("Head")
     if not head then return end
-    local neckMotor = head:FindFirstChild("Neck")
-    if neckMotor then neckMotor:Destroy() end
-    head.LocalTransparencyModifier = 0
-    for _, accessory in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
-        if accessory:IsA("Accessory") then
-            local handle = accessory:FindFirstChild("Handle")
-            if handle then handle.LocalTransparencyModifier = 0 end
+    
+    if animationTrack then
+        animationTrack:Stop()
+        animationTrack = nil
+    end
+    
+    local restoreData = neckMotorRestoreData[char]
+    if restoreData then
+        local neck = head:FindFirstChild("Neck")
+        if neck and neck:IsA("Motor6D") then
+            neck.C0 = restoreData.C0
+            neck.C1 = restoreData.C1
+            neck.Transform = restoreData.Transform
         end
+        neckMotorRestoreData[char] = nil
     end
 end
 
