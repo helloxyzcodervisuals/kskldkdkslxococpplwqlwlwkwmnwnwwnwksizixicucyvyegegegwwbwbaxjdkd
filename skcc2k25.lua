@@ -1272,19 +1272,19 @@ end
 --]]
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/hi.lua"))()
 
-local window = library:window({name = "get<font color="rgb(170,85,235)">asterace</font>.cc", size = UDim2.new(0, 650, 0, 580)})
+local window = library:window({name = 'get<font color="rgb(170,85,235)">asterace</font>.cc', size = UDim2.new(0, 650, 0, 580)})
 
 local UI = {}
 local UserInputService = game:GetService("UserInputService")
-local CoreGui= game:GetService("CoreGui")
+local CoreGui = game:GetService("CoreGui")
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-if not gameProcessed and input.KeyCode == Enum.KeyCode.M then
-local skeet = CoreGui:FindFirstChild("skeet")
-if skeet and skeet:IsA("ScreenGui") then
-skeet.Enabled = not skeet.Enabled
-end
-end
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.M then
+        local skeet = CoreGui:FindFirstChild("skeet")
+        if skeet and skeet:IsA("ScreenGui") then
+            skeet.Enabled = not skeet.Enabled
+        end
+    end
 end)
 function UI:CreateElement(type, parent, options)
     local element = nil
