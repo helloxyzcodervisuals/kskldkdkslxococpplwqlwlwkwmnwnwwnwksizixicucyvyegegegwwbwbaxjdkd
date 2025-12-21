@@ -537,8 +537,8 @@ local function createTracer(startPos, endPos)
     beam.Width1 = getgenv().CONFIG.Ragebot.TracerWidth
     beam.Texture = "rbxassetid://7136858729"
     beam.TextureSpeed = 1
-    beam.Brightness = 5
-    beam.LightEmission = 3
+    beam.Brightness = 1
+    beam.LightEmission = 1
     beam.FaceCamera = true
     
     local a0 = Instance.new("Attachment")
