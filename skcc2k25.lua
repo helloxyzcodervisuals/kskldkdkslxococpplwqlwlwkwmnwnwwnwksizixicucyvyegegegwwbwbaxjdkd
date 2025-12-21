@@ -105,33 +105,33 @@ local Camera = Workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 if makefolder then
-    makefolder("aui")
-    makefolder("aui/fonts")
+    makefolder("a")
+    makefolder("a/fonts")
 end
 
-if not isfile or (isfile and not isfile("aui/fonts/main.ttf")) then
+if not isfile or (isfile and not isfile("a/fonts/main.ttf")) then
     if writefile then
-        writefile("aui/fonts/main.ttf", game:HttpGet("https://github.com/i77lhm/storage/raw/refs/heads/main/fonts/ProggyClean.ttf"))
+        writefile("a/fonts/main.ttf", game:HttpGet("https://github.com/i77lhm/storage/raw/refs/heads/main/fonts/ProggyClean.ttf"))
     end
 end
 
 local font_data = {
-    name = "AUIFont",
+    name = "AFont",
     faces = {
         {
             name = "Regular",
             weight = 400,
             style = "normal",
-            assetId = getcustomasset and getcustomasset("aui/fonts/main.ttf") or ""
+            assetId = getcustomasset and getcustomasset("a/fonts/main.ttf") or ""
         }
     }
 }
 
-if writefile and not isfile("aui/fonts/main_encoded.ttf") then
-    writefile("aui/fonts/main_encoded.ttf", game:GetService("HttpService"):JSONEncode(font_data))
+if writefile and not isfile("a/fonts/main_encoded.ttf") then
+    writefile("a/fonts/main_encoded.ttf", game:GetService("HttpService"):JSONEncode(font_data))
 end
 
-local AFont = Font.new(getcustomasset and getcustomasset("aui/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
+local AFont = Font.new(getcustomasset and getcustomasset("a/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
 
 local hitNotifications = {}
 local notificationYOffset = 10
