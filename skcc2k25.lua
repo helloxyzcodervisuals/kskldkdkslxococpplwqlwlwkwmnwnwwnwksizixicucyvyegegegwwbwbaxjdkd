@@ -752,7 +752,6 @@ local function disableLoopFOV()
         getgenv().CONFIG.Misc.FOVConnection = nil
     end
 end
-
 local neckMotorRestoreData = {}
 local animationTrack = nil
 
@@ -775,7 +774,7 @@ local function hideHeadFE()
     animationTrack:Play()
     animationTrack:AdjustSpeed(0)
     
-    local originalNeck = head:FindFirstChild("Neck")
+    local originalNeck = torso:FindFirstChild("Neck")
     if originalNeck and originalNeck:IsA("Motor6D") then
         neckMotorRestoreData[char] = {
             C0 = originalNeck.C0,
@@ -806,7 +805,8 @@ local function showHeadFE()
     
     local char = game.Players.LocalPlayer.Character
     local head = char:FindFirstChild("Head")
-    if not head then return end
+    local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    if not head or not torso then return end
     
     if animationTrack then
         animationTrack:Stop()
@@ -815,7 +815,7 @@ local function showHeadFE()
     
     local restoreData = neckMotorRestoreData[char]
     if restoreData then
-        local neck = head:FindFirstChild("Neck")
+        local neck = torso:FindFirstChild("Neck")
         if neck and neck:IsA("Motor6D") then
             neck.C0 = restoreData.C0
             neck.C1 = restoreData.C1
