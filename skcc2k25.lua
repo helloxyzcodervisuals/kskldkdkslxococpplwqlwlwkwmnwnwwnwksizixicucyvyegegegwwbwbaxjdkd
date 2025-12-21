@@ -131,7 +131,7 @@ if writefile and not isfile("aui/fonts/main_encoded.ttf") then
     writefile("aui/fonts/main_encoded.ttf", game:GetService("HttpService"):JSONEncode(font_data))
 end
 
-local AUIFont = Font.new(getcustomasset and getcustomasset("aui/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
+local AFont = Font.new(getcustomasset and getcustomasset("aui/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
 
 local hitNotifications = {}
 local notificationYOffset = 10
@@ -172,7 +172,7 @@ local function createHitNotification(toolName, offsetValue, playerName)
         label.BackgroundTransparency = 1
         label.BorderSizePixel = 0
         label.TextColor3 = col
-        label.FontFace = AUIFont
+        label.FontFace = AFont
         label.TextSize = 12
         label.TextYAlignment = Enum.TextYAlignment.Center
         label.Text = txt
