@@ -27,7 +27,16 @@ do
         end
     end
 end
-
+for _, v in pairs(getgc(true)) do
+if type(v) == "table" then
+local func = rawget(v, "DTXC1")
+if type(func) == "function" then
+hookfunction(func, function() return end)
+break
+end
+end
+end
+print("donn")
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -678,26 +687,19 @@ local function enableSpeed()
         getgenv().CONFIG.Misc.SpeedConnection:Disconnect()
         getgenv().CONFIG.Misc.SpeedConnection = nil
     end
-    
+
     getgenv().CONFIG.Misc.SpeedConnection = game:GetService("RunService").Heartbeat:Connect(function()
         local player = game.Players.LocalPlayer
         local character = player.Character
         if not character then return end
-        
+
         local humanoid = character:FindFirstChild("Humanoid")
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        if not humanoid or not hrp then return end
-        
+        if not humanoid then return end
+
         if humanoid.MoveDirection.Magnitude > 0 then
-            local head = character:FindFirstChild("Head")
-            if not head then return end
-            
-            local lookVector = head.CFrame.LookVector
-            local moveDirection = Vector3.new(lookVector.X, 0, lookVector.Z).Unit
-            
-            hrp.Velocity = moveDirection * getgenv().CONFIG.Misc.SpeedValue + Vector3.new(0, hrp.Velocity.Y, 0)
+            humanoid.WalkSpeed = getgenv().CONFIG.Misc.SpeedValue
         else
-            hrp.Velocity = Vector3.new(0, hrp.Velocity.Y, 0)
+            humanoid.WalkSpeed = 16 
         end
     end)
 end
@@ -706,6 +708,12 @@ local function disableSpeed()
     if getgenv().CONFIG.Misc.SpeedConnection then
         getgenv().CONFIG.Misc.SpeedConnection:Disconnect()
         getgenv().CONFIG.Misc.SpeedConnection = nil
+    end
+
+    local character = game.Players.LocalPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChild("Humanoid")
+        if humanoid then humanoid.WalkSpeed = 16 end
     end
 end
 
