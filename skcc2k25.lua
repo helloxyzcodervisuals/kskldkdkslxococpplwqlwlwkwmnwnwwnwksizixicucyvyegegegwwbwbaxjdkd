@@ -468,7 +468,7 @@ local function wallbang()
         local cachedShootDistance = (cachedBestPositions.shootPos - startPos).Magnitude
         local cachedHitDistance = (cachedBestPositions.hitPos - targetPos).Magnitude
         
-        if cachedShootDistance <= getgenv().CONFIG.Ragebot.ShootRange or 
+        if cachedShootDistance <= getgenv().CONFIG.Ragebot.ShootRange and 
            cachedHitDistance <= getgenv().CONFIG.Ragebot.HitRange then
             
             local pathToShoot = checkClearPath(startPos, cachedBestPositions.shootPos)
@@ -476,7 +476,13 @@ local function wallbang()
             
             if pathToShoot and pathToTarget then
                 return cachedBestPositions.shootPos, cachedBestPositions.hitPos
+            else
+                cachedBestPositions.shootPos = nil
+                cachedBestPositions.hitPos = nil
             end
+        else
+            cachedBestPositions.shootPos = nil
+            cachedBestPositions.hitPos = nil
         end
     end
     
@@ -502,7 +508,7 @@ local function wallbang()
         local shootDistance = (shootPos - startPos).Magnitude
         local hitDistance = (hitPos - targetPos).Magnitude
         
-        if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange or hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+        if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange and hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
             local pathToShoot = checkClearPath(startPos, shootPos)
             local pathToTarget = checkClearPath(shootPos, hitPos)
         
@@ -519,10 +525,15 @@ local function wallbang()
     end
     
     if not bestShootPos then
-        cachedBestPositions.shootPos = nil
-        cachedBestPositions.hitPos = nil
-        cachedBestPositions.target = nil
-        return nil, nil
+        local randomY = math.random(-18, 20)
+        local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
+        local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
+        
+        cachedBestPositions.shootPos = fallbackShootPos
+        cachedBestPositions.hitPos = fallbackHitPos
+        cachedBestPositions.target = target
+        
+        return fallbackShootPos, fallbackHitPos
     end
     
     cachedBestPositions.shootPos = bestShootPos
