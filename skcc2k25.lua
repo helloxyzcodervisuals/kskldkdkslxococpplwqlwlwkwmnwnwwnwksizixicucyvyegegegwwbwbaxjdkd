@@ -36,7 +36,7 @@ break
 end
 end
 end
-print("donn")
+print("done")
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -2151,6 +2151,87 @@ UI:CreateElement("colorpicker", section_safe_esp, {name = "safe color", default 
         end
         if visuals.textLabel then
             visuals.textLabel.TextColor3 = value
+        end
+    end
+end})
+local InstantPrompt_Enabled = false
+
+UI:CreateElement("toggle", section_other, {name = "instant prompt", default = false, callback = function(value)
+    InstantPrompt_Enabled = value
+    
+    if value then
+        for _, obj in pairs(game:GetDescendants()) do
+            if obj:IsA("ProximityPrompt") then
+                obj.HoldDuration = 0
+            end
+        end
+        
+        game.DescendantAdded:Connect(function(obj)
+            if obj:IsA("ProximityPrompt") then
+                task.wait()
+                obj.HoldDuration = 0
+            end
+        end)
+    else
+        for _, obj in pairs(game:GetDescendants()) do
+            if obj:IsA("ProximityPrompt") then
+                obj.HoldDuration = 1
+            end
+        end
+    end
+end})
+local AutoDoor_Enabled = false
+local doorConnection = nil
+local RunService = game:GetService("RunService")
+local LocalPlayer = game:GetService("Players").LocalPlayer
+
+UI:CreateElement("toggle", section_other, {name = "auto door", default = false, callback = function(value)
+    AutoDoor_Enabled = value
+    
+    if value then
+        if doorConnection then
+            doorConnection:Disconnect()
+        end
+        
+        doorConnection = RunService.Heartbeat:Connect(function()
+            if not LocalPlayer.Character then return end
+            local charRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not charRoot then return end
+            
+            local Map = workspace:FindFirstChild("Map")
+            if not Map then return end
+            local Doors = Map:FindFirstChild("Doors")
+            if not Doors then return end
+            
+            local closestDoor = nil
+            local closestDistance = 15
+            
+            for _, door in pairs(Doors:GetChildren()) do
+                local knob = door:FindFirstChild("Knob1") or door:FindFirstChild("Knob2")
+                if knob then
+                    local distance = (knob.Position - charRoot.Position).Magnitude
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestDoor = door
+                    end
+                end
+            end
+            
+            if closestDoor then
+                local knob = closestDoor:FindFirstChild("Knob1") or closestDoor:FindFirstChild("Knob2")
+                local events = closestDoor:FindFirstChild("Events")
+                local toggleEvent = events and events:FindFirstChild("Toggle")
+                
+                if knob and toggleEvent then
+                    local args = {"Open", knob}
+                    toggleEvent:FireServer(unpack(args))
+                end
+            end
+        end)
+    else
+        if doorConnection then
+            doorConnection:Disconnect()
+            doorConnection = nil
         end
     end
 end})
