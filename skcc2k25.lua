@@ -1980,8 +1980,10 @@ local section_lockpick = UI:CreateElement("section", column2_misc, {name = "lock
 
 local NoFailLockpick_Enabled = false
 local lockpickAddedConnection = nil
+local RunService = game:GetService("RunService")
 
 UI:CreateElement("toggle", section_lockpick, {name = "no fail lockpick", default = false, callback = function(value)
+    _G.LockpickEnabled = value
     NoFailLockpick_Enabled = value
     
     local Player = game:GetService("Players").LocalPlayer
@@ -1989,48 +1991,40 @@ UI:CreateElement("toggle", section_lockpick, {name = "no fail lockpick", default
     if not PlayerGui then return end
     
     if value then
+        local function lockpick(gui)
+            for _, a in pairs(gui:GetDescendants()) do
+                if a:IsA("ImageLabel") and a.Name == "Bar" and a.Parent.Name ~= "Attempts" then
+                    local oldsize = a.Size
+                    RunService.RenderStepped:Connect(function()
+                        if _G.LockpickEnabled then
+                            a.Size = UDim2.new(0, 280, 0, 280)
+                        else
+                            a.Size = oldsize
+                        end
+                    end)
+                end
+            end
+        end
+        
         if lockpickAddedConnection then
             lockpickAddedConnection:Disconnect()
         end
         
         lockpickAddedConnection = PlayerGui.ChildAdded:Connect(function(child)
-            if child.Name == "LockpickGUI" then
-                task.wait(0.1)
-                
-                local frames = child:FindFirstChild("MF")
-                if frames then
-                    local lpFrame = frames:FindFirstChild("LP_Frame")
-                    if lpFrame then
-                        local bars = lpFrame:FindFirstChild("Frames")
-                        if bars then
-                            if bars.B1 and bars.B1.Bar and bars.B1.Bar:FindFirstChild("UIScale") then bars.B1.Bar.UIScale.Scale = 1 end
-                            if bars.B2 and bars.B2.Bar and bars.B2.Bar:FindFirstChild("UIScale") then bars.B2.Bar.UIScale.Scale = 1 end
-                            if bars.B3 and bars.B3.Bar and bars.B3.Bar:FindFirstChild("UIScale") then bars.B3.Bar.UIScale.Scale = 1 end
-                        end
-                    end
-                end
+            if child:IsA("ScreenGui") and child.Name == "LockpickGUI" then
+                lockpick(child)
             end
         end)
+        
+        for _, child in pairs(PlayerGui:GetChildren()) do
+            if child:IsA("ScreenGui") and child.Name == "LockpickGUI" then
+                lockpick(child)
+            end
+        end
     else
         if lockpickAddedConnection then
             lockpickAddedConnection:Disconnect()
             lockpickAddedConnection = nil
-        end
-        
-        local lockpickGui = PlayerGui:FindFirstChild("LockpickGUI")
-        if lockpickGui then
-            local frames = lockpickGui:FindFirstChild("MF")
-            if frames then
-                local lpFrame = frames:FindFirstChild("LP_Frame")
-                if lpFrame then
-                    local bars = lpFrame:FindFirstChild("Frames")
-                    if bars then
-                        if bars.B1 and bars.B1.Bar and bars.B1.Bar:FindFirstChild("UIScale") then bars.B1.Bar.UIScale.Scale = 1 end
-                        if bars.B2 and bars.B2.Bar and bars.B2.Bar:FindFirstChild("UIScale") then bars.B2.Bar.UIScale.Scale = 1 end
-                        if bars.B3 and bars.B3.Bar and bars.B3.Bar:FindFirstChild("UIScale") then bars.B3.Bar.UIScale.Scale = 1 end
-                    end
-                end
-            end
         end
     end
 end})
