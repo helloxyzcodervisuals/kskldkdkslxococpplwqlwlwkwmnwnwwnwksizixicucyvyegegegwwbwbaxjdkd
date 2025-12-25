@@ -168,7 +168,8 @@ local function createHitNotification(toolName, offsetValue, playerName)
         {"in the ", Color3.fromRGB(255, 255, 255)},
         {"head ", getgenv().CONFIG.Ragebot.HitColor},
         {"to hit ", Color3.fromRGB(255, 255, 255)},
-        {playerName, getgenv().CONFIG.Ragebot.HitColor}
+        {playerName, getgenv().CONFIG.Ragebot.HitColor},
+        {"on via cache", Color3.fromRGB(255, 255, 255)},
     }
     
     local offsetX = 6
