@@ -526,7 +526,7 @@ local function wallbang()
     end
     
     if not bestShootPos then
-        local randomY = math.random(-18, -20)
+        local randomY = math.random(-13, -15)
         local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
         local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
         
@@ -693,14 +693,13 @@ RunService.RenderStepped:Connect(function()
     fovCircle.Radius = getgenv().CONFIG.Ragebot.FOV
     fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 end)
-
 local function enableSpeed()
     if getgenv().CONFIG.Misc.SpeedConnection then
         getgenv().CONFIG.Misc.SpeedConnection:Disconnect()
         getgenv().CONFIG.Misc.SpeedConnection = nil
     end
 
-    getgenv().CONFIG.Misc.SpeedConnection = game:GetService("RunService").Heartbeat:Connect(function()
+    getgenv().CONFIG.Misc.SpeedConnection = game:GetService("RunService").RenderStepped:Connect(function()
         local player = game.Players.LocalPlayer
         local character = player.Character
         if not character then return end
@@ -708,11 +707,7 @@ local function enableSpeed()
         local humanoid = character:FindFirstChild("Humanoid")
         if not humanoid then return end
 
-        if humanoid.MoveDirection.Magnitude > 0 then
-            humanoid.WalkSpeed = getgenv().CONFIG.Misc.SpeedValue
-        else
-            humanoid.WalkSpeed = 16 
-        end
+        humanoid.WalkSpeed = getgenv().CONFIG.Misc.SpeedValue
     end)
 end
 
@@ -2244,6 +2239,54 @@ UI:CreateElement("toggle", section_other, {name = "auto door", default = false, 
         if doorConnection then
             doorConnection:Disconnect()
             doorConnection = nil
+        end
+    end
+end})
+local RichShaderSettings = {
+    Enabled = false,
+    Brightness = 0.2,
+    Contrast = 0.5,
+    Saturation = 1.5,
+    TintColor = Color3.fromRGB(255, 200, 150)
+}
+
+local colorCorrection = nil
+
+local brightnessSlider = UI:CreateElement("slider", section_visuals, {name = "brightness", min = -1, max = 1, default = 0.2, callback = function(value)
+    RichShaderSettings.Brightness = value
+    if colorCorrection then
+        colorCorrection.Brightness = value
+    end
+end})
+
+local contrastSlider = UI:CreateElement("slider", section_visuals, {name = "contrast", min = -1, max = 1, default = 0.5, callback = function(value)
+    RichShaderSettings.Contrast = value
+    if colorCorrection then
+        colorCorrection.Contrast = value
+    end
+end})
+
+local saturationSlider = UI:CreateElement("slider", section_visuals, {name = "saturation", min = 0, max = 2, default = 1.5, callback = function(value)
+    RichShaderSettings.Saturation = value
+    if colorCorrection then
+        colorCorrection.Saturation = value
+    end
+end})
+
+UI:CreateElement("toggle", section_visuals, {name = "rich shader", default = false, callback = function(value)
+    RichShaderSettings.Enabled = value
+    
+    if value then
+        colorCorrection = Instance.new("ColorCorrectionEffect")
+        colorCorrection.Parent = game:GetService("Lighting")
+        colorCorrection.Brightness = RichShaderSettings.Brightness
+        colorCorrection.Contrast = RichShaderSettings.Contrast
+        colorCorrection.Saturation = RichShaderSettings.Saturation
+        colorCorrection.TintColor = RichShaderSettings.TintColor
+    else
+        if colorCorrection then
+            colorCorrection:Destroy()
+            colorCorrection = nil
         end
     end
 end})
