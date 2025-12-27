@@ -2246,6 +2246,7 @@ UI:CreateElement("toggle", section_other, {name = "auto door", default = false, 
         end
     end
 end})
+local section_visuals = UI:CreateElement("section", column1_visualize, {name = "forcefield material"})
 local RichShaderSettings = {
     Enabled = false,
     Brightness = 0.2,
