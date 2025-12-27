@@ -770,7 +770,6 @@ end
 
 local runserviceConnection = nil
 local originalMotors = {}
-local toolPositions = {}
 
 local function hideHeadFE()
     if not game.Players.LocalPlayer.Character then return end
@@ -790,20 +789,6 @@ local function hideHeadFE()
         end
     end
     
-    toolPositions = {}
-    for _, tool in pairs(char:GetChildren()) do
-        if tool:IsA("Tool") then
-            local primaryPart = tool.PrimaryPart or tool:FindFirstChildWhichIsA("BasePart")
-            if primaryPart then
-                primaryPart.Anchored = true
-                toolPositions[tool.Name] = {
-                    Part = primaryPart,
-                    OriginalPosition = primaryPart.Position
-                }
-            end
-        end
-    end
-    
     if runserviceConnection then
         runserviceConnection:Disconnect()
     end
@@ -815,13 +800,6 @@ local function hideHeadFE()
                 motor.C1 = original.C1
             end
         end
-        
-        for toolName, data in pairs(toolPositions) do
-            if data.Part and data.Part.Parent then
-                data.Part.Anchored = true
-                data.Part.Position = data.OriginalPosition
-            end
-        end
     end)
 end
 
@@ -830,13 +808,6 @@ local function showHeadFE()
         runserviceConnection:Disconnect()
         runserviceConnection = nil
     end
-    
-    for toolName, data in pairs(toolPositions) do
-        if data.Part then
-            data.Part.Anchored = false
-        end
-    end
-    toolPositions = {}
     
     originalMotors = {}
 end
