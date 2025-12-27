@@ -768,6 +768,7 @@ local function disableLoopFOV()
     end
 end
 
+
 local animationTrack = nil
 local runserviceConnection = nil
 local originalMotors = {}
@@ -785,13 +786,6 @@ local function hideHeadFE()
     local head = char:FindFirstChild("Head")
     
     if not head then return end
-    
-    local camera = workspace.CurrentCamera
-    local originalCFrame = camera.CFrame
-    
-    camera.CFrame = camera.CFrame * CFrame.Angles(math.rad(-90), 0, 0)
-    
-    task.wait(0.1)
     
     originalMotors = {}
     for _, motor in pairs(torso:GetChildren()) do
@@ -812,7 +806,7 @@ local function hideHeadFE()
     fakeNeck.Name = "FakeNeck"
     fakeNeck.Part0 = torso
     fakeNeck.Part1 = head
-    fakeNeck.C0 = CFrame.new(0, 1.5, 0)
+    fakeNeck.C0 = CFrame.new(0, 1.5, -0.3)
     fakeNeck.C1 = CFrame.new(0, -0.5, 0)
     fakeNeck.Parent = torso
     
@@ -829,7 +823,7 @@ local function hideHeadFE()
         end
         
         if fakeNeck and fakeNeck.Parent then
-            fakeNeck.C0 = CFrame.new(0, 1.5, -2)
+            fakeNeck.C0 = CFrame.new(0, 1.5, -0.3)
             fakeNeck.C1 = CFrame.new(0, -0.5, 0)
         end
     end)
@@ -843,8 +837,6 @@ local function hideHeadFE()
     animationTrack:Play()
     animationTrack:AdjustSpeed(0)
     
-    camera.CFrame = originalCFrame
-    
     hum.Died:Connect(function()
         if runserviceConnection then
             runserviceConnection:Disconnect()
@@ -857,6 +849,7 @@ local function hideHeadFE()
         end
         
         animationTrack:Stop()
+        
         if getgenv().CONFIG.Misc.HideHeadEnabled then
             wait(0.1)
             if hum and hum.Parent then
@@ -878,7 +871,7 @@ local function hideHeadFE()
                     fakeNeck.Name = "FakeNeck"
                     fakeNeck.Part0 = newTorso
                     fakeNeck.Part1 = newHead
-                    fakeNeck.C0 = CFrame.new(0, 1.5, 0)
+                    fakeNeck.C0 = CFrame.new(0, 1.5, -0.3)
                     fakeNeck.C1 = CFrame.new(0, -0.5, 0)
                     fakeNeck.Parent = newTorso
                     
@@ -891,7 +884,7 @@ local function hideHeadFE()
                         end
                         
                         if fakeNeck and fakeNeck.Parent then
-                            fakeNeck.C0 = CFrame.new(0, 1.5, -2)
+                            fakeNeck.C0 = CFrame.new(0, 1.5, -0.3)
                             fakeNeck.C1 = CFrame.new(0, -0.5, 0)
                         end
                     end)
@@ -921,7 +914,7 @@ local function showHeadFE()
     end
     
     originalMotors = {}
-end           
+end
 
 local function enableNoFallDmg()
     if getgenv().CONFIG.Misc.NoFallHook then getgenv().CONFIG.Misc.NoFallHook = nil end
