@@ -183,7 +183,7 @@ local function createHitNotification(toolName, offsetValue, playerName)
         label.BorderSizePixel = 0
         label.TextColor3 = col
         label.FontFace = AFont
-        label.TextSize = 12
+        label.TextSize = 10
         label.TextYAlignment = Enum.TextYAlignment.Center
         label.Text = txt
         label.AutomaticSize = Enum.AutomaticSize.XY
@@ -558,8 +558,8 @@ local function createTracer(startPos, endPos)
     beam.Width1 = getgenv().CONFIG.Ragebot.TracerWidth
     beam.Texture = "rbxassetid://7136858729"
     beam.TextureSpeed = 1
-    beam.Brightness = 1
-    beam.LightEmission = 1
+    beam.Brightness = 2
+    beam.LightEmission = 2
     beam.FaceCamera = true
     
     local a0 = Instance.new("Attachment")
@@ -1291,7 +1291,7 @@ end
 --]]
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/hi.lua"))()
 
-local window = library:window({name = 'get<font color="rgb(170,85,235)">asterace</font>.cc', size = UDim2.new(0, 650, 0, 580)})
+local window = library:window({name = 'skcc.lua', size = UDim2.new(0, 650, 0, 600)})
 
 local UI = {}
 local UserInputService = game:GetService("UserInputService")
