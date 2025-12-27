@@ -1569,7 +1569,7 @@ function library:new_window(cfg)
                 
                 local toggle_gradient = utility.create_uigradient(90)
                 toggle_gradient.Transparency = NumberSequence.new(0.5)
-                toggle_gradient.Visible = false
+                --toggle_gradient.Visible = false
                 toggle_gradient.Parent = toggle_frame
                 
                 local toggle_title = utility.create("Text", {Text = toggle_name, Parent = holder, Visible = true, Transparency = 1, Theme = toggle_risky and "Risky Text" or "Text", Size = 13, Center = false, Outline = false, Font = custom_font, Position = UDim2.new(0,13,0,-3), ZIndex = 6})
@@ -1578,10 +1578,10 @@ function library:new_window(cfg)
                     toggled = not toggled
                     if toggled then
                         utility.changeobjecttheme(toggle_frame, "Accent")
-                        toggle_gradient.Visible = true
+                        --toggle_gradient.Visible = true
                     else
                         utility.changeobjecttheme(toggle_frame, "Object Background")
-                        toggle_gradient.Visible = false
+                        --toggle_gradient.Visible = false
                     end
                     library.flags[toggle_flag] = toggled
                     callback(toggled)
