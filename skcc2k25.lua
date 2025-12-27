@@ -780,14 +780,6 @@ local function hideHeadFE()
     if not torso then return end
     
     local hum = char:WaitForChild("Humanoid")
-    local anim = Instance.new("Animation")
-    anim.AnimationId = "rbxassetid://68339848"
-    
-    local animator = hum:WaitForChild("Animator")
-    animationTrack = animator:LoadAnimation(anim)
-    
-    animationTrack:Play()
-    animationTrack:AdjustSpeed(0)
     
     originalMotors = {}
     for _, motor in pairs(torso:GetChildren()) do
@@ -812,6 +804,15 @@ local function hideHeadFE()
         end
     end)
     
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://68339848"
+    
+    local animator = hum:WaitForChild("Animator")
+    animationTrack = animator:LoadAnimation(anim)
+    
+    animationTrack:Play()
+    animationTrack:AdjustSpeed(0)
+    
     hum.Died:Connect(function()
         if runserviceConnection then
             runserviceConnection:Disconnect()
@@ -822,9 +823,6 @@ local function hideHeadFE()
         if getgenv().CONFIG.Misc.HideHeadEnabled then
             wait(0.1)
             if hum and hum.Parent then
-                animationTrack:Play()
-                animationTrack:AdjustSpeed(0)
-                
                 originalMotors = {}
                 local newTorso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
                 if newTorso then
@@ -837,16 +835,17 @@ local function hideHeadFE()
                         end
                     end
                     
-                    if not runserviceConnection then
-                        runserviceConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                            for motor, original in pairs(originalMotors) do
-                                if motor and motor.Parent then
-                                    motor.C0 = original.C0
-                                    motor.C1 = original.C1
-                                end
+                    runserviceConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                        for motor, original in pairs(originalMotors) do
+                            if motor and motor.Parent then
+                                motor.C0 = original.C0
+                                motor.C1 = original.C1
                             end
-                        end)
-                    end
+                        end
+                    end)
+                    
+                    animationTrack:Play()
+                    animationTrack:AdjustSpeed(0)
                 end
             end
         end
@@ -866,7 +865,6 @@ local function showHeadFE()
     
     originalMotors = {}
 end
-
 local function enableNoFallDmg()
     if getgenv().CONFIG.Misc.NoFallHook then getgenv().CONFIG.Misc.NoFallHook = nil end
     getgenv().CONFIG.Misc.NoFallHook = hookmetamethod(game, "__namecall", function(self, ...)
