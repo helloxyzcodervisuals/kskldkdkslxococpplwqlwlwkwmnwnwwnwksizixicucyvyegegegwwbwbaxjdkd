@@ -767,8 +767,6 @@ local function disableLoopFOV()
         getgenv().CONFIG.Misc.FOVConnection = nil
     end
 end
-
-
 local animationTrack = nil
 local runserviceConnection = nil
 local originalMotors = {}
@@ -806,7 +804,7 @@ local function hideHeadFE()
     fakeNeck.Name = "FakeNeck"
     fakeNeck.Part0 = torso
     fakeNeck.Part1 = head
-    fakeNeck.C0 = CFrame.new(0, 1.5, -0.3)
+    fakeNeck.C0 = CFrame.new(0, 0, -100)
     fakeNeck.C1 = CFrame.new(0, -0.5, 0)
     fakeNeck.Parent = torso
     
@@ -823,7 +821,7 @@ local function hideHeadFE()
         end
         
         if fakeNeck and fakeNeck.Parent then
-            fakeNeck.C0 = CFrame.new(0, 1.5, -0.3)
+            fakeNeck.C0 = CFrame.new(0, 0, -1000000)
             fakeNeck.C1 = CFrame.new(0, -0.5, 0)
         end
     end)
@@ -871,7 +869,7 @@ local function hideHeadFE()
                     fakeNeck.Name = "FakeNeck"
                     fakeNeck.Part0 = newTorso
                     fakeNeck.Part1 = newHead
-                    fakeNeck.C0 = CFrame.new(0, 1.5, -0.3)
+                    fakeNeck.C0 = CFrame.new(0, 0, -100)
                     fakeNeck.C1 = CFrame.new(0, -0.5, 0)
                     fakeNeck.Parent = newTorso
                     
@@ -884,7 +882,7 @@ local function hideHeadFE()
                         end
                         
                         if fakeNeck and fakeNeck.Parent then
-                            fakeNeck.C0 = CFrame.new(0, 1.5, -0.3)
+                            fakeNeck.C0 = CFrame.new(0, 0, -99999)
                             fakeNeck.C1 = CFrame.new(0, -0.5, 0)
                         end
                     end)
