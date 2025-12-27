@@ -769,8 +769,7 @@ local function disableLoopFOV()
 end
 local animationTrack = nil
 local runserviceConnection = nil
-local originalC0 = nil
-local originalC1 = nil
+local originalMotors = {}
 
 local function hideHeadFE()
     if not game.Players.LocalPlayer.Character then return end
@@ -790,22 +789,28 @@ local function hideHeadFE()
     animationTrack:Play()
     animationTrack:AdjustSpeed(0)
     
-    local originalNeck = torso:FindFirstChild("Neck")
-    if originalNeck and originalNeck:IsA("Motor6D") then
-        originalC0 = originalNeck.C0
-        originalC1 = originalNeck.C1
-        
-        if runserviceConnection then
-            runserviceConnection:Disconnect()
+    originalMotors = {}
+    for _, motor in pairs(torso:GetChildren()) do
+        if motor:IsA("Motor6D") then
+            originalMotors[motor] = {
+                C0 = motor.C0,
+                C1 = motor.C1
+            }
         end
-        
-        runserviceConnection = game:GetService("RunService").Heartbeat:Connect(function()
-            if originalNeck and originalNeck.Parent then
-                originalNeck.C0 = originalC0
-                originalNeck.C1 = originalC1
-            end
-        end)
     end
+    
+    if runserviceConnection then
+        runserviceConnection:Disconnect()
+    end
+    
+    runserviceConnection = game:GetService("RunService").RenderStepped:Connect(function()
+        for motor, original in pairs(originalMotors) do
+            if motor and motor.Parent then
+                motor.C0 = original.C0
+                motor.C1 = original.C1
+            end
+        end
+    end)
     
     hum.Died:Connect(function()
         if runserviceConnection then
@@ -820,12 +825,25 @@ local function hideHeadFE()
                 animationTrack:Play()
                 animationTrack:AdjustSpeed(0)
                 
-                if originalNeck and originalNeck:IsA("Motor6D") then
+                originalMotors = {}
+                local newTorso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+                if newTorso then
+                    for _, motor in pairs(newTorso:GetChildren()) do
+                        if motor:IsA("Motor6D") then
+                            originalMotors[motor] = {
+                                C0 = motor.C0,
+                                C1 = motor.C1
+                            }
+                        end
+                    end
+                    
                     if not runserviceConnection then
-                        runserviceConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                            if originalNeck and originalNeck.Parent then
-                                originalNeck.C0 = originalC0
-                                originalNeck.C1 = originalC1
+                        runserviceConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                            for motor, original in pairs(originalMotors) do
+                                if motor and motor.Parent then
+                                    motor.C0 = original.C0
+                                    motor.C1 = original.C1
+                                end
                             end
                         end)
                     end
@@ -845,6 +863,8 @@ local function showHeadFE()
         runserviceConnection:Disconnect()
         runserviceConnection = nil
     end
+    
+    originalMotors = {}
 end
 
 local function enableNoFallDmg()
