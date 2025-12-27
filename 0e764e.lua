@@ -105,7 +105,7 @@ end
 function utility.textlength(str, font, fontsize)
     local text = Instance.new("TextLabel")
     text.Text = str
-    text.Font = font
+    --text.FontFace = font
     text.TextSize = fontsize
     text.Size = UDim2.new(0, 10000, 0, 10000)
     
