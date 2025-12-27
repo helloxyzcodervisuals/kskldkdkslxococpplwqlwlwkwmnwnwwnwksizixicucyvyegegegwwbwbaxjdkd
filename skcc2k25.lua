@@ -767,9 +767,11 @@ local function disableLoopFOV()
         getgenv().CONFIG.Misc.FOVConnection = nil
     end
 end
+
 local animationTrack = nil
 local runserviceConnection = nil
 local originalMotors = {}
+local fakeNeck = nil
 
 local function hideHeadFE()
     if not game.Players.LocalPlayer.Character then return end
@@ -780,6 +782,16 @@ local function hideHeadFE()
     if not torso then return end
     
     local hum = char:WaitForChild("Humanoid")
+    local head = char:FindFirstChild("Head")
+    
+    if not head then return end
+    
+    local camera = workspace.CurrentCamera
+    local originalCFrame = camera.CFrame
+    
+    camera.CFrame = camera.CFrame * CFrame.Angles(math.rad(-90), 0, 0)
+    
+    task.wait(0.1)
     
     originalMotors = {}
     for _, motor in pairs(torso:GetChildren()) do
@@ -790,6 +802,19 @@ local function hideHeadFE()
             }
         end
     end
+    
+    if fakeNeck then
+        fakeNeck:Destroy()
+        fakeNeck = nil
+    end
+    
+    fakeNeck = Instance.new("Motor6D")
+    fakeNeck.Name = "FakeNeck"
+    fakeNeck.Part0 = torso
+    fakeNeck.Part1 = head
+    fakeNeck.C0 = CFrame.new(0, 1.5, 0)
+    fakeNeck.C1 = CFrame.new(0, -0.5, 0)
+    fakeNeck.Parent = torso
     
     if runserviceConnection then
         runserviceConnection:Disconnect()
@@ -802,6 +827,11 @@ local function hideHeadFE()
                 motor.C1 = original.C1
             end
         end
+        
+        if fakeNeck and fakeNeck.Parent then
+            fakeNeck.C0 = CFrame.new(0, 1.5, -2)
+            fakeNeck.C1 = CFrame.new(0, -0.5, 0)
+        end
     end)
     
     local anim = Instance.new("Animation")
@@ -813,10 +843,17 @@ local function hideHeadFE()
     animationTrack:Play()
     animationTrack:AdjustSpeed(0)
     
+    camera.CFrame = originalCFrame
+    
     hum.Died:Connect(function()
         if runserviceConnection then
             runserviceConnection:Disconnect()
             runserviceConnection = nil
+        end
+        
+        if fakeNeck then
+            fakeNeck:Destroy()
+            fakeNeck = nil
         end
         
         animationTrack:Stop()
@@ -825,7 +862,9 @@ local function hideHeadFE()
             if hum and hum.Parent then
                 originalMotors = {}
                 local newTorso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-                if newTorso then
+                local newHead = char:FindFirstChild("Head")
+                
+                if newTorso and newHead then
                     for _, motor in pairs(newTorso:GetChildren()) do
                         if motor:IsA("Motor6D") then
                             originalMotors[motor] = {
@@ -835,12 +874,25 @@ local function hideHeadFE()
                         end
                     end
                     
+                    fakeNeck = Instance.new("Motor6D")
+                    fakeNeck.Name = "FakeNeck"
+                    fakeNeck.Part0 = newTorso
+                    fakeNeck.Part1 = newHead
+                    fakeNeck.C0 = CFrame.new(0, 1.5, 0)
+                    fakeNeck.C1 = CFrame.new(0, -0.5, 0)
+                    fakeNeck.Parent = newTorso
+                    
                     runserviceConnection = game:GetService("RunService").RenderStepped:Connect(function()
                         for motor, original in pairs(originalMotors) do
                             if motor and motor.Parent then
                                 motor.C0 = original.C0
                                 motor.C1 = original.C1
                             end
+                        end
+                        
+                        if fakeNeck and fakeNeck.Parent then
+                            fakeNeck.C0 = CFrame.new(0, 1.5, -2)
+                            fakeNeck.C1 = CFrame.new(0, -0.5, 0)
                         end
                     end)
                     
@@ -863,8 +915,14 @@ local function showHeadFE()
         runserviceConnection = nil
     end
     
+    if fakeNeck then
+        fakeNeck:Destroy()
+        fakeNeck = nil
+    end
+    
     originalMotors = {}
-end
+end           
+
 local function enableNoFallDmg()
     if getgenv().CONFIG.Misc.NoFallHook then getgenv().CONFIG.Misc.NoFallHook = nil end
     getgenv().CONFIG.Misc.NoFallHook = hookmetamethod(game, "__namecall", function(self, ...)
