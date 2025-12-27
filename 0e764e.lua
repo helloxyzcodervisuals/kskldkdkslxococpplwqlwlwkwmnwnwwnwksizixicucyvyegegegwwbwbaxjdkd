@@ -308,7 +308,7 @@ function utility.create(class, properties)
             obj.Text = v
         elseif prop == "Font" and obj:IsA("TextLabel") then
             if v == Drawing.Fonts.Plex or v == 2 then
-                obj.Font = custom_font
+                obj.FontFace = custom_font
             else
                 obj.Font = Enum.Font[v] or Enum.Font.SourceSans
             end
