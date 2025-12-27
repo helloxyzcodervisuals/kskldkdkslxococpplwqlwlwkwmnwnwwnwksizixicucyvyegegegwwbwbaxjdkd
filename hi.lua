@@ -81,7 +81,7 @@ getgenv().library = {
 
 local themes = {
     preset = {
-        ["accent"] = hex("#AA55EB"),
+        ["accent"] = hex("#F090D7"),
     }, 	
 
     utility = {
