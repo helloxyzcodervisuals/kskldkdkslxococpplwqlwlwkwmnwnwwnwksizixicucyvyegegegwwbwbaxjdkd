@@ -163,7 +163,7 @@ if not LPH_OBFUSCATED then
 end
 
 if not isfile(library.directory .. "/fonts/main.ttf") then 
-    writefile(library.directory .. "/fonts/main.ttf", game:HttpGet("https://github.com/i77lhm/storage/raw/refs/heads/main/fonts/fs-tahoma-8px.ttf"))
+    writefile(library.directory .. "/fonts/main.ttf", game:HttpGet("ttps://github.com/i77lhm/storage/raw/refs/heads/main/fonts/ProggyClean.ttf"))
 end
 
 local tahoma = {
