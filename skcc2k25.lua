@@ -770,6 +770,20 @@ end
 
 local runserviceConnection = nil
 local originalMotors = {}
+local toolTransparencies = {}
+
+local function getCurrentTool()
+    local char = game.Players.LocalPlayer.Character
+    if not char then return nil end
+    
+    for _, item in pairs(char:GetChildren()) do
+        if item:IsA("Tool") then
+            return item
+        end
+    end
+    
+    return nil
+end
 
 local function hideHeadFE()
     if not game.Players.LocalPlayer.Character then return end
@@ -779,6 +793,16 @@ local function hideHeadFE()
     
     if not torso then return end
     
+    local tool = getCurrentTool()
+    if not tool then return end
+    
+    local values = tool:FindFirstChild("Values")
+    if not values then return end
+    
+    local ammo = values:FindFirstChild("SERVER_Ammo")
+    local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo")
+    if not ammo or not storedAmmo then return end
+    
     originalMotors = {}
     for _, motor in pairs(torso:GetChildren()) do
         if motor:IsA("Motor6D") then
@@ -786,6 +810,14 @@ local function hideHeadFE()
                 C0 = motor.C0,
                 C1 = motor.C1
             }
+        end
+    end
+    
+    toolTransparencies = {}
+    for _, part in pairs(tool:GetDescendants()) do
+        if part:IsA("BasePart") then
+            toolTransparencies[part] = part.Transparency
+            part.Transparency = 1
         end
     end
     
@@ -808,6 +840,13 @@ local function showHeadFE()
         runserviceConnection:Disconnect()
         runserviceConnection = nil
     end
+    
+    for part, transparency in pairs(toolTransparencies) do
+        if part and part.Parent then
+            part.Transparency = transparency
+        end
+    end
+    toolTransparencies = {}
     
     originalMotors = {}
 end
