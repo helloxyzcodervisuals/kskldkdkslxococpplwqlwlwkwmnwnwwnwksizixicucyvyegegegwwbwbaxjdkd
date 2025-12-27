@@ -767,10 +767,10 @@ local function disableLoopFOV()
         getgenv().CONFIG.Misc.FOVConnection = nil
     end
 end
-local animationTrack = nil
+
 local runserviceConnection = nil
 local originalMotors = {}
-local fakeNeck = nil
+local toolPositions = {}
 
 local function hideHeadFE()
     if not game.Players.LocalPlayer.Character then return end
@@ -779,11 +779,6 @@ local function hideHeadFE()
     local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
     
     if not torso then return end
-    
-    local hum = char:WaitForChild("Humanoid")
-    local head = char:FindFirstChild("Head")
-    
-    if not head then return end
     
     originalMotors = {}
     for _, motor in pairs(torso:GetChildren()) do
@@ -795,18 +790,19 @@ local function hideHeadFE()
         end
     end
     
-    if fakeNeck then
-        fakeNeck:Destroy()
-        fakeNeck = nil
+    toolPositions = {}
+    for _, tool in pairs(char:GetChildren()) do
+        if tool:IsA("Tool") then
+            local primaryPart = tool.PrimaryPart or tool:FindFirstChildWhichIsA("BasePart")
+            if primaryPart then
+                primaryPart.Anchored = true
+                toolPositions[tool.Name] = {
+                    Part = primaryPart,
+                    OriginalPosition = primaryPart.Position
+                }
+            end
+        end
     end
-    
-    fakeNeck = Instance.new("Motor6D")
-    fakeNeck.Name = "FakeNeck"
-    fakeNeck.Part0 = torso
-    fakeNeck.Part1 = head
-    fakeNeck.C0 = CFrame.new(0, 0, -100)
-    fakeNeck.C1 = CFrame.new(0, -0.5, 0)
-    fakeNeck.Parent = torso
     
     if runserviceConnection then
         runserviceConnection:Disconnect()
@@ -820,96 +816,27 @@ local function hideHeadFE()
             end
         end
         
-        if fakeNeck and fakeNeck.Parent then
-            fakeNeck.C0 = CFrame.new(0, 0, -1000000)
-            fakeNeck.C1 = CFrame.new(0, -0.5, 0)
-        end
-    end)
-    
-    local anim = Instance.new("Animation")
-    anim.AnimationId = "rbxassetid://68339848"
-    
-    local animator = hum:WaitForChild("Animator")
-    animationTrack = animator:LoadAnimation(anim)
-    
-    animationTrack:Play()
-    animationTrack:AdjustSpeed(0)
-    
-    hum.Died:Connect(function()
-        if runserviceConnection then
-            runserviceConnection:Disconnect()
-            runserviceConnection = nil
-        end
-        
-        if fakeNeck then
-            fakeNeck:Destroy()
-            fakeNeck = nil
-        end
-        
-        animationTrack:Stop()
-        
-        if getgenv().CONFIG.Misc.HideHeadEnabled then
-            wait(0.1)
-            if hum and hum.Parent then
-                originalMotors = {}
-                local newTorso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-                local newHead = char:FindFirstChild("Head")
-                
-                if newTorso and newHead then
-                    for _, motor in pairs(newTorso:GetChildren()) do
-                        if motor:IsA("Motor6D") then
-                            originalMotors[motor] = {
-                                C0 = motor.C0,
-                                C1 = motor.C1
-                            }
-                        end
-                    end
-                    
-                    fakeNeck = Instance.new("Motor6D")
-                    fakeNeck.Name = "FakeNeck"
-                    fakeNeck.Part0 = newTorso
-                    fakeNeck.Part1 = newHead
-                    fakeNeck.C0 = CFrame.new(0, 0, -100)
-                    fakeNeck.C1 = CFrame.new(0, -0.5, 0)
-                    fakeNeck.Parent = newTorso
-                    
-                    runserviceConnection = game:GetService("RunService").RenderStepped:Connect(function()
-                        for motor, original in pairs(originalMotors) do
-                            if motor and motor.Parent then
-                                motor.C0 = original.C0
-                                motor.C1 = original.C1
-                            end
-                        end
-                        
-                        if fakeNeck and fakeNeck.Parent then
-                            fakeNeck.C0 = CFrame.new(0, 0, -99999)
-                            fakeNeck.C1 = CFrame.new(0, -0.5, 0)
-                        end
-                    end)
-                    
-                    animationTrack:Play()
-                    animationTrack:AdjustSpeed(0)
-                end
+        for toolName, data in pairs(toolPositions) do
+            if data.Part and data.Part.Parent then
+                data.Part.Anchored = true
+                data.Part.Position = data.OriginalPosition
             end
         end
     end)
 end
 
 local function showHeadFE()
-    if animationTrack then
-        animationTrack:Stop()
-        animationTrack = nil
-    end
-    
     if runserviceConnection then
         runserviceConnection:Disconnect()
         runserviceConnection = nil
     end
     
-    if fakeNeck then
-        fakeNeck:Destroy()
-        fakeNeck = nil
+    for toolName, data in pairs(toolPositions) do
+        if data.Part then
+            data.Part.Anchored = false
+        end
     end
+    toolPositions = {}
     
     originalMotors = {}
 end
