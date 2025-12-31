@@ -2932,7 +2932,7 @@ UI:CreateElement("toggle", section_other, {name = "auto door", default = false, 
         end
     end
 end})
-local section_visuals = UI:CreateElement("section", column1_visualize, {name = "forcefield material"})
+local section_visuals = UI:CreateElement("section", column1_visualize, {name = "Rich World"})
 local RichShaderSettings = {
     Enabled = false,
     Brightness = 0.2,
@@ -2961,6 +2961,13 @@ local saturationSlider = UI:CreateElement("slider", section_visuals, {name = "sa
     RichShaderSettings.Saturation = value
     if colorCorrection then
         colorCorrection.Saturation = value
+    end
+end})
+
+UI:CreateElement("colorpicker", section_visuals, {name = "tint color", default = Color3.fromRGB(255, 200, 150), callback = function(value)
+    RichShaderSettings.TintColor = value
+    if colorCorrection then
+        colorCorrection.TintColor = value
     end
 end})
 
