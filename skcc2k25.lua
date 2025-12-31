@@ -526,7 +526,7 @@ local function wallbang()
     end
     
     if not bestShootPos then
-        local randomY = math.random(-13, -15)
+        local randomY = math.random(-18, 20)
         local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
         local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
         
@@ -1291,7 +1291,7 @@ end
 --]]
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/hi.lua"))()
 
-local window = library:window({name = 'skcc.lua', size = UDim2.new(0, 650, 0, 600)})
+local window = library:window({name = 'skcc.lua', size = UDim2.new(0, 650, 0, 850)})
 
 local UI = {}
 local UserInputService = game:GetService("UserInputService")
