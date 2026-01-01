@@ -2513,11 +2513,203 @@ UI:CreateElement("slider", section_tracers, {name = "brightness", flag = "legit_
 UI:CreateElement("slider", section_tracers, {name = "light emission", flag = "legit_tracerlight", min = 0, max = 2, default = 1, suffix = "", callback = function(value) getgenv().Legitbot.Tracers.LightEmission = value end})
 UI:CreateElement("slider", section_tracers, {name = "lifetime", flag = "legit_tracerlifetime", min = 0.1, max = 2, default = 0.5, suffix = "s", callback = function(value) getgenv().Legitbot.Tracers.Lifetime = value end})
 
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local local_player = Players.LocalPlayer
+
+getgenv().GunMod = {
+    NoRecoil = true,
+    NoSpread = true,
+    NoEquipTime = true
+}
+
+local no_recoil_enabled = getgenv().GunMod.NoRecoil
+local no_spread_enabled = getgenv().GunMod.NoSpread
+local no_equiptime_enabled = getgenv().GunMod.NoEquipTime
+
+local config_modules_table = {}
+local weapon_config_data = {}
+local cached_configs = {}
+local current_tools = {}
+local backpack_tools = {}
+local character_tools = {}
+local all_configs_array = {}
+local gun_config_cache = {}
+
+local function applyNoRecoil()
+    if not no_recoil_enabled then return end
+    
+    local configs_found = {}
+    
+    for _, config_table in pairs(getgc(true)) do
+        if type(config_table) == "table" and rawget(config_table, "Recoil") then
+            table.insert(configs_found, config_table)
+        end
+    end
+    
+    for _, player_container in ipairs({local_player.Backpack, local_player.Character}) do
+        for _, weapon_tool in ipairs(player_container:GetChildren()) do
+            if weapon_tool:IsA("Tool") then
+                local weapon_config = weapon_tool:FindFirstChild("Config")
+                if weapon_config and weapon_config:IsA("ModuleScript") then
+                    local config_load_success, config_data_table = pcall(require, weapon_config)
+                    if config_load_success and type(config_data_table) == "table" then
+                        table.insert(configs_found, config_data_table)
+                    end
+                end
+            end
+        end
+    end
+    
+    for _, current_config_data in ipairs(configs_found) do
+        local function set_config_value(config_field, field_value)
+            if rawget(current_config_data, config_field) then
+                rawset(current_config_data, config_field, field_value)
+            end
+        end
+
+        set_config_value("Recoil", 0)
+        set_config_value("RecoilSpeed", 0)
+        set_config_value("RecoilDamper", 1)
+        set_config_value("RecoilRedution", 1)
+        set_config_value("AngleX_Min", 0)
+        set_config_value("AngleX_Max", 0)
+        set_config_value("AngleY_Min", 0)
+        set_config_value("AngleY_Max", 0)
+        set_config_value("AngleZ_Min", 0)
+        set_config_value("AngleZ_Max", 0)
+
+        if rawget(current_config_data, "AimSettings") and type(current_config_data.AimSettings) == "table" then
+            rawset(current_config_data.AimSettings, "RecoilReduction_X", 1)
+            rawset(current_config_data.AimSettings, "RecoilReduction_Y", 1)
+            rawset(current_config_data.AimSettings, "RecoilReduction_Z", 1)
+            rawset(current_config_data.AimSettings, "SpreadReductionP", 1)
+        end
+    end
+end
+
+local function applyNoSpread()
+    if not no_spread_enabled then return end
+    
+    local configs_found = {}
+    
+    for _, config_table in pairs(getgc(true)) do
+        if type(config_table) == "table" and rawget(config_table, "Spread") then
+            table.insert(configs_found, config_table)
+        end
+    end
+    
+    for _, player_container in ipairs({local_player.Backpack, local_player.Character}) do
+        for _, weapon_tool in ipairs(player_container:GetChildren()) do
+            if weapon_tool:IsA("Tool") then
+                local weapon_config = weapon_tool:FindFirstChild("Config")
+                if weapon_config and weapon_config:IsA("ModuleScript") then
+                    local config_load_success, config_data_table = pcall(require, weapon_config)
+                    if config_load_success and type(config_data_table) == "table" then
+                        table.insert(configs_found, config_data_table)
+                    end
+                end
+            end
+        end
+    end
+    
+    for _, current_config_data in ipairs(configs_found) do
+        if rawget(current_config_data, "Spread") then
+            rawset(current_config_data, "Spread", 0)
+        end
+    end
+end
+
+local function applyNoEquipTime()
+    if not no_equiptime_enabled then return end
+    
+    local configs_found = {}
+    
+    for _, config_table in pairs(getgc(true)) do
+        if type(config_table) == "table" and rawget(config_table, "EquipTime") then
+            table.insert(configs_found, config_table)
+        end
+    end
+    
+    for _, player_container in ipairs({local_player.Backpack, local_player.Character}) do
+        for _, weapon_tool in ipairs(player_container:GetChildren()) do
+            if weapon_tool:IsA("Tool") then
+                local weapon_config = weapon_tool:FindFirstChild("Config")
+                if weapon_config and weapon_config:IsA("ModuleScript") then
+                    local config_load_success, config_data_table = pcall(require, weapon_config)
+                    if config_load_success and type(config_data_table) == "table" then
+                        table.insert(configs_found, config_data_table)
+                    end
+                end
+            end
+        end
+    end
+    
+    for _, current_config_data in ipairs(configs_found) do
+        if rawget(current_config_data, "EquipTime") then
+            rawset(current_config_data, "EquipTime", 0)
+        end
+    end
+end
+
+local function applyAllGunMods()
+    applyNoRecoil()
+    applyNoSpread()
+    applyNoEquipTime()
+end
+
+local section_gun_mod = UI:CreateElement("section", column1_legit, {name = "Gun Mod"})
+
+UI:CreateElement("toggle", section_gun_mod, {name = "no recoil", flag = "legit_norecoil", default = true, callback = function(value) 
+    getgenv().GunMod.NoRecoil = value
+    no_recoil_enabled = value
+    if value then
+        applyNoRecoil()
+    end
+end})
+
+UI:CreateElement("toggle", section_gun_mod, {name = "no spread", flag = "legit_nospread", default = true, callback = function(value) 
+    getgenv().GunMod.NoSpread = value
+    no_spread_enabled = value
+    if value then
+        applyNoSpread()
+    end
+end})
+
+UI:CreateElement("toggle", section_gun_mod, {name = "no equip time", flag = "legit_noequiptime", default = true, callback = function(value) 
+    getgenv().GunMod.NoEquipTime = value
+    no_equiptime_enabled = value
+    if value then
+        applyNoEquipTime()
+    end
+end})
+
+local_player.CharacterAdded:Connect(function(character)
+    task.wait(1)
+    if getgenv().GunMod.NoRecoil or getgenv().GunMod.NoSpread or getgenv().GunMod.NoEquipTime then
+        applyAllGunMods()
+    end
+end)
+
+local_player.Backpack.ChildAdded:Connect(function(tool)
+    if tool:IsA("Tool") then
+        task.wait(0.1)
+        if getgenv().GunMod.NoRecoil or getgenv().GunMod.NoSpread or getgenv().GunMod.NoEquipTime then
+            applyAllGunMods()
+        end
+    end
+end)
+
+task.spawn(function()
+    task.wait(1)
+    applyAllGunMods()
+end)
 task.spawn(function()
     task.wait(0.1)
     trackGlobalBullets()
-end) 
-
+end)
 local tab_rage = UI:CreateElement("tab", window, {name = "rage"})
 local column1_rage = UI:CreateElement("column", tab_rage, {fill = true})
 local column2_rage = UI:CreateElement("column", tab_rage, {fill = true})
