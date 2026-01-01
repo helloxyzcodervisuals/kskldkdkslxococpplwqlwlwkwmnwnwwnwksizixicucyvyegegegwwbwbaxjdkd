@@ -1290,6 +1290,919 @@ local function SetupArrows()
     end)
 end
 --]]
+--[[
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/hi.lua"))()
+
+local window = library:window({name = 'skcc.lua', size = UDim2.new(0, 650, 0, 850)})
+
+local UI = {}
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.M then
+        local skeet = CoreGui:FindFirstChild("skeet")
+        if skeet and skeet:IsA("ScreenGui") then
+            skeet.Enabled = not skeet.Enabled
+        end
+    end
+end)
+function UI:CreateElement(type, parent, options)
+    local element = nil
+    
+    if type == "tab" then
+        element = parent:tab(options)
+    elseif type == "column" then
+        element = parent:column(options)
+    elseif type == "section" then
+        element = parent:section(options)
+    elseif type == "toggle" then
+        element = parent:addToggle(options)
+    elseif type == "slider" then
+        element = parent:addSlider(options)
+    elseif type == "list" then
+        element = parent:addList(options)
+    elseif type == "colorpicker" then
+        element = parent:addColorpicker(options)
+    elseif type == "textbox" then
+        element = parent:addTextbox(options)
+    elseif type == "button" then
+        element = parent:addButton(options)
+    end
+    
+    return element
+end
+
+repeat
+    task.wait()
+until game:IsLoaded()
+
+do
+    local function isAdonisAC(tab)
+        return rawget(tab, "Detected")
+            and typeof(rawget(tab, "Detected")) == "function"
+            and rawget(tab, "RLocked")
+    end
+
+    for _, v in next, getgc(true) do
+        if typeof(v) == "table" and isAdonisAC(v) then
+            for i, f in next, v do
+                if rawequal(i, "Detected") then
+                    local old
+                    old = hookfunction(f, function(action, info, crash)
+                        if rawequal(action, "_") and rawequal(info, "_") and rawequal(crash, false) then
+                            return old(action, info, crash)
+                        end
+                        return task.wait(9e9)
+                    end)
+                    warn("bypassed")
+                    break
+                end
+            end
+        end
+    end
+end
+for _, v in pairs(getgc(true)) do
+if type(v) == "table" then
+local func = rawget(v, "DTXC1")
+if type(func) == "function" then
+hookfunction(func, function() return end)
+break
+end
+end
+end
+print("done")
+getgenv().CONFIG = {
+    Ragebot = {
+        Enabled = false,
+        RapidFire = false,
+        FireRate = 30,
+        Prediction = true,
+        PredictionAmount = 0.12,
+        TeamCheck = false,
+        VisibilityCheck = true,
+        FOV = 120,
+        ShowFOV = true,
+        Wallbang = true,
+        Tracers = true,
+        TracerColor = Color3.fromRGB(255, 0, 0),
+        TracerWidth = 1,
+        TracerLifetime = 3,
+        ShootRange = 15,
+        HitRange = 15,
+        HitNotify = true,
+        AutoReload = true,
+        HitSound = true,
+        HitColor = Color3.fromRGB(255, 182, 193),
+        UseTargetList = false,
+        UseWhitelist = false,
+        HitNotifyDuration = 5,
+        LowHealthCheck = false,
+        SelectedHitSound = "skeet"
+    },
+    Misc = {
+        SpeedEnabled = false,
+        SpeedValue = 50,
+        JumpPowerEnabled = false,
+        JumpPowerValue = 100,
+        LoopFOVEnabled = false,
+        HideHeadEnabled = false,
+        InfStaminaEnabled = false,
+        NoFallDmgEnabled = false,
+        SpeedConnection = nil,
+        FOVConnection = nil,
+        JumpPowerConnection = nil,
+        NoFallHook = nil,
+        InfStaminaHook = nil
+    },
+    Visualize = {
+        ESP = {
+            Enabled = false,
+            BoxColor = Color3.fromRGB(78, 150, 50),
+            OutlineColor = Color3.fromRGB(78, 150, 50),
+            TextColor = Color3.fromRGB(255, 255, 255),
+            MaxDistance = 1000
+        },
+        ForcefieldColor = Color3.fromRGB(255, 255, 255),
+        ForcefieldTransparency = 0.5,
+        LocalForcefieldEnabled = false,
+        ArrowEnabled = false,
+        ArrowColor = Color3.fromRGB(255, 255, 255),
+        ArrowDistance = 80,
+        ArrowSize = 16,
+        ArrowThickness = 1,
+        ArrowAA = false
+    }
+}
+
+getgenv().Lists = {
+    TargetList = {},
+    Whitelist = {}
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+if makefolder then
+    makefolder("a")
+    makefolder("a/fonts")
+end
+
+if not isfile or (isfile and not isfile("a/fonts/main.ttf")) then
+    if writefile then
+        writefile("a/fonts/main.ttf", game:HttpGet("https://github.com/i77lhm/storage/raw/refs/heads/main/fonts/ProggyClean.ttf"))
+    end
+end
+
+local font_data = {
+    name = "AFont",
+    faces = {
+        {
+            name = "Regular",
+            weight = 400,
+            style = "normal",
+            assetId = getcustomasset and getcustomasset("a/fonts/main.ttf") or ""
+        }
+    }
+}
+
+if writefile and not isfile("a/fonts/main_encoded.ttf") then
+    writefile("a/fonts/main_encoded.ttf", game:GetService("HttpService"):JSONEncode(font_data))
+end
+
+local AFont = Font.new(getcustomasset and getcustomasset("a/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
+
+local hitNotifications = {}
+local notificationYOffset = 10
+
+local function createHitNotification(toolName, offsetValue, playerName)
+    if not getgenv().CONFIG.Ragebot.HitNotify then return end
+    
+    local ScreenGui = game:GetService("CoreGui"):FindFirstChild("HitNotifications") or Instance.new("ScreenGui")
+    ScreenGui.Name = "HitNotifications"
+    ScreenGui.Parent = game:GetService("CoreGui")
+    
+    local box = Instance.new("Frame")
+    box.Parent = ScreenGui
+    box.BackgroundColor3 = Color3.new(0, 0, 0)
+    box.BackgroundTransparency = 0.5
+    box.BorderSizePixel = 0
+    box.AnchorPoint = Vector2.new(0, 0)
+    box.Position = UDim2.new(0, 10, 0, -50)
+    
+    local parts = {
+        {"Using ", Color3.fromRGB(255, 255, 255)},
+        {toolName.." ", getgenv().CONFIG.Ragebot.HitColor},
+        {"On ", Color3.fromRGB(255, 255, 255)},
+        {string.format("%.2f", offsetValue).." ", getgenv().CONFIG.Ragebot.HitColor},
+        {"in the ", Color3.fromRGB(255, 255, 255)},
+        {"head ", getgenv().CONFIG.Ragebot.HitColor},
+        {"to hit ", Color3.fromRGB(255, 255, 255)},
+        {playerName, getgenv().CONFIG.Ragebot.HitColor},
+        {"on via cache", Color3.fromRGB(255, 255, 255)},
+    }
+    
+    local offsetX = 6
+    local totalW, maxH = 0, 0
+    
+    for _, seg in ipairs(parts) do
+        local txt, col = seg[1], seg[2]
+        local label = Instance.new("TextLabel")
+        label.Parent = box
+        label.BackgroundTransparency = 1
+        label.BorderSizePixel = 0
+        label.TextColor3 = col
+        label.FontFace = AFont
+        label.TextSize = 10
+        label.TextYAlignment = Enum.TextYAlignment.Center
+        label.Text = txt
+        label.AutomaticSize = Enum.AutomaticSize.XY
+        label.Position = UDim2.new(0, offsetX, 0, 0)
+        offsetX = offsetX + label.TextBounds.X
+        totalW = offsetX
+        maxH = math.max(maxH, label.TextBounds.Y)
+    end
+    
+    box.Size = UDim2.new(0, totalW + 12, 0, maxH + 8)
+    
+    local notificationIndex = #hitNotifications + 1
+    local targetY = notificationYOffset + ((notificationIndex - 1) * (maxH + 8 + 5))
+    
+    table.insert(hitNotifications, {box = box, index = notificationIndex})
+    
+    for i, notif in ipairs(hitNotifications) do
+        notif.index = i
+        notif.box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((i - 1) * (notif.box.AbsoluteSize.Y + 5)))
+    end
+    
+    local slideInTween = TweenService:Create(
+        box,
+        TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+        {Position = UDim2.new(0, 10, 0, notificationYOffset + ((notificationIndex - 1) * (maxH + 8 + 5)))}
+    )
+    slideInTween:Play()
+    
+    task.delay(getgenv().CONFIG.Ragebot.HitNotifyDuration, function()
+        for i, notif in ipairs(hitNotifications) do
+            if notif.box == box then
+                table.remove(hitNotifications, i)
+                break
+            end
+        end
+        
+        if box then 
+            local slideOutTween = TweenService:Create(
+                box,
+                TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In),
+                {Position = UDim2.new(0, 10, 0, -50)}
+            )
+            slideOutTween:Play()
+            slideOutTween.Completed:Wait()
+            box:Destroy() 
+        end
+        
+        for i, notif in ipairs(hitNotifications) do
+            notif.box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((i - 1) * (notif.box.AbsoluteSize.Y + 5)))
+        end
+    end)
+end
+
+local function playHitSound()
+    if not getgenv().CONFIG.Ragebot.HitSound then return end
+    
+    local soundIds = {
+        ["skeet"] = "rbxassetid://4817809188",
+        ["xp level"] = "rbxassetid://17148249625",
+        ["bell"] = "rbxassetid://6534948092"
+    }
+    
+    local soundId = soundIds[getgenv().CONFIG.Ragebot.SelectedHitSound] or soundIds["skeet"]
+    
+    local sound = Instance.new("Sound")
+    sound.SoundId = soundId
+    sound.Volume = 0.5
+    sound.Parent = Workspace
+    sound:Play()
+    
+    game:GetService("Debris"):AddItem(sound, 3)
+end
+
+local function getCurrentTool()
+    if LocalPlayer.Character then
+        for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
+            if tool:IsA("Tool") then
+                return tool
+            end
+        end
+    end
+    return nil
+end
+
+local function autoReload()
+    if not getgenv().CONFIG.Ragebot.AutoReload then return end
+    
+    local tool = getCurrentTool()
+    if not tool then return end
+    
+    local values = tool:FindFirstChild("Values")
+    if not values then return end
+    
+    local ammo = values:FindFirstChild("SERVER_Ammo")
+    local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo")
+    if not ammo or not storedAmmo then return end
+    
+    if ammo.Value <= 0 and storedAmmo.Value > 0 then
+        local args = {
+            tick(),
+            "KLWE89U0",
+            tool
+        }
+        local GNX_R = ReplicatedStorage:WaitForChild("Events"):WaitForChild("GNX_R")
+        GNX_R:FireServer(unpack(args))
+    end
+end
+
+local function canSeeTarget(targetPart)
+    if not getgenv().CONFIG.Ragebot.VisibilityCheck then return true end
+    
+    local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
+    if not localHead then return false end
+    
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    
+    local startPos = localHead.Position
+    local endPos = targetPart.Position
+    local direction = (endPos - startPos)
+    local distance = direction.Magnitude
+    
+    local raycastResult = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
+    
+    if raycastResult then
+        local hitPart = raycastResult.Instance
+        if hitPart and hitPart.CanCollide then
+            local model = hitPart:FindFirstAncestorOfClass("Model")
+            if model then
+                local humanoid = model:FindFirstChild("Humanoid")
+                if humanoid then
+                    local targetPlayer = Players:GetPlayerFromCharacter(model)
+                    if targetPlayer then
+                        return true
+                    end
+                end
+            end
+            return false
+        end
+    end
+    
+    local secondRaycast = Workspace:Raycast(startPos + direction.Unit * 0.5, direction.Unit * (distance - 0.5), raycastParams)
+    if secondRaycast then
+        local hitPart = secondRaycast.Instance
+        if hitPart and hitPart.CanCollide then
+            local model = hitPart:FindFirstAncestorOfClass("Model")
+            if model then
+                local humanoid = model:FindFirstChild("Humanoid")
+                if humanoid then
+                    local targetPlayer = Players:GetPlayerFromCharacter(model)
+                    if targetPlayer then
+                        return true
+                    end
+                end
+            end
+            return false
+        end
+    end
+    
+    return true
+end
+
+local function getClosestTarget()
+    local closest = nil
+    local shortestDistance = math.huge
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        
+        if getgenv().CONFIG.Ragebot.UseWhitelist and table.find(getgenv().Lists.Whitelist, player.Name) then
+            continue
+        end
+        
+        if getgenv().CONFIG.Ragebot.UseTargetList and not table.find(getgenv().Lists.TargetList, player.Name) then
+            continue
+        end
+        
+        if getgenv().CONFIG.Ragebot.TeamCheck and player.Team == LocalPlayer.Team then continue end
+        
+        local character = player.Character
+        if character then
+            local humanoid = character:FindFirstChild("Humanoid")
+            local head = character:FindFirstChild("Head")
+            
+            if humanoid and humanoid.Health > 0 and head then
+                local hasForcefield = false
+                for _, child in pairs(character:GetChildren()) do
+                    if child:IsA("ForceField") then
+                        hasForcefield = true
+                        break
+                    end
+                end
+                
+                if hasForcefield then continue end
+        
+                if getgenv().CONFIG.Ragebot.LowHealthCheck and humanoid.Health < 15 then continue end
+                
+                local distance = (head.Position - LocalPlayer.Character.Head.Position).Magnitude
+                if distance < shortestDistance then
+                    if canSeeTarget(head) then
+                        closest = head
+                        shortestDistance = distance
+                    end
+                end
+            end
+        end
+    end
+    
+    return closest
+end
+
+local function checkClearPath(startPos, endPos)
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    
+    local direction = (endPos - startPos)
+    local distance = direction.Magnitude
+    
+    local raycastResult = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
+    
+    if raycastResult then
+        local hitPart = raycastResult.Instance
+        if hitPart and hitPart.CanCollide then
+            local model = hitPart:FindFirstAncestorOfClass("Model")
+            if model then
+                local humanoid = model:FindFirstChild("Humanoid")
+                if not humanoid then
+                    return false
+                end
+            else
+                return false
+            end
+        end
+    end
+    return true
+end
+
+local cachedBestPositions = {
+    shootPos = nil,
+    hitPos = nil,
+    target = nil
+}
+
+local function wallbang()
+    local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
+    if not localHead then return nil end
+    
+    local target = getClosestTarget()
+    if not target then 
+        cachedBestPositions.shootPos = nil
+        cachedBestPositions.hitPos = nil
+        cachedBestPositions.target = nil
+        return nil, nil
+    end
+    
+    local startPos = localHead.Position
+    local targetPos = target.Position
+    
+    if not getgenv().CONFIG.Ragebot.Wallbang then
+        cachedBestPositions.shootPos = startPos
+        cachedBestPositions.hitPos = targetPos
+        cachedBestPositions.target = target
+        return startPos, targetPos
+    end
+
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    
+    local direction = targetPos - startPos
+    local distance = direction.Magnitude
+    local directRay = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
+    
+    if not directRay then
+        cachedBestPositions.shootPos = startPos
+        cachedBestPositions.hitPos = targetPos
+        cachedBestPositions.target = target
+        return startPos, targetPos
+    end
+    
+    if cachedBestPositions.shootPos and cachedBestPositions.target == target then
+        local cachedShootDistance = (cachedBestPositions.shootPos - startPos).Magnitude
+        local cachedHitDistance = (cachedBestPositions.hitPos - targetPos).Magnitude
+        
+        if cachedShootDistance <= getgenv().CONFIG.Ragebot.ShootRange and 
+           cachedHitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+            
+            local pathToShoot = checkClearPath(startPos, cachedBestPositions.shootPos)
+            local pathToTarget = checkClearPath(cachedBestPositions.shootPos, cachedBestPositions.hitPos)
+            
+            if pathToShoot and pathToTarget then
+                local shootToHitRay = Workspace:Raycast(cachedBestPositions.shootPos, (cachedBestPositions.hitPos - cachedBestPositions.shootPos).Unit * (cachedBestPositions.hitPos - cachedBestPositions.shootPos).Magnitude, raycastParams)
+                if not shootToHitRay then
+                    return cachedBestPositions.shootPos, cachedBestPositions.hitPos
+                end
+            end
+        end
+        cachedBestPositions.shootPos = nil
+        cachedBestPositions.hitPos = nil
+    end
+    
+    local bestShootPos = nil
+    local bestHitPos = nil
+    local bestScore = math.huge
+    
+    for i = 1, 150 do
+        local shootOffset = Vector3.new(
+            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange),
+            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange),
+            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange)
+        )
+        local shootPos = startPos + shootOffset
+        
+        local hitOffset = Vector3.new(
+            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange),
+            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange),
+            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange)
+        )
+        local hitPos = targetPos + hitOffset
+        
+        local shootDistance = (shootPos - startPos).Magnitude
+        local hitDistance = (hitPos - targetPos).Magnitude
+        
+        if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange and hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+            local pathToShoot = checkClearPath(startPos, shootPos)
+            local pathToTarget = checkClearPath(shootPos, hitPos)
+            
+            if pathToShoot and pathToTarget then
+                local shootToHitRay = Workspace:Raycast(shootPos, (hitPos - shootPos).Unit * (hitPos - shootPos).Magnitude, raycastParams)
+                if not shootToHitRay then
+                    local totalScore = shootDistance + hitDistance
+                    
+                    if totalScore < bestScore then
+                        bestScore = totalScore
+                        bestShootPos = shootPos
+                        bestHitPos = hitPos
+                    end
+                end
+            end
+        end
+    end
+    
+    if not bestShootPos or not bestHitPos then
+        local randomY = math.random(-16, -14)
+        local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
+        local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
+        
+        cachedBestPositions.shootPos = fallbackShootPos
+        cachedBestPositions.hitPos = fallbackHitPos
+        cachedBestPositions.target = target
+        
+        return fallbackShootPos, fallbackHitPos
+    end
+    
+    cachedBestPositions.shootPos = bestShootPos
+    cachedBestPositions.hitPos = bestHitPos
+    cachedBestPositions.target = target
+    
+    return bestShootPos, bestHitPos
+end
+
+local function createTracer(startPos, endPos)
+    if not getgenv().CONFIG.Ragebot.Tracers then return end
+    
+    local tracerModel = Instance.new("Model")
+    tracerModel.Name = "TracerBeam"
+    
+    local beam = Instance.new("Beam")
+    beam.Color = ColorSequence.new(getgenv().CONFIG.Ragebot.TracerColor)
+    beam.Width0 = getgenv().CONFIG.Ragebot.TracerWidth
+    beam.Width1 = getgenv().CONFIG.Ragebot.TracerWidth
+    beam.Texture = "rbxassetid://7136858729"
+    beam.TextureSpeed = 1
+    beam.Brightness = 2
+    beam.LightEmission = 2
+    beam.FaceCamera = true
+    
+    local a0 = Instance.new("Attachment")
+    local a1 = Instance.new("Attachment")
+    a0.WorldPosition = startPos
+    a1.WorldPosition = endPos
+    beam.Attachment0 = a0
+    beam.Attachment1 = a1
+    
+    beam.Parent = tracerModel
+    a0.Parent = tracerModel
+    a1.Parent = tracerModel
+    tracerModel.Parent = Workspace
+    
+    local tweenInfo = TweenInfo.new(
+        getgenv().CONFIG.Ragebot.TracerLifetime,
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.Out
+    )
+    
+    local tween = TweenService:Create(beam, tweenInfo, {
+        Brightness = 0
+    })
+    
+    tween:Play()
+    tween.Completed:Connect(function()
+        if tracerModel then 
+            tracerModel:Destroy() 
+        end
+    end)
+end
+
+local function RandomString(length)
+    local charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    local result = ""
+    for i = 1, length do
+        result = result .. charset:sub(math.random(1, #charset), math.random(1, #charset))
+    end
+    return result
+end
+
+local function shootAtTarget(targetHead)
+    if not targetHead then return false end
+    local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
+    if not localHead then return false end
+    local tool = getCurrentTool()
+    if not tool then return false end
+    local values = tool:FindFirstChild("Values")
+    local hitMarker = tool:FindFirstChild("Hitmarker")
+    if not values or not hitMarker then return false end
+    local ammo = values:FindFirstChild("SERVER_Ammo")
+    local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo")
+    if not ammo or not storedAmmo then return false end
+    if ammo.Value <= 0 then
+        autoReload()
+        return false
+    end
+
+    local bestShootPos, bestHitPos = wallbang()
+    
+    if not bestShootPos or not bestHitPos then
+        return false
+    end
+    local hitPosition = bestHitPos
+  
+    if getgenv().CONFIG.Ragebot.Prediction then
+        local velocity = targetHead.Velocity or Vector3.zero
+        hitPosition = hitPosition + velocity * getgenv().CONFIG.Ragebot.PredictionAmount
+    end
+
+    local hitDirection = (hitPosition - bestShootPos).Unit
+    local randomKey = RandomString(30) .. "0"
+    local args1 = {tick(), randomKey, tool, "FDS9I83", bestShootPos, {hitDirection}, false}
+    local args2 = {"🧈", tool, randomKey, 1, targetHead, hitPosition, hitDirection}
+    local events = ReplicatedStorage:WaitForChild("Events")
+    local GNX_S = events:WaitForChild("GNX_S")
+    local ZFKLF__H = events:WaitForChild("ZFKLF__H")
+    local targetPlayer = Players:GetPlayerFromCharacter(targetHead.Parent)
+    if targetPlayer then
+        createHitNotification(tool.Name, (bestShootPos - localHead.Position).Magnitude, targetPlayer.Name)
+        playHitSound()
+    end
+
+    coroutine.wrap(function()
+        GNX_S:FireServer(unpack(args1))
+        ZFKLF__H:FireServer(unpack(args2))
+    end)()
+
+    ammo.Value = math.max(ammo.Value - 1, 0)
+    hitMarker:Fire(targetHead)
+    storedAmmo.Value = storedAmmo.Value
+    createTracer(bestShootPos, hitPosition)
+    return true
+end
+
+local lastShotTime = 0
+RunService.Heartbeat:Connect(function()
+    if not getgenv().CONFIG.Ragebot.Enabled then return end
+    if not LocalPlayer.Character then return end
+    if not LocalPlayer.Character:FindFirstChild("Head") then return end
+    
+    local target = getClosestTarget()
+    if not target then return end
+    
+    if getgenv().CONFIG.Ragebot.RapidFire then
+        while getgenv().CONFIG.Ragebot.RapidFire and getgenv().CONFIG.Ragebot.Enabled and target do
+            shootAtTarget(target)
+            task.wait()
+        end
+    else
+        local currentTime = tick()
+        local waitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
+        if currentTime - lastShotTime >= waitTime then
+            shootAtTarget(target)
+            --wait()
+            --shootAtTarget(target)
+            lastShotTime = currentTime
+        end
+    end
+end)
+
+local fovCircle = Drawing.new("Circle")
+fovCircle.Visible = getgenv().CONFIG.Ragebot.ShowFOV
+fovCircle.Radius = getgenv().CONFIG.Ragebot.FOV
+fovCircle.Color = Color3.fromRGB(255, 255, 255)
+fovCircle.Thickness = 1
+fovCircle.Filled = false
+
+RunService.RenderStepped:Connect(function()
+    fovCircle.Visible = getgenv().CONFIG.Ragebot.ShowFOV and getgenv().CONFIG.Ragebot.Enabled
+    fovCircle.Radius = getgenv().CONFIG.Ragebot.FOV
+    fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+end)
+local function enableSpeed()
+    if getgenv().CONFIG.Misc.SpeedConnection then
+        getgenv().CONFIG.Misc.SpeedConnection:Disconnect()
+        getgenv().CONFIG.Misc.SpeedConnection = nil
+    end
+
+    getgenv().CONFIG.Misc.SpeedConnection = game:GetService("RunService").RenderStepped:Connect(function()
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character then return end
+
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not humanoid then return end
+
+        humanoid.WalkSpeed = getgenv().CONFIG.Misc.SpeedValue
+    end)
+end
+
+local function disableSpeed()
+    if getgenv().CONFIG.Misc.SpeedConnection then
+        getgenv().CONFIG.Misc.SpeedConnection:Disconnect()
+        getgenv().CONFIG.Misc.SpeedConnection = nil
+    end
+
+    local character = game.Players.LocalPlayer.Character
+    if character then
+        local humanoid = character:FindFirstChild("Humanoid")
+        if humanoid then humanoid.WalkSpeed = 16 end
+    end
+end
+
+local function enableJumpPower()
+    if getgenv().CONFIG.Misc.JumpPowerConnection then
+        getgenv().CONFIG.Misc.JumpPowerConnection:Disconnect()
+        getgenv().CONFIG.Misc.JumpPowerConnection = nil
+    end
+    
+    getgenv().CONFIG.Misc.JumpPowerConnection = game:GetService("RunService").Heartbeat:Connect(function()
+        if not getgenv().CONFIG.Misc.JumpPowerEnabled then return end
+        if not game.Players.LocalPlayer.Character then return end
+        local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if not humanoid then return end
+        local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        if humanoid:GetState() == Enum.HumanoidStateType.Jumping then
+            hrp.Velocity = Vector3.new(hrp.Velocity.X, getgenv().CONFIG.Misc.JumpPowerValue, hrp.Velocity.Z)
+        end
+    end)
+end
+
+local function disableJumpPower()
+    if getgenv().CONFIG.Misc.JumpPowerConnection then
+        getgenv().CONFIG.Misc.JumpPowerConnection:Disconnect()
+        getgenv().CONFIG.Misc.JumpPowerConnection = nil
+    end
+end
+
+local function enableLoopFOV()
+    if getgenv().CONFIG.Misc.FOVConnection then
+        getgenv().CONFIG.Misc.FOVConnection:Disconnect()
+        getgenv().CONFIG.Misc.FOVConnection = nil
+    end
+    
+    getgenv().CONFIG.Misc.FOVConnection = game:GetService("RunService").RenderStepped:Connect(function()
+        workspace.CurrentCamera.FieldOfView = 120
+    end)
+end
+
+local function disableLoopFOV()
+    if getgenv().CONFIG.Misc.FOVConnection then
+        getgenv().CONFIG.Misc.FOVConnection:Disconnect()
+        getgenv().CONFIG.Misc.FOVConnection = nil
+    end
+end
+
+local runserviceConnection = nil
+local originalMotors = {}
+local toolTransparencies = {}
+
+local function getCurrentTool()
+    local char = game.Players.LocalPlayer.Character
+    if not char then return nil end
+    
+    for _, item in pairs(char:GetChildren()) do
+        if item:IsA("Tool") then
+            return item
+        end
+    end
+    
+    return nil
+end
+
+local function hideHeadFE()
+    if not game.Players.LocalPlayer.Character then return end
+    
+    local char = game.Players.LocalPlayer.Character
+    local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    
+    if not torso then return end
+    
+    local tool = getCurrentTool()
+    if not tool then return end
+    
+    local values = tool:FindFirstChild("Values")
+    if not values then return end
+    
+    local ammo = values:FindFirstChild("SERVER_Ammo")
+    local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo")
+    if not ammo or not storedAmmo then return end
+    
+    originalMotors = {}
+    for _, motor in pairs(torso:GetChildren()) do
+        if motor:IsA("Motor6D") then
+            originalMotors[motor] = {
+                C0 = motor.C0,
+                C1 = motor.C1
+            }
+        end
+    end
+    
+    toolTransparencies = {}
+    for _, part in pairs(tool:GetDescendants()) do
+        if part:IsA("BasePart") then
+            toolTransparencies[part] = part.Transparency
+            part.Transparency = 1
+        end
+    end
+    
+    if runserviceConnection then
+        runserviceConnection:Disconnect()
+    end
+    
+    runserviceConnection = game:GetService("RunService").RenderStepped:Connect(function()
+        for motor, original in pairs(originalMotors) do
+            if motor and motor.Parent then
+                motor.C0 = original.C0
+                motor.C1 = original.C1
+            end
+        end
+    end)
+end
+
+local function showHeadFE()
+    if runserviceConnection then
+        runserviceConnection:Disconnect()
+        runserviceConnection = nil
+    end
+    
+    for part, transparency in pairs(toolTransparencies) do
+        if part and part.Parent then
+            part.Transparency = transparency
+        end
+    end
+    toolTransparencies = {}
+    
+    originalMotors = {}
+end
+
+local function enableNoFallDmg()
+    if getgenv().CONFIG.Misc.NoFallHook then getgenv().CONFIG.Misc.NoFallHook = nil end
+    getgenv().CONFIG.Misc.NoFallHook = hookmetamethod(game, "__namecall", function(self, ...)
+        local args = { ... }
+        if getnamecallmethod() == "FireServer" and not checkcaller() and args[1] == "FlllD" and args[4] == false then
+            args[2] = 0
+            args[3] = 0
+        end
+        return getgenv().CONFIG.Misc.NoFallHook(self, unpack(args))
+    end)
+end
+
+local function disableNoFallDmg()
+    if getgenv().CONFIG.Misc.NoFallHook then getgenv().CONFIG.Misc.NoFallHook = nil end
+end
+--]]
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/hi.lua"))()
 
 local window = library:window({name = 'skcc.lua', size = UDim2.new(0, 650, 0, 850)})
@@ -1358,62 +2271,6 @@ getgenv().Legitbot = {
         Lifetime = 0.5
     }
 }
-
-local script = {
-    locals = {
-        silent_aim_target = nil,
-        silent_aim_is_targetting = false,
-        aim_position = Vector3.new(0, 0, 0)
-    }
-}
-
-local function createLegitTracer(st, ed)
-    if not getgenv().Legitbot.Tracers.Enabled then return end
-    
-    local tracerModel = Instance.new("Model")
-    tracerModel.Name = "LegitTracerBeam"
-    
-    local beam = Instance.new("Beam")
-    beam.Color = ColorSequence.new(getgenv().Legitbot.Tracers.Color)
-    beam.Width0 = getgenv().Legitbot.Tracers.Width
-    beam.Width1 = getgenv().Legitbot.Tracers.Width
-    beam.Texture = "rbxassetid://7136858729"
-    beam.TextureSpeed = 1
-    beam.Brightness = getgenv().Legitbot.Tracers.Brightness
-    beam.LightEmission = getgenv().Legitbot.Tracers.LightEmission
-    beam.FaceCamera = true
-    
-    local a0 = Instance.new("Attachment")
-    local a1 = Instance.new("Attachment")
-    a0.WorldPosition = st
-    a1.WorldPosition = ed
-    beam.Attachment0 = a0
-    beam.Attachment1 = a1
-    
-    beam.Parent = tracerModel
-    a0.Parent = tracerModel
-    a1.Parent = tracerModel
-    tracerModel.Parent = Workspace
-    
-    local tweenInfo = TweenInfo.new(
-        getgenv().Legitbot.Tracers.Lifetime,
-        Enum.EasingStyle.Linear,
-        Enum.EasingDirection.Out
-    )
-    
-    local tween = TweenService:Create(beam, tweenInfo, {
-        Brightness = 0,
-        LightEmission = 0
-    })
-    
-    tween:Play()
-    tween.Completed:Connect(function()
-        if tracerModel then 
-            tracerModel:Destroy() 
-        end
-    end
-end
-
 local function trackGlobalBullets()
     local bfr = workspace.Camera:FindFirstChild("Bullets")
     if not bfr then return end
@@ -1479,7 +2336,6 @@ local function is_in_fov(position)
     local distance = (screen_pos.position - center).Magnitude
     return distance <= getgenv().Legitbot.SilentAim.FOV
 end
-
 local function get_closest_player_to_position(target_position)
     local closest_player = nil
     local closest_distance = math.huge
@@ -1535,7 +2391,6 @@ local function get_target_part_position(character)
     
     return character:FindFirstChild("HumanoidRootPart").Position
 end
-
 RunService.RenderStepped:Connect(function()
     if not getgenv().Legitbot.SilentAim.Enabled then
         script.locals.silent_aim_is_targetting = false
@@ -1612,8 +2467,8 @@ task.spawn(function()
     task.wait(0.1)
     trackGlobalBullets()
 end)
+  
 
-print("Legitbot System Loaded")
 local tab_rage = UI:CreateElement("tab", window, {name = "rage"})
 local column1_rage = UI:CreateElement("column", tab_rage, {fill = true})
 local column2_rage = UI:CreateElement("column", tab_rage, {fill = true})
