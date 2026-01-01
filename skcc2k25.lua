@@ -1331,7 +1331,289 @@ function UI:CreateElement(type, parent, options)
     
     return element
 end
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
+local camera = Workspace.CurrentCamera
+local local_player = Players.LocalPlayer
+
+getgenv().Legitbot = {
+    Enabled = false,
+    SilentAim = {
+        Enabled = false,
+        FOV = 100,
+        TeamCheck = true,
+        HitPart = "Torso",
+        HeadChance = 30,
+        Prediction = 0.165
+    },
+    Tracers = {
+        Enabled = true,
+        Color = Color3.fromRGB(255, 50, 50),
+        Width = 0.3,
+        Brightness = 2,
+        LightEmission = 1,
+        Lifetime = 0.5
+    }
+}
+
+local script = {
+    locals = {
+        silent_aim_target = nil,
+        silent_aim_is_targetting = false,
+        aim_position = Vector3.new(0, 0, 0)
+    }
+}
+
+local function createLegitTracer(st, ed)
+    if not getgenv().Legitbot.Tracers.Enabled then return end
+    
+    local tracerModel = Instance.new("Model")
+    tracerModel.Name = "LegitTracerBeam"
+    
+    local beam = Instance.new("Beam")
+    beam.Color = ColorSequence.new(getgenv().Legitbot.Tracers.Color)
+    beam.Width0 = getgenv().Legitbot.Tracers.Width
+    beam.Width1 = getgenv().Legitbot.Tracers.Width
+    beam.Texture = "rbxassetid://7136858729"
+    beam.TextureSpeed = 1
+    beam.Brightness = getgenv().Legitbot.Tracers.Brightness
+    beam.LightEmission = getgenv().Legitbot.Tracers.LightEmission
+    beam.FaceCamera = true
+    
+    local a0 = Instance.new("Attachment")
+    local a1 = Instance.new("Attachment")
+    a0.WorldPosition = st
+    a1.WorldPosition = ed
+    beam.Attachment0 = a0
+    beam.Attachment1 = a1
+    
+    beam.Parent = tracerModel
+    a0.Parent = tracerModel
+    a1.Parent = tracerModel
+    tracerModel.Parent = Workspace
+    
+    local tweenInfo = TweenInfo.new(
+        getgenv().Legitbot.Tracers.Lifetime,
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.Out
+    )
+    
+    local tween = TweenService:Create(beam, tweenInfo, {
+        Brightness = 0,
+        LightEmission = 0
+    })
+    
+    tween:Play()
+    tween.Completed:Connect(function()
+        if tracerModel then 
+            tracerModel:Destroy() 
+        end
+    end
+end
+
+local function trackGlobalBullets()
+    local bfr = workspace.Camera:FindFirstChild("Bullets")
+    if not bfr then return end
+    
+    local function tblt(blt)
+        if not blt:IsA("BasePart") then return end
+        
+        local stp = blt.Position
+        local lsp = stp
+        local stc = 0
+        
+        local con
+        con = RunService.Heartbeat:Connect(function()
+            if not blt or not blt.Parent then
+                con:Disconnect()
+                if (lsp - stp).Magnitude > 1 then
+                    createLegitTracer(stp, lsp)
+                end
+                return
+            end
+            
+            local cp = blt.Position
+            if (cp - lsp).Magnitude < 0.01 then
+                stc = stc + 1
+                if stc > 3 then
+                    con:Disconnect()
+                    if (cp - stp).Magnitude > 1 then
+                        createLegitTracer(stp, cp)
+                    end
+                end
+            else
+                stc = 0
+                lsp = cp
+            end
+        end)
+    end
+    
+    bfr.ChildAdded:Connect(tblt)
+    
+    for _, v in ipairs(bfr:GetChildren()) do
+        tblt(v)
+    end
+end
+
+local function get_direction(origin, destination)
+    return ((destination - origin).Unit * 1000)
+end
+
+local function world_to_screen(position)
+    local viewport_position, on_screen = camera:WorldToViewportPoint(position)
+    return {position = Vector2.new(viewport_position.X, viewport_position.Y), on_screen = on_screen}
+end
+
+local function has_character(player)
+    return player and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+end
+
+local function is_in_fov(position)
+    local screen_pos = world_to_screen(position)
+    if not screen_pos.on_screen then return false end
+    
+    local center = camera.ViewportSize / 2
+    local distance = (screen_pos.position - center).Magnitude
+    return distance <= getgenv().Legitbot.SilentAim.FOV
+end
+
+local function get_closest_player_to_position(target_position)
+    local closest_player = nil
+    local closest_distance = math.huge
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == local_player then continue end
+        if not has_character(player) then continue end
+        
+        if getgenv().Legitbot.SilentAim.TeamCheck and player.Team and local_player.Team and player.Team == local_player.Team then
+            continue
+        end
+        
+        local character = player.Character
+        local humanoid_root_part = character:FindFirstChild("HumanoidRootPart")
+        if not humanoid_root_part then continue end
+        
+        if not is_in_fov(humanoid_root_part.Position) then
+            continue
+        end
+        
+        local player_position = humanoid_root_part.Position
+        local distance = (target_position - player_position).Magnitude
+        
+        if distance < closest_distance then
+            closest_distance = distance
+            closest_player = player
+        end
+    end
+    
+    return closest_player
+end
+
+local function get_target_part_position(character)
+    if not character then return Vector3.new(0, 0, 0) end
+    
+    local hit_part = getgenv().Legitbot.SilentAim.HitPart
+    local head_chance = getgenv().Legitbot.SilentAim.HeadChance
+    
+    local should_hit_head = math.random(1, 100) <= head_chance
+    local target_part_name = should_hit_head and "Head" or hit_part
+    
+    local target_part = character:FindFirstChild(target_part_name)
+    if not target_part and target_part_name == "Head" then
+        target_part = character:FindFirstChild("Torso")
+    end
+    if not target_part then
+        target_part = character:FindFirstChild("HumanoidRootPart")
+    end
+    
+    if target_part then
+        return target_part.Position
+    end
+    
+    return character:FindFirstChild("HumanoidRootPart").Position
+end
+
+RunService.RenderStepped:Connect(function()
+    if not getgenv().Legitbot.SilentAim.Enabled then
+        script.locals.silent_aim_is_targetting = false
+        script.locals.silent_aim_target = nil
+        return
+    end
+    
+    local target_position = camera.CFrame.Position + camera.CFrame.LookVector * 100
+    local new_target = get_closest_player_to_position(target_position)
+    
+    script.locals.silent_aim_is_targetting = new_target and true or false
+    script.locals.silent_aim_target = new_target or nil
+    
+    if script.locals.silent_aim_target and has_character(script.locals.silent_aim_target) then
+        local character = script.locals.silent_aim_target.Character
+        local base_position = get_target_part_position(character)
+        
+        local velocity = Vector3.new(0, 0, 0)
+        local hit_part = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso")
+        if hit_part then
+            velocity = hit_part.Velocity
+        end
+        
+        local prediction = getgenv().Legitbot.SilentAim.Prediction
+        local predicted_position = base_position + (velocity * prediction)
+        script.locals.aim_position = predicted_position
+    end
+end)
+
+local __namecall
+__namecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    local method = tostring(getnamecallmethod())
+    
+    if not checkcaller() and script.locals.silent_aim_is_targetting and script.locals.silent_aim_target and self == Workspace and method == "Raycast" then
+        local origin = args[1]
+        args[2] = get_direction(origin, script.locals.aim_position)
+        return __namecall(self, unpack(args))
+    end
+    
+    return __namecall(self, ...)
+end)
+
+local tab_legit = UI:CreateElement("tab", window, {name = "legit"})
+local column1_legit = UI:CreateElement("column", tab_legit, {fill = true})
+local column2_legit = UI:CreateElement("column", tab_legit, {fill = true})
+
+local section_silentaim = UI:CreateElement("section", column1_legit, {name = "Silent Aim"})
+UI:CreateElement("toggle", section_silentaim, {name = "enable silent aim", flag = "legit_silentaim", default = false, callback = function(value) getgenv().Legitbot.SilentAim.Enabled = value end})
+UI:CreateElement("slider", section_silentaim, {name = "field of view", flag = "legit_fov", min = 10, max = 500, default = 100, suffix = "", callback = function(value) getgenv().Legitbot.SilentAim.FOV = value end})
+UI:CreateElement("slider", section_silentaim, {name = "prediction", flag = "legit_prediction", min = 0, max = 0.5, default = 0.165, suffix = "s", callback = function(value) getgenv().Legitbot.SilentAim.Prediction = value end})
+UI:CreateElement("toggle", section_silentaim, {name = "team check", flag = "legit_teamcheck", default = true, callback = function(value) getgenv().Legitbot.SilentAim.TeamCheck = value end})
+UI:CreateElement("slider", section_silentaim, {name = "head chance", flag = "legit_headchance", min = 0, max = 100, default = 30, suffix = "%", callback = function(value) getgenv().Legitbot.SilentAim.HeadChance = value end})
+UI:CreateElement("toggle", section_silentaim, {name = "hit torso", flag = "legit_hittorso", default = true, callback = function(value) 
+    if value then
+        getgenv().Legitbot.SilentAim.HitPart = "Torso"
+    end
+end})
+UI:CreateElement("toggle", section_silentaim, {name = "hit head", flag = "legit_hithead", default = false, callback = function(value) 
+    if value then
+        getgenv().Legitbot.SilentAim.HitPart = "Head"
+    end
+end})
+
+local section_tracers = UI:CreateElement("section", column2_legit, {name = "Tracers"})
+UI:CreateElement("toggle", section_tracers, {name = "enable tracers", flag = "legit_tracers", default = true, callback = function(value) getgenv().Legitbot.Tracers.Enabled = value end})
+UI:CreateElement("colorpicker", section_tracers, {name = "tracer color", flag = "legit_tracercolor", default = Color3.fromRGB(255, 50, 50), callback = function(value) getgenv().Legitbot.Tracers.Color = value end})
+UI:CreateElement("slider", section_tracers, {name = "width", flag = "legit_tracerwidth", min = 0.1, max = 2, default = 0.3, suffix = "", callback = function(value) getgenv().Legitbot.Tracers.Width = value end})
+UI:CreateElement("slider", section_tracers, {name = "brightness", flag = "legit_tracerbrightness", min = 0, max = 5, default = 2, suffix = "", callback = function(value) getgenv().Legitbot.Tracers.Brightness = value end})
+UI:CreateElement("slider", section_tracers, {name = "light emission", flag = "legit_tracerlight", min = 0, max = 2, default = 1, suffix = "", callback = function(value) getgenv().Legitbot.Tracers.LightEmission = value end})
+UI:CreateElement("slider", section_tracers, {name = "lifetime", flag = "legit_tracerlifetime", min = 0.1, max = 2, default = 0.5, suffix = "s", callback = function(value) getgenv().Legitbot.Tracers.Lifetime = value end})
+
+task.spawn(function()
+    task.wait(0.1)
+    trackGlobalBullets()
+end)
+
+print("Legitbot System Loaded")
 local tab_rage = UI:CreateElement("tab", window, {name = "rage"})
 local column1_rage = UI:CreateElement("column", tab_rage, {fill = true})
 local column2_rage = UI:CreateElement("column", tab_rage, {fill = true})
