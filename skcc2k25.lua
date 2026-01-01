@@ -757,7 +757,7 @@ local function enableLoopFOV()
         getgenv().CONFIG.Misc.FOVConnection = nil
     end
     
-    getgenv().CONFIG.Misc.FOVConnection = game:GetService("RunService").Heartbeat:Connect(function()
+    getgenv().CONFIG.Misc.FOVConnection = game:GetService("RunService").RenderStepped:Connect(function()
         workspace.CurrentCamera.FieldOfView = 120
     end)
 end
