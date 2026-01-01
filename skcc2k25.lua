@@ -140,7 +140,8 @@ if writefile and not isfile("a/fonts/main_encoded.ttf") then
     writefile("a/fonts/main_encoded.ttf", game:GetService("HttpService"):JSONEncode(font_data))
 end
 
-local AFont = Font.new(getcustomasset and getcustomasset("a/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular) + label.TextBounds.Xnotif.box == box then
+local AFont = Font.new(getcustomasset and getcustomasset("a/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
+--+ label.TextBounds.Xnotif.box == box thenfromRGB(255, 255, 255)},nextNotif.box.Parent = ScreenGui
 local hitNotifications = {}
 local notificationYOffset = 10
 local MAX_VISIBLE_NOTIFICATIONS = 10
@@ -183,7 +184,7 @@ local function createHitNotification(toolName, offsetValue, playerName)
         label.BorderSizePixel = 0
         label.TextColor3 = col
         label.FontFace = AFont
-        label.TextSize = 15
+        label.TextSize = 10
         label.TextYAlignment = Enum.TextYAlignment.Center
         label.Text = txt
         label.AutomaticSize = Enum.AutomaticSize.XY
