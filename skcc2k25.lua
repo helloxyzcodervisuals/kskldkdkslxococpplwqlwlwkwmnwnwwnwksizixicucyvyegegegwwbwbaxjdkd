@@ -2244,6 +2244,7 @@ function UI:CreateElement(type, parent, options)
     
     return element
 end
+
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -2271,6 +2272,53 @@ getgenv().Legitbot = {
         Lifetime = 0.5
     }
 }
+
+getgenv().silent_aim_is_targetting = false
+getgenv().silent_aim_target = nil
+getgenv().aim_position = Vector3.new()
+
+local function createLegitTracer(startPos, endPos)
+    if not getgenv().Legitbot.Tracers.Enabled then return end
+    
+    local beamPart = Instance.new("Part")
+    beamPart.Anchored = true
+    beamPart.CanCollide = false
+    beamPart.Transparency = 1
+    beamPart.Size = Vector3.new(0.1, 0.1, 0.1)
+    beamPart.Parent = Workspace
+    
+    local attachment0 = Instance.new("Attachment")
+    attachment0.Parent = beamPart
+    
+    local attachment1 = Instance.new("Attachment")
+    attachment1.Parent = beamPart
+    
+    local beam = Instance.new("Beam")
+    beam.Attachment0 = attachment0
+    beam.Attachment1 = attachment1
+    beam.Color = ColorSequence.new(getgenv().Legitbot.Tracers.Color)
+    beam.Width0 = getgenv().Legitbot.Tracers.Width
+    beam.Width1 = getgenv().Legitbot.Tracers.Width
+    beam.Brightness = getgenv().Legitbot.Tracers.Brightness
+    beam.LightEmission = getgenv().Legitbot.Tracers.LightEmission
+    beam.Parent = beamPart
+    
+    local midPoint = (startPos + endPos) / 2
+    local lookVector = (endPos - startPos).Unit
+    local distance = (startPos - endPos).Magnitude
+    
+    beamPart.CFrame = CFrame.new(midPoint, midPoint + lookVector) * CFrame.new(0, 0, -distance/2)
+    
+    attachment0.WorldPosition = startPos
+    attachment1.WorldPosition = endPos
+    
+    task.delay(getgenv().Legitbot.Tracers.Lifetime, function()
+        if beamPart and beamPart.Parent then
+            beamPart:Destroy()
+        end
+    end)
+end
+
 local function trackGlobalBullets()
     local bfr = workspace.Camera:FindFirstChild("Bullets")
     if not bfr then return end
@@ -2336,6 +2384,7 @@ local function is_in_fov(position)
     local distance = (screen_pos.position - center).Magnitude
     return distance <= getgenv().Legitbot.SilentAim.FOV
 end
+
 local function get_closest_player_to_position(target_position)
     local closest_player = nil
     local closest_distance = math.huge
@@ -2391,21 +2440,22 @@ local function get_target_part_position(character)
     
     return character:FindFirstChild("HumanoidRootPart").Position
 end
+
 RunService.RenderStepped:Connect(function()
     if not getgenv().Legitbot.SilentAim.Enabled then
-        script.locals.silent_aim_is_targetting = false
-        script.locals.silent_aim_target = nil
+        getgenv().silent_aim_is_targetting = false
+        getgenv().silent_aim_target = nil
         return
     end
     
     local target_position = camera.CFrame.Position + camera.CFrame.LookVector * 100
     local new_target = get_closest_player_to_position(target_position)
     
-    script.locals.silent_aim_is_targetting = new_target and true or false
-    script.locals.silent_aim_target = new_target or nil
+    getgenv().silent_aim_is_targetting = new_target and true or false
+    getgenv().silent_aim_target = new_target or nil
     
-    if script.locals.silent_aim_target and has_character(script.locals.silent_aim_target) then
-        local character = script.locals.silent_aim_target.Character
+    if getgenv().silent_aim_target and has_character(getgenv().silent_aim_target) then
+        local character = getgenv().silent_aim_target.Character
         local base_position = get_target_part_position(character)
         
         local velocity = Vector3.new(0, 0, 0)
@@ -2416,7 +2466,7 @@ RunService.RenderStepped:Connect(function()
         
         local prediction = getgenv().Legitbot.SilentAim.Prediction
         local predicted_position = base_position + (velocity * prediction)
-        script.locals.aim_position = predicted_position
+        getgenv().aim_position = predicted_position
     end
 end)
 
@@ -2425,9 +2475,9 @@ __namecall = hookmetamethod(game, "__namecall", function(self, ...)
     local args = {...}
     local method = tostring(getnamecallmethod())
     
-    if not checkcaller() and script.locals.silent_aim_is_targetting and script.locals.silent_aim_target and self == Workspace and method == "Raycast" then
+    if not checkcaller() and getgenv().silent_aim_is_targetting and getgenv().silent_aim_target and self == Workspace and method == "Raycast" then
         local origin = args[1]
-        args[2] = get_direction(origin, script.locals.aim_position)
+        args[2] = get_direction(origin, getgenv().aim_position)
         return __namecall(self, unpack(args))
     end
     
@@ -2466,8 +2516,7 @@ UI:CreateElement("slider", section_tracers, {name = "lifetime", flag = "legit_tr
 task.spawn(function()
     task.wait(0.1)
     trackGlobalBullets()
-end)
-  
+end) 
 
 local tab_rage = UI:CreateElement("tab", window, {name = "rage"})
 local column1_rage = UI:CreateElement("column", tab_rage, {fill = true})
