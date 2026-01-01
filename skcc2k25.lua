@@ -2335,7 +2335,7 @@ local function trackGlobalBullets()
             if not blt or not blt.Parent then
                 con:Disconnect()
                 if (lsp - stp).Magnitude > 1 then
-                    createLegitTracer(stp, lsp)
+                    createTracer(stp, lsp)
                 end
                 return
             end
@@ -2346,7 +2346,7 @@ local function trackGlobalBullets()
                 if stc > 3 then
                     con:Disconnect()
                     if (cp - stp).Magnitude > 1 then
-                        createLegitTracer(stp, cp)
+                        createTracer(stp, cp)
                     end
                 end
             else
