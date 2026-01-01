@@ -141,11 +141,10 @@ if writefile and not isfile("a/fonts/main_encoded.ttf") then
 end
 
 local AFont = Font.new(getcustomasset and getcustomasset("a/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
---+ label.TextBounds.Xnotif.box == box thenfromRGB(255, 255, 255)},nextNotif.box.Parent = ScreenGui
+--+ label.TextBounds.Xnotif.box == box thenfromRGB(255, 255, 255)},nextNotif.box.Parent = ScreenGui("%.2f", offsetValue).." ", getgenv().CONFIG.Ragebot.HitColor},= offsetX
 local hitNotifications = {}
 local notificationYOffset = 10
 local MAX_VISIBLE_NOTIFICATIONS = 10
-local WAITING_NOTIFICATIONS = {}
 
 local function createHitNotification(toolName, offsetValue, playerName)
     if not getgenv().CONFIG.Ragebot.HitNotify then return end
@@ -154,8 +153,18 @@ local function createHitNotification(toolName, offsetValue, playerName)
     ScreenGui.Name = "HitNotifications"
     ScreenGui.Parent = game:GetService("CoreGui")
     
+    local scrollFrame = ScreenGui:FindFirstChild("NotificationScroll") or Instance.new("ScrollingFrame")
+    scrollFrame.Name = "NotificationScroll"
+    scrollFrame.Parent = ScreenGui
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.Size = UDim2.new(0, 400, 0, 200)
+    scrollFrame.Position = UDim2.new(0, 30, 0, 10)  
+    scrollFrame.ScrollingEnabled = false
+    scrollFrame.CanvasSize = UDim2.new(0, 400, 0, 0)
+    scrollFrame.ScrollBarThickness = 0
+    
     local box = Instance.new("Frame")
-    box.Parent = ScreenGui
+    box.Parent = scrollFrame
     box.BackgroundColor3 = Color3.new(0, 0, 0)
     box.BackgroundTransparency = 0.5
     box.BorderSizePixel = 0
@@ -173,7 +182,7 @@ local function createHitNotification(toolName, offsetValue, playerName)
         {"on via cache", Color3.fromRGB(255, 255, 255)},
     }
     
-    local offsetX = 6
+    local offsetX = 8 
     local totalW, maxH = 0, 0
     
     for _, seg in ipairs(parts) do
@@ -194,40 +203,45 @@ local function createHitNotification(toolName, offsetValue, playerName)
         maxH = math.max(maxH, label.TextBounds.Y)
     end
     
-    box.Size = UDim2.new(0, totalW + 12, 0, maxH + 8)
+    box.Size = UDim2.new(0, totalW + 16, 0, maxH + 8) 
     
-    if #hitNotifications >= MAX_VISIBLE_NOTIFICATIONS then
-        table.insert(WAITING_NOTIFICATIONS, {
-            box = box,
-            toolName = toolName,
-            offsetValue = offsetValue,
-            playerName = playerName,
-            timestamp = tick()
-        })
-        
-        box.Visible = false
-        box.Position = UDim2.new(0, 10, 0, -500)
-        
-        local hiddenFrame = Instance.new("Frame")
-        hiddenFrame.Name = "HiddenFrame"
-        hiddenFrame.Size = UDim2.new(0, 0, 0, 0)
-        hiddenFrame.BackgroundTransparency = 1
-        hiddenFrame.Parent = ScreenGui
-        box.Parent = hiddenFrame
-        
-        return
-    end
+    table.insert(hitNotifications, {box = box, createTime = tick()})
     
-    local notificationIndex = #hitNotifications + 1
-    
-    table.insert(hitNotifications, {box = box, index = notificationIndex})
-    
+    local totalHeight = 0
     for i, notif in ipairs(hitNotifications) do
-        notif.index = i
-        notif.box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((i - 1) * (notif.box.AbsoluteSize.Y + 5)))
+        local yPos = (i - 1) * (notif.box.AbsoluteSize.Y + 5)
+        notif.box.Position = UDim2.new(0, 0, 0, yPos)  
+        totalHeight = totalHeight + notif.box.AbsoluteSize.Y + 5
     end
     
-    box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((notificationIndex - 1) * (maxH + 8 + 5)))
+    scrollFrame.CanvasSize = UDim2.new(0, 400, 0, totalHeight)
+    
+    local function updateScrollFrame()
+        local allFrames = {}
+        for _, notif in ipairs(hitNotifications) do
+            if notif.box and notif.box.Parent then
+                table.insert(allFrames, notif)
+            end
+        end
+        
+        hitNotifications = allFrames
+        
+        local visibleCount = math.min(#hitNotifications, MAX_VISIBLE_NOTIFICATIONS)
+        scrollFrame.CanvasSize = UDim2.new(0, 400, 0, visibleCount * (box.AbsoluteSize.Y + 5))
+        
+        for i, notif in ipairs(hitNotifications) do
+            local yPos = (i - 1) * (notif.box.AbsoluteSize.Y + 5)
+            notif.box.Position = UDim2.new(0, 0, 0, yPos)
+            
+            if i <= MAX_VISIBLE_NOTIFICATIONS then
+                notif.box.Visible = true
+            else
+                notif.box.Visible = false
+            end
+        end
+    end
+    
+    updateScrollFrame()
     
     task.delay(getgenv().CONFIG.Ragebot.HitNotifyDuration, function()
         for i, notif in ipairs(hitNotifications) do
@@ -238,34 +252,7 @@ local function createHitNotification(toolName, offsetValue, playerName)
             end
         end
         
-        for i, notif in ipairs(hitNotifications) do
-            notif.box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((i - 1) * (notif.box.AbsoluteSize.Y + 5)))
-        end
-        
-        if #WAITING_NOTIFICATIONS > 0 and #hitNotifications < MAX_VISIBLE_NOTIFICATIONS then
-            local nextNotif = table.remove(WAITING_NOTIFICATIONS, 1)
-            nextNotif.box.Visible = true
-            nextNotif.box.Parent = ScreenGui
-            
-            local newIndex = #hitNotifications + 1
-            table.insert(hitNotifications, {box = nextNotif.box, index = newIndex})
-            
-            nextNotif.box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((newIndex - 1) * (nextNotif.box.AbsoluteSize.Y + 5)))
-            
-            task.delay(getgenv().CONFIG.Ragebot.HitNotifyDuration, function()
-                for i, notif in ipairs(hitNotifications) do
-                    if notif.box == nextNotif.box then
-                        table.remove(hitNotifications, i)
-                        nextNotif.box:Destroy()
-                        break
-                    end
-                end
-                
-                for i, notif in ipairs(hitNotifications) do
-                    notif.box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((i - 1) * (notif.box.AbsoluteSize.Y + 5)))
-                end
-            end)
-        end
+        updateScrollFrame()
     end)
 end
 local function playHitSound()
@@ -686,8 +673,8 @@ local function shootAtTarget(targetHead)
     createTracer(bestShootPos, hitPosition)
     return true
 end
-
 local lastShotTime = 0
+
 RunService.Heartbeat:Connect(function()
     if not getgenv().CONFIG.Ragebot.Enabled then return end
     if not LocalPlayer.Character then return end
@@ -696,18 +683,19 @@ RunService.Heartbeat:Connect(function()
     local target = getClosestTarget()
     if not target then return end
     
+    local currentTime = tick()
+    local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
+    
     if getgenv().CONFIG.Ragebot.RapidFire then
-        while getgenv().CONFIG.Ragebot.RapidFire and getgenv().CONFIG.Ragebot.Enabled and target do
+        local rapidWaitTime = baseWaitTime * 0.01
+        
+        if currentTime - lastShotTime >= rapidWaitTime then
             shootAtTarget(target)
-            task.wait()
+            lastShotTime = currentTime
         end
     else
-        local currentTime = tick()
-        local waitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
-        if currentTime - lastShotTime >= waitTime then
+        if currentTime - lastShotTime >= baseWaitTime then
             shootAtTarget(target)
-            --wait()
-            --shootAtTarget(target)
             lastShotTime = currentTime
         end
     end
