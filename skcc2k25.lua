@@ -140,10 +140,11 @@ if writefile and not isfile("a/fonts/main_encoded.ttf") then
     writefile("a/fonts/main_encoded.ttf", game:GetService("HttpService"):JSONEncode(font_data))
 end
 
-local AFont = Font.new(getcustomasset and getcustomasset("a/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
-
+local AFont = Font.new(getcustomasset and getcustomasset("a/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular) + label.TextBounds.Xnotif.box == box then
 local hitNotifications = {}
 local notificationYOffset = 10
+local MAX_VISIBLE_NOTIFICATIONS = 10
+local WAITING_NOTIFICATIONS = {}
 
 local function createHitNotification(toolName, offsetValue, playerName)
     if not getgenv().CONFIG.Ragebot.HitNotify then return end
@@ -158,7 +159,6 @@ local function createHitNotification(toolName, offsetValue, playerName)
     box.BackgroundTransparency = 0.5
     box.BorderSizePixel = 0
     box.AnchorPoint = Vector2.new(0, 0)
-    box.Position = UDim2.new(0, 10, 0, -50)
     
     local parts = {
         {"Using ", Color3.fromRGB(255, 255, 255)},
@@ -183,7 +183,7 @@ local function createHitNotification(toolName, offsetValue, playerName)
         label.BorderSizePixel = 0
         label.TextColor3 = col
         label.FontFace = AFont
-        label.TextSize = 10
+        label.TextSize = 15
         label.TextYAlignment = Enum.TextYAlignment.Center
         label.Text = txt
         label.AutomaticSize = Enum.AutomaticSize.XY
@@ -195,8 +195,29 @@ local function createHitNotification(toolName, offsetValue, playerName)
     
     box.Size = UDim2.new(0, totalW + 12, 0, maxH + 8)
     
+    if #hitNotifications >= MAX_VISIBLE_NOTIFICATIONS then
+        table.insert(WAITING_NOTIFICATIONS, {
+            box = box,
+            toolName = toolName,
+            offsetValue = offsetValue,
+            playerName = playerName,
+            timestamp = tick()
+        })
+        
+        box.Visible = false
+        box.Position = UDim2.new(0, 10, 0, -500)
+        
+        local hiddenFrame = Instance.new("Frame")
+        hiddenFrame.Name = "HiddenFrame"
+        hiddenFrame.Size = UDim2.new(0, 0, 0, 0)
+        hiddenFrame.BackgroundTransparency = 1
+        hiddenFrame.Parent = ScreenGui
+        box.Parent = hiddenFrame
+        
+        return
+    end
+    
     local notificationIndex = #hitNotifications + 1
-    local targetY = notificationYOffset + ((notificationIndex - 1) * (maxH + 8 + 5))
     
     table.insert(hitNotifications, {box = box, index = notificationIndex})
     
@@ -205,38 +226,47 @@ local function createHitNotification(toolName, offsetValue, playerName)
         notif.box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((i - 1) * (notif.box.AbsoluteSize.Y + 5)))
     end
     
-    local slideInTween = TweenService:Create(
-        box,
-        TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-        {Position = UDim2.new(0, 10, 0, notificationYOffset + ((notificationIndex - 1) * (maxH + 8 + 5)))}
-    )
-    slideInTween:Play()
+    box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((notificationIndex - 1) * (maxH + 8 + 5)))
     
     task.delay(getgenv().CONFIG.Ragebot.HitNotifyDuration, function()
         for i, notif in ipairs(hitNotifications) do
             if notif.box == box then
                 table.remove(hitNotifications, i)
+                box:Destroy()
                 break
             end
-        end
-        
-        if box then 
-            local slideOutTween = TweenService:Create(
-                box,
-                TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.In),
-                {Position = UDim2.new(0, 10, 0, -50)}
-            )
-            slideOutTween:Play()
-            slideOutTween.Completed:Wait()
-            box:Destroy() 
         end
         
         for i, notif in ipairs(hitNotifications) do
             notif.box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((i - 1) * (notif.box.AbsoluteSize.Y + 5)))
         end
+        
+        if #WAITING_NOTIFICATIONS > 0 and #hitNotifications < MAX_VISIBLE_NOTIFICATIONS then
+            local nextNotif = table.remove(WAITING_NOTIFICATIONS, 1)
+            nextNotif.box.Visible = true
+            nextNotif.box.Parent = ScreenGui
+            
+            local newIndex = #hitNotifications + 1
+            table.insert(hitNotifications, {box = nextNotif.box, index = newIndex})
+            
+            nextNotif.box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((newIndex - 1) * (nextNotif.box.AbsoluteSize.Y + 5)))
+            
+            task.delay(getgenv().CONFIG.Ragebot.HitNotifyDuration, function()
+                for i, notif in ipairs(hitNotifications) do
+                    if notif.box == nextNotif.box then
+                        table.remove(hitNotifications, i)
+                        nextNotif.box:Destroy()
+                        break
+                    end
+                end
+                
+                for i, notif in ipairs(hitNotifications) do
+                    notif.box.Position = UDim2.new(0, 10, 0, notificationYOffset + ((i - 1) * (notif.box.AbsoluteSize.Y + 5)))
+                end
+            end)
+        end
     end)
 end
-
 local function playHitSound()
     if not getgenv().CONFIG.Ragebot.HitSound then return end
     
