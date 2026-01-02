@@ -4737,3 +4737,146 @@ UI:CreateElement("toggle", section_visuals, {name = "rich shader", default = fal
         end
     end
 end})
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Player = Players.LocalPlayer
+local FlyConnection = nil
+local FlyEnabled = false
+local FlySpeed = 50
+
+local QuickUIFrame = Instance.new("Frame")
+QuickUIFrame.Name = "QuickUIFrame"
+QuickUIFrame.Size = UDim2.new(0, 80, 0, 30)
+QuickUIFrame.Position = UDim2.new(0, 10, 0, 50)
+QuickUIFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+QuickUIFrame.BackgroundTransparency = 0.5
+QuickUIFrame.BorderSizePixel = 0
+
+local QuickUIText = Instance.new("TextButton")
+QuickUIText.Name = "QuickUIText"
+QuickUIText.Size = UDim2.new(1, 0, 1, 0)
+QuickUIText.BackgroundTransparency = 1
+QuickUIText.Text = "FLY OFF"
+QuickUIText.TextColor3 = Color3.fromRGB(255, 50, 50)
+QuickUIText.Font = Enum.Font.GothamBold
+QuickUIText.TextSize = 12
+QuickUIText.Parent = QuickUIFrame
+
+local function StartFlying()
+    local Char = Player.Character
+    if not Char then return end
+    
+    local Hum = Char:FindFirstChildOfClass("Humanoid")
+    local Root = Char:FindFirstChild("HumanoidRootPart")
+    if not Hum or not Root then return end
+    
+    local RagdollEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("__RZDONL")
+    RagdollEvent:FireServer("__---r", Vector3.zero, CFrame.new(-4574, 3, -443, 0, 0, 1, 0, 1, 0, -1, 0, 0), false)
+    
+    for _, child in ipairs(Char:GetDescendants()) do
+        if child:IsA("Motor6D") then
+            child.Enabled = false
+        end
+    end
+    
+    Hum.PlatformStand = true
+    Hum:ChangeState(Enum.HumanoidStateType.Freefall)
+    
+    local Head = Char:FindFirstChild("Head")
+    
+    local flyMotors = {}
+    for _, part in ipairs(Char:GetDescendants()) do
+        if part:IsA("BasePart") and part ~= Root then
+            local motor = Instance.new("Motor6D")
+            motor.Name = "FlyMotor"
+            motor.Part0 = Root
+            motor.Part1 = part
+            motor.C1 = CFrame.new()
+            motor.C0 = Root.CFrame:ToObjectSpace(part.CFrame)
+            motor.Parent = part
+            table.insert(flyMotors, motor)
+        end
+    end
+    
+    FlyConnection = RunService.Heartbeat:Connect(function()
+        if not FlyEnabled then
+            if FlyConnection then
+                FlyConnection:Disconnect()
+                FlyConnection = nil
+            end
+            Hum.PlatformStand = false
+            Root.Velocity = Vector3.new(0, 0, 0)
+            Hum:ChangeState(Enum.HumanoidStateType.Running)
+            RagdollEvent:FireServer("__---r", Vector3.zero, CFrame.new(-4574, 3, -443, 0, 0, 1, 0, 1, 0, -1, 0, 0), true)
+            
+            for _, motor in ipairs(flyMotors) do
+                motor:Destroy()
+            end
+            
+            for _, child in ipairs(Char:GetDescendants()) do
+                if child:IsA("Motor6D") and child.Name ~= "FlyMotor" then
+                    child.Enabled = true
+                end
+            end
+            
+            return
+        end
+        
+        if Head then
+            for _, sound in ipairs(Head:GetDescendants()) do
+                if sound:IsA("Sound") then
+                    sound:Destroy()
+                end
+            end
+        end
+        
+        local Cam = workspace.CurrentCamera
+        if not Cam then return end
+        
+        local cameraLook = Cam.CFrame.LookVector
+        local IsMoving = Hum.MoveDirection.Magnitude > 0
+        
+        local targetLook = Vector3.new(cameraLook.X, 0, cameraLook.Z)
+        if targetLook.Magnitude > 0 then
+            targetLook = targetLook.Unit
+            Root.CFrame = CFrame.new(Root.Position, Root.Position + targetLook)
+        end
+        
+        
+        
+        if IsMoving then
+            local moveVector = Vector3.new(cameraLook.X, cameraLook.Y, cameraLook.Z).Unit
+            Root.Velocity = moveVector * FlySpeed
+            RagdollEvent:FireServer("__---r", Vector3.zero, CFrame.new(-4574, 3, -443, 0, 0, 1, 0, 1, 0, -1, 0, 0), false)
+        else
+            Root.Velocity = Vector3.new(0, 0, 0)
+        end
+    end)
+end
+
+QuickUIText.MouseButton1Click:Connect(function()
+    FlyEnabled = not FlyEnabled
+    if FlyEnabled then
+        QuickUIText.Text = "FLY ON"
+        QuickUIText.TextColor3 = Color3.fromRGB(50, 255, 50)
+        StartFlying()
+    else
+        QuickUIText.Text = "FLY OFF"
+        QuickUIText.TextColor3 = Color3.fromRGB(255, 50, 50)
+    end
+end)
+
+QuickUIFrame.Parent = game:GetService("CoreGui"):FindFirstChild("skeet") or game:GetService("CoreGui")
+
+--local section_movement = UI:CreateElement("section", column1_misc, {name = "movement"})
+UI:CreateElement("toggle", section_movement, {name = "fly", flag = "misc_fly", default = false, callback = function(value) 
+    FlyEnabled = value 
+    QuickUIText.Text = value and "FLY ON" or "FLY OFF"
+    QuickUIText.TextColor3 = value and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
+    if value then 
+        StartFlying()
+    end
+end})
+UI:CreateElement("slider", section_movement, {name = "fly speed", flag = "misc_flyspeed", min = 10, max = 200, default = 50, suffix = "", callback = function(value) FlySpeed = value end})
