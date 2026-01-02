@@ -548,14 +548,66 @@ local function wallbang()
     
     if not bestShootPos or not bestHitPos then
         local randomY = math.random(-16, -14)
-        local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
-        local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
+        local bestFallbackScore = math.huge
+        local bestFallbackShootPos = nil
+        local bestFallbackHitPos = nil
         
-        cachedBestPositions.shootPos = fallbackShootPos
-        cachedBestPositions.hitPos = fallbackHitPos
-        cachedBestPositions.target = target
+        for i = 1, 99 do
+            local shootXOffset = math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange)
+            local shootZOffset = math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange)
+            
+            local hitXOffset = math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange)
+            local hitZOffset = math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange)
+            
+            local fallbackShootPos = Vector3.new(startPos.X + shootXOffset, randomY, startPos.Z + shootZOffset)
+            local fallbackHitPos = Vector3.new(targetPos.X + hitXOffset, randomY, targetPos.Z + hitZOffset)
+            
+            local fallbackShootDistance = (fallbackShootPos - startPos).Magnitude
+            local fallbackHitDistance = (fallbackHitPos - targetPos).Magnitude
+            
+            if fallbackShootDistance <= getgenv().CONFIG.Ragebot.ShootRange and 
+               fallbackHitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+                
+                local pathToFallbackShoot = checkClearPath(startPos, fallbackShootPos)
+                local pathToFallbackTarget = checkClearPath(fallbackShootPos, fallbackHitPos)
+                
+                if pathToFallbackShoot and pathToFallbackTarget then
+                    local fallbackShootToHitRay = Workspace:Raycast(fallbackShootPos, (fallbackHitPos - fallbackShootPos).Unit * (fallbackHitPos - fallbackShootPos).Magnitude, raycastParams)
+                    if not fallbackShootToHitRay then
+                        local totalFallbackScore = fallbackShootDistance + fallbackHitDistance
+                        
+                        if totalFallbackScore < bestFallbackScore then
+                            bestFallbackScore = totalFallbackScore
+                            bestFallbackShootPos = fallbackShootPos
+                            bestFallbackHitPos = fallbackHitPos
+                        end
+                    end
+                end
+            end
+        end
         
-        return fallbackShootPos, fallbackHitPos
+        if bestFallbackShootPos and bestFallbackHitPos then
+            cachedBestPositions.shootPos = bestFallbackShootPos
+            cachedBestPositions.hitPos = bestFallbackHitPos
+            cachedBestPositions.target = target
+            
+            return bestFallbackShootPos, bestFallbackHitPos
+        else
+            local clampedShootX = math.clamp(math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange), -getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange)
+            local clampedShootZ = math.clamp(math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange), -getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange)
+            
+            local clampedHitX = math.clamp(math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange), -getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange)
+            local clampedHitZ = math.clamp(math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange), -getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange)
+            
+            local finalFallbackShootPos = Vector3.new(startPos.X + clampedShootX, randomY, startPos.Z + clampedShootZ)
+            local finalFallbackHitPos = Vector3.new(targetPos.X + clampedHitX, randomY, targetPos.Z + clampedHitZ)
+            
+            cachedBestPositions.shootPos = finalFallbackShootPos
+            cachedBestPositions.hitPos = finalFallbackHitPos
+            cachedBestPositions.target = target
+            
+            return finalFallbackShootPos, finalFallbackHitPos
+        end
     end
     
     cachedBestPositions.shootPos = bestShootPos
