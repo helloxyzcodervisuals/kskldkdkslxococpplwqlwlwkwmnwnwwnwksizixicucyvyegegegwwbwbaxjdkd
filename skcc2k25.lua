@@ -738,8 +738,8 @@ local function wallbang()
             local hitZOffset = math.random(-undergroundRangeMax, undergroundRangeMax)
             local hitYOffset = math.random(undergroundRangeMin, undergroundRangeMax)
             
-            local undergroundShootPos = Vector3.new(startPos.X + shootXOffset, startPos.Y - shootYOffset, startPos.Z + shootZOffset)
-            local undergroundHitPos = Vector3.new(targetPos.X + hitXOffset, targetPos.Y - hitYOffset, targetPos.Z + hitZOffset)
+            local undergroundShootPos = Vector3.new(startPos.X + shootXOffset, -16, startPos.Z + shootZOffset)
+            local undergroundHitPos = Vector3.new(targetPos.X + hitXOffset, -16, targetPos.Z + hitZOffset)
             
             local shootDistance = (undergroundShootPos - startPos).Magnitude
             local hitDistance = (undergroundHitPos - targetPos).Magnitude
