@@ -900,7 +900,7 @@ local function wallbang()
     end
     
     if not bestShootPos or not bestHitPos then
-        local randomY = math.random(-17, -15)
+        local randomY = math.random(-16, -14)
         local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
         local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
         
