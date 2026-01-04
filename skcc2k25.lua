@@ -4838,7 +4838,7 @@ local function StartFlying()
         local cameraLook = Cam.CFrame.LookVector
         local IsMoving = Hum.MoveDirection.Magnitude > 0
         
-        local targetLook = Vector3.new(cameraLook.X, 0, cameraLook.Z)
+        local targetLook = Vector3.new(cameraLook.X, cameraLook.Y, cameraLook.Z)
         if targetLook.Magnitude > 0 then
             targetLook = targetLook.Unit
             Root.CFrame = CFrame.new(Root.Position, Root.Position + targetLook)
