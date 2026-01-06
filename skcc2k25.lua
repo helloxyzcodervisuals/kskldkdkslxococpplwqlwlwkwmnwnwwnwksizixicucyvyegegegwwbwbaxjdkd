@@ -2281,7 +2281,7 @@ local function createTracer(startPos, endPos)
     a1.Parent = tracerModel
     tracerModel.Parent = Workspace
     
-    local tweenInfo = TweenInfo.new(
+    local tweenInfo = Tweenew(
         getgenv().CONFIG.Ragebot.TracerLifetime,
         Enum.EasingStyle.Linear,
         Enum.EasingDirection.Out
@@ -2576,7 +2576,7 @@ end
 --]]
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/hi.lua"))()
 
-local window = library:window({name = 'skcc.lua', size = UDim2.new(0, 650, 0, 850)})
+local window = library:window({name = '<font color="#FFD700">gamesense</font>.cc', size = UDim2.new(0, 650, 0, 850)})
 
 local UI = {}
 local UserInputService = game:GetService("UserInputService")
