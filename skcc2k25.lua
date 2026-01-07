@@ -904,11 +904,30 @@ local function wallbang()
         local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
         local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
         
-        cachedBestPositions.shootPos = fallbackShootPos
-        cachedBestPositions.hitPos = fallbackHitPos
-        cachedBestPositions.target = target
+        local pathToShoot = checkClearPath(startPos, fallbackShootPos)
+        local pathToTarget = checkClearPath(fallbackShootPos, fallbackHitPos)
         
-        return fallbackShootPos, fallbackHitPos
+        if pathToShoot and pathToTarget then
+            local shootToHitRay = Workspace:Raycast(fallbackShootPos, (fallbackHitPos - fallbackShootPos).Unit * (fallbackHitPos - fallbackShootPos).Magnitude, raycastParams)
+            
+            if not shootToHitRay then
+                cachedBestPositions.shootPos = fallbackShootPos
+                cachedBestPositions.hitPos = fallbackHitPos
+                cachedBestPositions.target = target
+                
+                return fallbackShootPos, fallbackHitPos
+            else
+                cachedBestPositions.shootPos = nil
+                cachedBestPositions.hitPos = nil
+                cachedBestPositions.target = nil
+                return nil, nil
+            end
+        else
+            cachedBestPositions.shootPos = nil
+            cachedBestPositions.hitPos = nil
+            cachedBestPositions.target = nil
+            return nil, nil
+        end
     end
     
     cachedBestPositions.shootPos = bestShootPos
@@ -1027,7 +1046,7 @@ local function shootAtTarget(targetHead)
 end
 local lastShotTime = 0
 
-RunService.Heartbeat:Connect(function()
+RunService.RenderStepped:Connect(function()
     if not getgenv().CONFIG.Ragebot.Enabled then return end
     if not LocalPlayer.Character then return end
     if not LocalPlayer.Character:FindFirstChild("Head") then return end
@@ -1036,7 +1055,7 @@ RunService.Heartbeat:Connect(function()
     if not target then return end
     
     local currentTime = tick()
-    local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
+    local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 0.5)
     
     if getgenv().CONFIG.Ragebot.RapidFire then
         local rapidWaitTime = baseWaitTime * 0.01
@@ -1052,7 +1071,31 @@ RunService.Heartbeat:Connect(function()
         end
     end
 end)
-
+RunService.Heartbeat:Connect(function()
+    if not getgenv().CONFIG.Ragebot.Enabled then return end
+    if not LocalPlayer.Character then return end
+    if not LocalPlayer.Character:FindFirstChild("Head") then return end
+    
+    local target = getClosestTarget()
+    if not target then return end
+    
+    local currentTime = tick()
+    local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 0.5)
+    
+    if getgenv().CONFIG.Ragebot.RapidFire then
+        local rapidWaitTime = baseWaitTime * 0.01
+        
+        if currentTime - lastShotTime >= rapidWaitTime then
+            shootAtTarget(target)
+            lastShotTime = currentTime
+        end
+    else
+        if currentTime - lastShotTime >= baseWaitTime then
+            shootAtTarget(target)
+            lastShotTime = currentTime
+        end
+    end
+end)
 local fovCircle = Drawing.new("Circle")
 fovCircle.Visible = getgenv().CONFIG.Ragebot.ShowFOV
 fovCircle.Radius = getgenv().CONFIG.Ragebot.FOV
