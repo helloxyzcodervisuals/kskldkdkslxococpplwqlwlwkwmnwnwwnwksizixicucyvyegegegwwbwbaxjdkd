@@ -268,7 +268,7 @@ local function playHitSound()
     
     local sound = Instance.new("Sound")
     sound.SoundId = soundId
-    sound.Volume = 2
+    sound.Volume = 0.75
     sound.Parent = Workspace
     sound:Play()
     
@@ -904,30 +904,11 @@ local function wallbang()
         local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
         local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
         
-        local pathToShoot = checkClearPath(startPos, fallbackShootPos)
-        local pathToTarget = checkClearPath(fallbackShootPos, fallbackHitPos)
+        cachedBestPositions.shootPos = fallbackShootPos
+        cachedBestPositions.hitPos = fallbackHitPos
+        cachedBestPositions.target = target
         
-        if pathToShoot and pathToTarget then
-            local shootToHitRay = Workspace:Raycast(fallbackShootPos, (fallbackHitPos - fallbackShootPos).Unit * (fallbackHitPos - fallbackShootPos).Magnitude, raycastParams)
-            
-            if not shootToHitRay then
-                cachedBestPositions.shootPos = fallbackShootPos
-                cachedBestPositions.hitPos = fallbackHitPos
-                cachedBestPositions.target = target
-                
-                return fallbackShootPos, fallbackHitPos
-            else
-                cachedBestPositions.shootPos = nil
-                cachedBestPositions.hitPos = nil
-                cachedBestPositions.target = nil
-                return nil, nil
-            end
-        else
-            cachedBestPositions.shootPos = nil
-            cachedBestPositions.hitPos = nil
-            cachedBestPositions.target = nil
-            return nil, nil
-        end
+        return fallbackShootPos, fallbackHitPos
     end
     
     cachedBestPositions.shootPos = bestShootPos
@@ -936,6 +917,7 @@ local function wallbang()
     
     return bestShootPos, bestHitPos
 end
+
 local function createTracer(startPos, endPos)
     if not getgenv().CONFIG.Ragebot.Tracers then return end
     
@@ -1055,8 +1037,8 @@ RunService.RenderStepped:Connect(function()
     if not target then return end
     
     local currentTime = tick()
-    local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 0.5)
-    
+    local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 0.05)
+    local WaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
     if getgenv().CONFIG.Ragebot.RapidFire then
         local rapidWaitTime = baseWaitTime * 0.01
         
@@ -1065,32 +1047,7 @@ RunService.RenderStepped:Connect(function()
             lastShotTime = currentTime
         end
     else
-        if currentTime - lastShotTime >= baseWaitTime then
-            shootAtTarget(target)
-            lastShotTime = currentTime
-        end
-    end
-end)
-RunService.Heartbeat:Connect(function()
-    if not getgenv().CONFIG.Ragebot.Enabled then return end
-    if not LocalPlayer.Character then return end
-    if not LocalPlayer.Character:FindFirstChild("Head") then return end
-    
-    local target = getClosestTarget()
-    if not target then return end
-    
-    local currentTime = tick()
-    local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 0.5)
-    
-    if getgenv().CONFIG.Ragebot.RapidFire then
-        local rapidWaitTime = baseWaitTime * 0.01
-        
-        if currentTime - lastShotTime >= rapidWaitTime then
-            shootAtTarget(target)
-            lastShotTime = currentTime
-        end
-    else
-        if currentTime - lastShotTime >= baseWaitTime then
+        if currentTime - lastShotTime >= WaitTime then
             shootAtTarget(target)
             lastShotTime = currentTime
         end
