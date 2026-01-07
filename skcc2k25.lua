@@ -268,11 +268,11 @@ local function playHitSound()
     
     local sound = Instance.new("Sound")
     sound.SoundId = soundId
-    sound.Volume = 0.5
+    sound.Volume = 2
     sound.Parent = Workspace
     sound:Play()
     
-    game:GetService("Debris"):AddItem(sound, 3)
+    game:GetService("Debris"):AddItem(sound, 0.75)
 end
 
 local function getCurrentTool()
@@ -1019,7 +1019,7 @@ local function shootAtTarget(targetHead)
         ZFKLF__H:FireServer(unpack(args2))
     end)()
 
-    ammo.Value = math.max(ammo.Value - 1, 0)
+    --ammo.Value = math.max(ammo.Value - 1, 0)
     hitMarker:Fire(targetHead)
     storedAmmo.Value = storedAmmo.Value
     createTracer(bestShootPos, hitPosition)
