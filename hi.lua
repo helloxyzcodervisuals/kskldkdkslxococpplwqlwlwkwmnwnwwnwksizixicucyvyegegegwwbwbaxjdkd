@@ -2593,137 +2593,7 @@ function library:addToggle(options)
     return setmetatable(cfg, library)
 end
 --]]
-function library:addToggle(options) 
-    local cfg = {
-        enabled = options.enabled or false,
-        name = options.name or "Toggle",
-        flag = options.flag or tostring(random(1,9999999)),
-        default = options.default or false,
-        folding = options.folding or false, 
-        callback = options.callback or function() end,
-    }
 
-    local toggle = self:create("TextLabel", {
-        Parent = self.background or self.elements,
-        FontFace = library.font,
-        TextColor3 = rgb(151, 151, 151),
-        BorderColor3 = rgb(0, 0, 0),
-        Text = "",
-        ZIndex = 2,
-        Size = dim2(1, -8, 0, 12),
-        BorderSizePixel = 0,
-        BackgroundTransparency = 1,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        AutomaticSize = Enum.AutomaticSize.Y,
-        TextYAlignment = Enum.TextYAlignment.Top,
-        TextSize = 11,
-        BackgroundColor3 = rgb(255, 255, 255)
-    })
-    
-    local left_components = self:create("Frame", {
-        Parent = toggle,
-        BackgroundTransparency = 1,
-        Position = dim2(0, 3, 0, 1),
-        BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(0, 0, 0, 14),
-        BorderSizePixel = 0,
-        BackgroundColor3 = rgb(255, 255, 255)
-    })
-    
-    self:create("UIListLayout", {
-        Parent = left_components,
-        Padding = dim(0, 5),
-        FillDirection = Enum.FillDirection.Horizontal
-    })
-    
-    local toggle_box = self:create("TextButton", {
-        Parent = left_components,
-        Text = "",
-        Position = dim2(0, 0, 0, 2),
-        BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(0, 8, 0, 8),
-        BorderSizePixel = 0,
-        BackgroundColor3 = rgb(25, 25, 25),
-        LayoutOrder = -1,
-        AutoButtonColor = false
-    })
-    
-    local toggle_inner = self:create("Frame", {
-        Parent = toggle_box,
-        Position = dim2(0, 1, 0, 1),
-        BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, -2, 1, -2),
-        BorderSizePixel = 0,
-        BackgroundColor3 = rgb(45, 45, 45)
-    })
-    
-    local toggle_bg = self:create("Frame", {
-        Parent = toggle_inner,
-        Position = dim2(0, 1, 0, 1),
-        BorderColor3 = rgb(0, 0, 0),
-        Size = dim2(1, -2, 1, -2),
-        BorderSizePixel = 0,
-        BackgroundColor3 = cfg.default and themes.preset.accent or rgb(15, 15, 15)
-    }); self:applyTheme(toggle_bg, "accent", "BackgroundColor3")
-    
-    local text = self:create("TextButton", {
-        Parent = left_components,
-        FontFace = library.font,
-        TextColor3 = rgb(180, 180, 180),
-        BorderColor3 = rgb(0, 0, 0),
-        Text = cfg.name,
-        BackgroundTransparency = 1,
-        Size = dim2(0, 0, 1, -1),
-        BorderSizePixel = 0,
-        AutomaticSize = Enum.AutomaticSize.X,
-        TextSize = 12,
-        BackgroundColor3 = rgb(255, 255, 255)
-    })
-
-    cfg.background = self:create("Frame", {
-        Parent = toggle,
-        Visible = cfg.folding and cfg.default,
-        BorderColor3 = rgb(0, 0, 0),
-        LayoutOrder = 99,
-        Position = dim2(0, 0, 0, 15),
-        Size = dim2(1, self.background and 2 or -6, 0, 0),
-        BorderSizePixel = 0,
-        AutomaticSize = Enum.AutomaticSize.Y,
-        BackgroundColor3 = rgb(13, 13, 13)
-    })
-
-    self:create("UIListLayout", {
-        Parent = cfg.background,
-        Padding = dim(0, 3),
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        FillDirection = Enum.FillDirection.Vertical
-    })
-
-    function cfg.set(bool) 
-        cfg.enabled = bool
-        toggle_bg.BackgroundColor3 = bool and themes.preset.accent or rgb(15, 15, 15)
-        cfg.callback(bool)
-
-        flags[cfg.flag] = bool
-
-        if cfg.folding then 
-            cfg.background.Visible = bool
-        end 
-    end 
-
-    cfg.set(cfg.default)
-
-    config_flags[cfg.flag] = cfg.set
-
-    local function onToggleClick()
-        cfg.set(not cfg.enabled)
-    end
-
-    toggle_box.MouseButton1Click:Connect(onToggleClick)
-    text.MouseButton1Click:Connect(onToggleClick)
-
-    return setmetatable(cfg, library)
-end
 --[[
 function library:addDropdown(options) 
     local cfg = {
@@ -3113,6 +2983,7 @@ function library:addDropdown(options)
     return setmetatable(cfg, library)
 end
 --]]
+
 function library:addList(options) 
     local cfg = {
         name = options.name or nil,
@@ -4766,6 +4637,151 @@ function library:addTextbox(options)
             textbox.Text = cfg.value
         end
     end)
+
+    return setmetatable(cfg, library)
+end
+function library:addToggle(options) 
+    local cfg = {
+        enabled = options.enabled or false,
+        name = options.name or "Toggle",
+        flag = options.flag or tostring(random(1,9999999)),
+        default = options.default or false,
+        folding = options.folding or false, 
+        callback = options.callback or function() end,
+    }
+
+    local toggle = self:create("TextLabel", {
+        Parent = self.background or self.elements,
+        FontFace = library.font,
+        TextColor3 = rgb(151, 151, 151),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = "",
+        ZIndex = 2,
+        Size = dim2(1, -8, 0, 12),
+        BorderSizePixel = 0,
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        TextYAlignment = Enum.TextYAlignment.Top,
+        TextSize = 11,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    local left_components = self:create("Frame", {
+        Parent = toggle,
+        BackgroundTransparency = 1,
+        Position = dim2(0, 3, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, 0, 0, 14),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+    
+    self:create("UIListLayout", {
+        Parent = left_components,
+        Padding = dim(0, 5),
+        FillDirection = Enum.FillDirection.Horizontal
+    })
+    
+    local toggle_box = self:create("TextButton", {
+        Parent = left_components,
+        Text = "",
+        Position = dim2(0, 0, 0, 2),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(0, 8, 0, 8),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(25, 25, 25),
+        LayoutOrder = -1,
+        AutoButtonColor = false
+    })
+    
+    local toggle_inner = self:create("Frame", {
+        Parent = toggle_box,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = rgb(45, 45, 45)
+    })
+    
+    local toggle_bg = self:create("Frame", {
+        Parent = toggle_inner,
+        Position = dim2(0, 1, 0, 1),
+        BorderColor3 = rgb(0, 0, 0),
+        Size = dim2(1, -2, 1, -2),
+        BorderSizePixel = 0,
+        BackgroundColor3 = cfg.default and themes.preset.accent or rgb(15, 15, 15)
+    }); self:applyTheme(toggle_bg, "accent", "BackgroundColor3")
+    
+    local text = self:create("TextButton", {
+        Parent = left_components,
+        FontFace = library.font,
+        TextColor3 = rgb(180, 180, 180),
+        BorderColor3 = rgb(0, 0, 0),
+        Text = cfg.name,
+        BackgroundTransparency = 1,
+        Size = dim2(0, 0, 1, -1),
+        BorderSizePixel = 0,
+        AutomaticSize = Enum.AutomaticSize.X,
+        TextSize = 12,
+        BackgroundColor3 = rgb(255, 255, 255)
+    })
+
+    cfg.background = self:create("Frame", {
+        Parent = toggle,
+        Visible = cfg.folding and cfg.default,
+        BorderColor3 = rgb(0, 0, 0),
+        LayoutOrder = 99,
+        Position = dim2(0, 0, 0, 15),
+        Size = dim2(1, self.background and 2 or -6, 0, 0),
+        BorderSizePixel = 0,
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundColor3 = rgb(13, 13, 13)
+    })
+    
+    
+    local shadowGradient = Instance.new("UIGradient")
+    shadowGradient.Parent = cfg.background
+    shadowGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+    }
+    shadowGradient.Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0, 0.6),
+        NumberSequenceKeypoint.new(0.5, 0.8),
+        NumberSequenceKeypoint.new(1, 0.9)
+    }
+    shadowGradient.Rotation = 90
+
+    self:create("UIListLayout", {
+        Parent = cfg.background,
+        Padding = dim(0, 3),
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        FillDirection = Enum.FillDirection.Vertical
+    })
+
+    function cfg.set(bool) 
+        cfg.enabled = bool
+        toggle_bg.BackgroundColor3 = bool and themes.preset.accent or rgb(15, 15, 15)
+        cfg.callback(bool)
+
+        flags[cfg.flag] = bool
+
+        if cfg.folding then 
+            cfg.background.Visible = bool
+        end 
+    end 
+
+    cfg.set(cfg.default)
+
+    config_flags[cfg.flag] = cfg.set
+
+    local function onToggleClick()
+        cfg.set(not cfg.enabled)
+    end
+
+    toggle_box.MouseButton1Click:Connect(onToggleClick)
+    text.MouseButton1Click:Connect(onToggleClick)
 
     return setmetatable(cfg, library)
 end
