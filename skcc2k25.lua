@@ -144,8 +144,8 @@ end
 local AFont = Font.new(getcustomasset and getcustomasset("a/fonts/main_encoded.ttf") or Enum.Font.Gotham, Enum.FontWeight.Regular)
 --+ label.TextBounds.Xnotif.box == box thenfromRGB(255, 255, 255)},nextNotif.box.Parent = ScreenGui("%.2f", offsetValue).." ", getgenv().CONFIG.Ragebot.HitColor},= offsetX
 local hitNotifications = {}
-local notificationYOffset = 10
-local MAX_VISIBLE_NOTIFICATIONS = 10
+local notificationYOffset = 5
+local MAX_VISIBLE_NOTIFICATIONS = 15
 
 local function createHitNotification(toolName, offsetValue, playerName)
     if not getgenv().CONFIG.Ragebot.HitNotify then return end
@@ -167,7 +167,7 @@ local function createHitNotification(toolName, offsetValue, playerName)
     local box = Instance.new("Frame")
     box.Parent = scrollFrame
     box.BackgroundColor3 = Color3.new(0, 0, 0)
-    box.BackgroundTransparency = 0.5
+    box.BackgroundTransparency = 1
     box.BorderSizePixel = 0
     box.AnchorPoint = Vector2.new(0, 0)
     
