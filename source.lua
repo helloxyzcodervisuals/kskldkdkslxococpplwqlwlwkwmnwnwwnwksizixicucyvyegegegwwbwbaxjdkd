@@ -2125,20 +2125,20 @@ function library:Load(opts)
                 end
 
                 hueFrame.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.Touch then
                         slidingHue = true
                         updateHue(input)
                     end
                 end)
 
                 hueFrame.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.Touch then
                         slidingHue = false
                     end
                 end)
 
                 inputService.InputChanged:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    if input.UserInputType == Enum.UserInputType.MouseMovement and input.UserInputType == Enum.UserInputType.Touch then
                         if slidingHue then
                             updateHue(input)
                         end
@@ -2172,20 +2172,20 @@ function library:Load(opts)
                 end
 
                 saturation.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.Touch then
                         slidingSaturation = true
                         updateSatVal(input)
                     end
                 end)
 
                 saturation.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.Touch then
                         slidingSaturation = false
                     end
                 end)
 
                 inputService.InputChanged:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseMovement then
+                    if input.UserInputType == Enum.UserInputType.MouseMovement and input.UserInputType == Enum.UserInputType.Touch then
                         if slidingSaturation then
                             updateSatVal(input)
                         end
