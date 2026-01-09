@@ -916,15 +916,34 @@ local function wallbang()
     end
     
     if not bestShootPos or not bestHitPos then
-        local randomY = math.random(-16, -14)
-        local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
-        local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
+        for attempt = 1, 10 do
+            local randomY = math.random(-16, -14)
+            local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
+            local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
+            
+            local pathToFallbackShoot = checkClearPath(startPos, fallbackShootPos)
+            local pathFromShootToHit = checkClearPath(fallbackShootPos, fallbackHitPos)
+            
+            if pathToFallbackShoot and pathFromShootToHit then
+                local fallbackRay = Workspace:Raycast(fallbackShootPos, (fallbackHitPos - fallbackShootPos).Unit * (fallbackHitPos - fallbackShootPos).Magnitude, raycastParams)
+                if not fallbackRay then
+                    cachedBestPositions.shootPos = fallbackShootPos
+                    cachedBestPositions.hitPos = fallbackHitPos
+                    cachedBestPositions.target = target
+                    return fallbackShootPos, fallbackHitPos
+                end
+            end
+            
+            local offsetX = math.random(-3, 3)
+            local offsetZ = math.random(-3, 3)
+            fallbackShootPos = Vector3.new(startPos.X + offsetX, randomY, startPos.Z + offsetZ)
+            fallbackHitPos = Vector3.new(targetPos.X + offsetX, randomY, targetPos.Z + offsetZ)
+        end
         
-        cachedBestPositions.shootPos = fallbackShootPos
-        cachedBestPositions.hitPos = fallbackHitPos
-        cachedBestPositions.target = target
-        
-        return fallbackShootPos, fallbackHitPos
+        cachedBestPositions.shootPos = nil
+        cachedBestPositions.hitPos = nil
+        cachedBestPositions.target = nil
+        return nil, nil
     end
     
     cachedBestPositions.shootPos = bestShootPos
@@ -933,7 +952,6 @@ local function wallbang()
     
     return bestShootPos, bestHitPos
 end
-
 local function createTracer(startPos, endPos)
     if not getgenv().CONFIG.Ragebot.Tracers then return end
     
