@@ -513,14 +513,6 @@ miscColumn1:Slider({Name = "Jump Power Value", Min = 50, Max = 300, Default = 10
     getgenv().CONFIG.Misc.JumpPowerValue = value
 end})
 
-miscColumn1:Toggle({Name = "Fly", Flag = "misc_fly", callback = function(bool)
-    getgenv().CONFIG.Misc.FlyEnabled = bool
-    QuickUIText.Text = bool and "FLY ON" or "FLY OFF"
-    QuickUIText.TextColor3 = bool and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
-    if bool then 
-        StartFlying()
-    end
-end})
 
 miscColumn1:Slider({Name = "Fly Speed", Min = 10, Max = 200, Default = 50, Flag = "misc_flyspeed", callback = function(value)
     getgenv().CONFIG.Misc.FlySpeed = value
@@ -950,7 +942,14 @@ QuickUIText.MouseButton1Click:Connect(function()
 end)
 
 QuickUIFrame.Parent = game:GetService("CoreGui"):FindFirstChild("skeet") or game:GetService("CoreGui")
-
+miscColumn1:Toggle({Name = "Fly", Flag = "misc_fly", callback = function(bool)
+    getgenv().CONFIG.Misc.FlyEnabled = bool
+    QuickUIText.Text = bool and "FLY ON" or "FLY OFF"
+    QuickUIText.TextColor3 = bool and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
+    if bool then 
+        StartFlying()
+    end
+end})
 local visualizeTab = main:Tab("Visualize")
 local vizColumn1 = visualizeTab:Section({Name = "ESP Settings", column = 1})
 local vizColumn2 = visualizeTab:Section({Name = "Fade Settings", column = 1})
