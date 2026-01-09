@@ -1285,7 +1285,7 @@ QuickUIText.MouseButton1Click:Connect(function()
     end
 end)
 
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/vozoid/ui-libraries/main/venus/source.lua", true))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/source.lua"))()
 
 local main = library:Load({Name = "SKCC.LUA", Theme = "Dark", SizeX = 440, SizeY = 480, ColorOverrides = {}})
 
