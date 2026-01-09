@@ -64,7 +64,9 @@ getgenv().CONFIG = {
         UseWhitelist = false,
         HitNotifyDuration = 5,
         LowHealthCheck = false,
-        SelectedHitSound = "skeet"
+        SelectedHitSound = "skeet",
+        FriendCheck = false,
+        MaxTarget = 0
     },
     Misc = {
         SpeedEnabled = false,
@@ -369,9 +371,14 @@ end
 local function getClosestTarget()
     local closest = nil
     local shortestDistance = math.huge
+    local targetCount = 0
     
     for _, player in pairs(Players:GetPlayers()) do
         if player == LocalPlayer then continue end
+        
+        if getgenv().CONFIG.Ragebot.FriendCheck and LocalPlayer:IsFriendsWith(player.UserId) then
+            continue
+        end
         
         if getgenv().CONFIG.Ragebot.UseWhitelist and table.find(getgenv().Lists.Whitelist, player.Name) then
             continue
@@ -402,6 +409,14 @@ local function getClosestTarget()
                 if getgenv().CONFIG.Ragebot.LowHealthCheck and humanoid.Health < 15 then continue end
                 
                 local distance = (head.Position - LocalPlayer.Character.Head.Position).Magnitude
+                
+                if getgenv().CONFIG.Ragebot.MaxTarget > 0 then
+                    targetCount = targetCount + 1
+                    if targetCount > getgenv().CONFIG.Ragebot.MaxTarget then
+                        break
+                    end
+                end
+                
                 if distance < shortestDistance then
                     if canSeeTarget(head) then
                         closest = head
@@ -3091,7 +3106,7 @@ UI:CreateElement("toggle", section_rage_left, {name = "enable", flag = "rage_ena
 UI:CreateElement("toggle", section_rage_left, {name = "rapid fire", flag = "rage_rapidfire", default = false, callback = function(value) getgenv().CONFIG.Ragebot.RapidFire = value end})
 UI:CreateElement("toggle", section_rage_left, {name = "hit sound", flag = "rage_hitsound", default = true, callback = function(value) getgenv().CONFIG.Ragebot.HitSound = value end})
 UI:CreateElement("toggle", section_rage_left, {name = "auto reload", flag = "rage_autoreload", default = true, callback = function(value) getgenv().CONFIG.Ragebot.AutoReload = value end})
-UI:CreateElement("slider", section_rage_left, {name = "fire rate", flag = "rage_firerate", min = 1, max = 1000, default = 30, suffix = "", callback = function(value) getgenv().CONFIG.Ragebot.FireRate = value end})
+UI:CreateElement("slider", section_rage_left, {name = "fire rate", flag = "rage_firerate", min = 1, max = 1000, default = 30, suffix = " RPS", callback = function(value) getgenv().CONFIG.Ragebot.FireRate = value end})
 UI:CreateElement("slider", section_rage_left, {name = "shoot range", flag = "rage_shootrange", min = 1, max = 30, default = 15, suffix = "", callback = function(value) getgenv().CONFIG.Ragebot.ShootRange = value end})
 UI:CreateElement("slider", section_rage_left, {name = "hit range", flag = "rage_hitrange", min = 1, max = 30, default = 15, suffix = "", callback = function(value) getgenv().CONFIG.Ragebot.HitRange = value end})
 UI:CreateElement("list", section_rage_left, {name = "hit sound", flag = "rage_hitsoundlist", items = {"skeet", "xp level", "bell"}, default = "skeet", callback = function(value) getgenv().CONFIG.Ragebot.SelectedHitSound = value end})
@@ -3103,15 +3118,16 @@ UI:CreateElement("toggle", section_targeting, {name = "wallbang", flag = "rage_w
 UI:CreateElement("slider", section_targeting, {name = "fov", flag = "rage_fov", min = 10, max = 360, default = 120, suffix = "", callback = function(value) getgenv().CONFIG.Ragebot.FOV = value end})
 UI:CreateElement("toggle", section_targeting, {name = "show fov", flag = "rage_showfov", default = true, callback = function(value) getgenv().CONFIG.Ragebot.ShowFOV = value end})
 UI:CreateElement("toggle", section_targeting, {name = "downed check", flag = "rage_downcheck", default = false, callback = function(value) getgenv().CONFIG.Ragebot.LowHealthCheck = value end})
-
+UI:CreateElement("toggle", section_targeting, {name = "friend check", flag = "rage_friendcheck", default = false, callback = function(value) getgenv().CONFIG.Ragebot.FriendCheck = value end})
+UI:CreateElement("slider", section_targeting, {name = "max target", flag = "rage_maxtarget", min = 0, max = 20, default = 1, suffix = " players", callback = function(value) getgenv().CONFIG.Ragebot.MaxTarget = value end})
 local section_combat_left = UI:CreateElement("section", column1_rage, {name = "aim settings"})
 UI:CreateElement("toggle", section_combat_left, {name = "prediction", flag = "rage_prediction", default = true, callback = function(value) getgenv().CONFIG.Ragebot.Prediction = value end})
 UI:CreateElement("slider", section_combat_left, {name = "prediction amount", flag = "rage_predictionamount", min = 0.05, max = 0.3, default = 0.12, suffix = "", callback = function(value) getgenv().CONFIG.Ragebot.PredictionAmount = value end})
 
 local section_visuals_left = UI:CreateElement("section", column1_rage, {name = "tracers"})
 UI:CreateElement("toggle", section_visuals_left, {name = "tracers", flag = "rage_tracers", default = true, callback = function(value) getgenv().CONFIG.Ragebot.Tracers = value end})
-UI:CreateElement("slider", section_visuals_left, {name = "tracer width", flag = "rage_tracerwidth", min = 0.1, max = 5, default = 1, suffix = "", callback = function(value) getgenv().CONFIG.Ragebot.TracerWidth = value end})
-UI:CreateElement("slider", section_visuals_left, {name = "tracer lifetime", flag = "rage_tracerlife", min = 0.5, max = 10, default = 3, suffix = "", callback = function(value) getgenv().CONFIG.Ragebot.TracerLifetime = value end})
+UI:CreateElement("slider", section_visuals_left, {name = "tracer width", flag = "rage_tracerwidth", min = 0.1, max = 5, default = 1, suffix = "witdh", callback = function(value) getgenv().CONFIG.Ragebot.TracerWidth = value end})
+UI:CreateElement("slider", section_visuals_left, {name = "tracer lifetime", flag = "rage_tracerlife", min = 0.5, max = 100, default = 3, suffix = "time", callback = function(value) getgenv().CONFIG.Ragebot.TracerLifetime = value end})
 
 local section_visuals_right = UI:CreateElement("section", column2_rage, {name = "colors"})
 UI:CreateElement("colorpicker", section_visuals_right, {name = "tracer color", flag = "rage_tracercolor", default = Color3.fromRGB(255, 0, 0), callback = function(value) getgenv().CONFIG.Ragebot.TracerColor = value end})
