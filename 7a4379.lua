@@ -115,7 +115,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/GhostDuckyy/UI-Libraries/refs/heads/main/Venus/source.lua", true))()
+local library = loadstring(game:HttpGet(https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/source.lua", true))()
 
 local main = library:Load({Name = "SKCC.LUA", Theme = "Dark", SizeX = 540, SizeY = 600, ColorOverrides = {}})
 
