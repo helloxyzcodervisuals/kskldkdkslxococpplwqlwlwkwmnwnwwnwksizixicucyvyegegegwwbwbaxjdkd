@@ -817,7 +817,7 @@ function library:Load(opts)
                 end
 
                 slider.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 input.UserInputType == Enum.UserInputType.Touch then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.Touch then
                         sliding = true
                         utility.tween(fill, {0.2}, {BackgroundColor3 = theme.SliderFillSliding})
                         slide(input)
@@ -825,7 +825,7 @@ function library:Load(opts)
                 end)
 
                 slider.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 input.UserInputType == Enum.UserInputType.Touch then
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 and input.UserInputType == Enum.UserInputType.Touch then
                         utility.tween(fill, {0.2}, {BackgroundColor3 = theme.SliderFill})
                         sliding = false
                         if not mouseOver then
@@ -847,7 +847,7 @@ function library:Load(opts)
                 end)
 
                 inputService.InputChanged:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseMovement input.UserInputType == Enum.UserInputType.Touch then
+                    if input.UserInputType == Enum.UserInputType.MouseMovement and input.UserInputType == Enum.UserInputType.Touch then
                         if sliding then
                             slide(input)
                         end
