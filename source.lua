@@ -126,25 +126,42 @@ function utility.ripple(obj)
 end
 
 function utility.drag(obj)
-    local start, objPosition, dragging
+    local start, objPosition, dragging, withinBounds
 
     obj.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            start = input.Position
-            objPosition = obj.Position
+            local mousePos = input.Position
+            local objScreenPos = obj.AbsolutePosition
+            local objSize = obj.AbsoluteSize
+            
+            if mousePos.X >= objScreenPos.X and mousePos.X <= objScreenPos.X + objSize.X and
+               mousePos.Y >= objScreenPos.Y and mousePos.Y <= objScreenPos.Y + objSize.Y then
+                
+                withinBounds = true
+                dragging = true
+                start = input.Position
+                objPosition = obj.Position
+            else
+                withinBounds = false
+            end
         end
     end)
 
-    obj.InputEnded:Connect(function(input )
+    obj.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
             dragging = false
+            withinBounds = false
         end
     end)
 
-    inputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging or input.UserInputType == Enum.UserInputType.Touch then   
-            utility.tween(obj, {library.dragSpeed}, {Position = UDim2.new(objPosition.X.Scale, objPosition.X.Offset + (input.Position - start).X, objPosition.Y.Scale, objPosition.Y.Offset + (input.Position - start).Y)})
+    obj.InputChanged:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) and dragging and withinBounds then
+            utility.tween(obj, {library.dragSpeed}, {Position = UDim2.new(
+                objPosition.X.Scale, 
+                objPosition.X.Offset + (input.Position - start).X,
+                objPosition.Y.Scale, 
+                objPosition.Y.Offset + (input.Position - start).Y
+            )})
         end
     end)
 end
