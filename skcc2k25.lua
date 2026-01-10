@@ -810,6 +810,7 @@ local function wallbang()
     return bestShootPos, bestHitPos
 end
 --]]
+
 local cachedBestPositions = {
     shootPos = nil,
     hitPos = nil,
@@ -920,20 +921,11 @@ local function wallbang()
         local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
         local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
         
-        if checkClearPath(startPos, fallbackShootPos) and checkClearPath(fallbackShootPos, fallbackHitPos) then
-            local fallbackRay = Workspace:Raycast(fallbackShootPos, (fallbackHitPos - fallbackShootPos).Unit * (fallbackHitPos - fallbackShootPos).Magnitude, raycastParams)
-            if not fallbackRay then
-                cachedBestPositions.shootPos = fallbackShootPos
-                cachedBestPositions.hitPos = fallbackHitPos
-                cachedBestPositions.target = target
-                return fallbackShootPos, fallbackHitPos
-            end
-        end
+        cachedBestPositions.shootPos = fallbackShootPos
+        cachedBestPositions.hitPos = fallbackHitPos
+        cachedBestPositions.target = target
         
-        cachedBestPositions.shootPos = nil
-        cachedBestPositions.hitPos = nil
-        cachedBestPositions.target = nil
-        return nil, nil
+        return fallbackShootPos, fallbackHitPos
     end
     
     cachedBestPositions.shootPos = bestShootPos
