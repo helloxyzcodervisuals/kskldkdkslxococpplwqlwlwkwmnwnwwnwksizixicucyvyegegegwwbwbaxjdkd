@@ -6167,5 +6167,680 @@ end)
 
 ]]
 --]]
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/example/specter/main/library.lua"))()
 
---[file content end]
+repeat task.wait() until game:IsLoaded()
+
+do
+    local function isAdonisAC(tab)
+        return rawget(tab, "Detected")
+            and typeof(rawget(tab, "Detected")) == "function"
+            and rawget(tab, "RLocked")
+    end
+
+    for _, v in next, getgc(true) do
+        if typeof(v) == "table" and isAdonisAC(v) then
+            for i, f in next, v do
+                if rawequal(i, "Detected") then
+                    local old
+                    old = hookfunction(f, function(action, info, crash)
+                        if rawequal(action, "_") and rawequal(info, "_") and rawequal(crash, false) then
+                            return old(action, info, crash)
+                        end
+                        return task.wait(9e9)
+                    end)
+                    warn("Adonis AC Bypassed")
+                    break
+                end
+            end
+        end
+    end
+    
+    for _, v in pairs(getgc(true)) do
+        if type(v) == "table" then
+            local func = rawget(v, "DTXC1")
+            if type(func) == "function" then
+                hookfunction(func, function() return end)
+                break
+            end
+        end
+    end
+    print("Anti-Cheat Bypassed")
+end
+
+getgenv().CONFIG = {
+    Ragebot = {
+        Enabled = false,
+        RapidFire = false,
+        FireRate = 30,
+        Prediction = true,
+        PredictionAmount = 0.12,
+        TeamCheck = false,
+        VisibilityCheck = true,
+        FOV = 120,
+        ShowFOV = true,
+        Wallbang = true,
+        Tracers = true,
+        TracerColor = Color3.fromRGB(255, 0, 0),
+        TracerWidth = 1,
+        TracerLifetime = 3,
+        ShootRange = 15,
+        HitRange = 15,
+        HitNotify = true,
+        AutoReload = true,
+        HitSound = true,
+        HitColor = Color3.fromRGB(255, 182, 193),
+        UseTargetList = false,
+        UseWhitelist = false,
+        HitNotifyDuration = 5,
+        LowHealthCheck = false,
+        SelectedHitSound = "skeet"
+    },
+    Misc = {
+        SpeedEnabled = false,
+        SpeedValue = 50,
+        JumpPowerEnabled = false,
+        JumpPowerValue = 100,
+        LoopFOVEnabled = false,
+        HideHeadEnabled = false,
+        InfStaminaEnabled = false,
+        NoFallDmgEnabled = false,
+        FlyEnabled = false,
+        FlySpeed = 50,
+        SpeedConnection = nil,
+        FOVConnection = nil,
+        JumpPowerConnection = nil,
+        NoFallHook = nil,
+        InfStaminaHook = nil
+    },
+    Visualize = {
+        ESP = {
+            Enabled = false,
+            BoxColor = Color3.fromRGB(78, 150, 50),
+            OutlineColor = Color3.fromRGB(78, 150, 50),
+            TextColor = Color3.fromRGB(255, 255, 255),
+            MaxDistance = 1000
+        },
+        ForcefieldColor = Color3.fromRGB(255, 255, 255),
+        ForcefieldTransparency = 0.5,
+        LocalForcefieldEnabled = false,
+        ArrowEnabled = false,
+        ArrowColor = Color3.fromRGB(255, 255, 255),
+        ArrowDistance = 80,
+        ArrowSize = 16,
+        ArrowThickness = 1,
+        ArrowAA = false
+    },
+    Legitbot = {
+        Enabled = false,
+        SilentAim = {
+            Enabled = false,
+            FOV = 100,
+            TeamCheck = true,
+            HitPart = "Torso",
+            HeadChance = 30,
+            Prediction = 0.165
+        },
+        Tracers = {
+            Enabled = true,
+            Color = Color3.fromRGB(255, 50, 50),
+            Width = 0.3,
+            Brightness = 2,
+            LightEmission = 1,
+            Lifetime = 0.5
+        }
+    },
+    GunMod = {
+        NoRecoil = true,
+        NoSpread = true,
+        NoEquipTime = true
+    }
+}
+
+getgenv().Lists = {
+    TargetList = {},
+    Whitelist = {}
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Arrow = {
+    Enabled = false,
+    DistFromCenter = 80,
+    TriangleHeight = 16,
+    TriangleWidth = 16,
+    TriangleTransparency = 0,
+    TriangleThickness = 1,
+    TriangleColor = Color3.fromRGB(255, 255, 255),
+    AntiAliasing = false,
+    Players = Players,
+    Camera = Camera,
+    RS = RunService,
+    LocalPlayer = LocalPlayer,
+    ArrowDrawings = {}
+}
+
+local function getCurrentTool()
+    if LocalPlayer.Character then
+        for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
+            if tool:IsA("Tool") then
+                return tool
+            end
+        end
+    end
+    return nil
+end
+
+local function canSeeTarget(targetPart)
+    if not getgenv().CONFIG.Ragebot.VisibilityCheck then return true end
+    local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
+    if not localHead then return false end
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    local startPos = localHead.Position
+    local endPos = targetPart.Position
+    local direction = (endPos - startPos)
+    local distance = direction.Magnitude
+    local raycastResult = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
+    if raycastResult then
+        local hitPart = raycastResult.Instance
+        if hitPart and hitPart.CanCollide then
+            local model = hitPart:FindFirstAncestorOfClass("Model")
+            if model then
+                local humanoid = model:FindFirstChild("Humanoid")
+                if humanoid then
+                    local targetPlayer = Players:GetPlayerFromCharacter(model)
+                    if targetPlayer then
+                        return true
+                    end
+                end
+            end
+            return false
+        end
+    end
+    return true
+end
+
+local function getClosestTarget()
+    local closest = nil
+    local shortestDistance = math.huge
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        if getgenv().CONFIG.Ragebot.UseWhitelist and table.find(getgenv().Lists.Whitelist, player.Name) then continue end
+        if getgenv().CONFIG.Ragebot.UseTargetList and not table.find(getgenv().Lists.TargetList, player.Name) then continue end
+        if getgenv().CONFIG.Ragebot.TeamCheck and player.Team == LocalPlayer.Team then continue end
+        local character = player.Character
+        if character then
+            local humanoid = character:FindFirstChild("Humanoid")
+            local head = character:FindFirstChild("Head")
+            if humanoid and humanoid.Health > 0 and head then
+                local hasForcefield = false
+                for _, child in pairs(character:GetChildren()) do
+                    if child:IsA("ForceField") then hasForcefield = true break end
+                end
+                if hasForcefield then continue end
+                if getgenv().CONFIG.Ragebot.LowHealthCheck and humanoid.Health < 15 then continue end
+                local distance = (head.Position - LocalPlayer.Character.Head.Position).Magnitude
+                if distance < shortestDistance then
+                    if canSeeTarget(head) then
+                        closest = head
+                        shortestDistance = distance
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local cachedBestPositions = {shootPos = nil, hitPos = nil, target = nil}
+local function checkClearPath(startPos, endPos)
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    local direction = (endPos - startPos)
+    local distance = direction.Magnitude
+    local raycastResult = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
+    if raycastResult then
+        local hitPart = raycastResult.Instance
+        if hitPart and hitPart.CanCollide then
+            local model = hitPart:FindFirstAncestorOfClass("Model")
+            if model then
+                local humanoid = model:FindFirstChild("Humanoid")
+                if not humanoid then return false end
+            else return false end
+        end
+    end
+    return true
+end
+local function wallbang()
+    local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
+    if not localHead then return nil end
+    local target = getClosestTarget()
+    if not target then cachedBestPositions.shootPos = nil cachedBestPositions.hitPos = nil cachedBestPositions.target = nil return nil, nil end
+    local startPos = localHead.Position
+    local targetPos = target.Position
+    if not getgenv().CONFIG.Ragebot.Wallbang then cachedBestPositions.shootPos = startPos cachedBestPositions.hitPos = targetPos cachedBestPositions.target = target return startPos, targetPos end
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    local direction = targetPos - startPos
+    local distance = direction.Magnitude
+    local directRay = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
+    if not directRay then cachedBestPositions.shootPos = startPos cachedBestPositions.hitPos = targetPos cachedBestPositions.target = target return startPos, targetPos end
+    if cachedBestPositions.shootPos and cachedBestPositions.target == target then
+        local cachedShootDistance = (cachedBestPositions.shootPos - startPos).Magnitude
+        local cachedHitDistance = (cachedBestPositions.hitPos - targetPos).Magnitude
+        if cachedShootDistance <= getgenv().CONFIG.Ragebot.ShootRange and cachedHitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+            local pathToShoot = checkClearPath(startPos, cachedBestPositions.shootPos)
+            local pathToTarget = checkClearPath(cachedBestPositions.shootPos, cachedBestPositions.hitPos)
+            if pathToShoot and pathToTarget then
+                local shootToHitRay = Workspace:Raycast(cachedBestPositions.shootPos, (cachedBestPositions.hitPos - cachedBestPositions.shootPos).Unit * (cachedBestPositions.hitPos - cachedBestPositions.shootPos).Magnitude, raycastParams)
+                if not shootToHitRay then return cachedBestPositions.shootPos, cachedBestPositions.hitPos end
+            end
+        end
+        cachedBestPositions.shootPos = nil cachedBestPositions.hitPos = nil
+    end
+    local bestShootPos = nil local bestHitPos = nil local bestScore = math.huge
+    for i = 1, 150 do
+        local shootOffset = Vector3.new(math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange), math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange), math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange))
+        local shootPos = startPos + shootOffset
+        local hitOffset = Vector3.new(math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange), math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange), math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange))
+        local hitPos = targetPos + hitOffset
+        local shootDistance = (shootPos - startPos).Magnitude
+        local hitDistance = (hitPos - targetPos).Magnitude
+        if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange and hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+            local pathToShoot = checkClearPath(startPos, shootPos)
+            local pathToTarget = checkClearPath(shootPos, hitPos)
+            if pathToShoot and pathToTarget then
+                local shootToHitRay = Workspace:Raycast(shootPos, (hitPos - shootPos).Unit * (hitPos - shootPos).Magnitude, raycastParams)
+                if not shootToHitRay then
+                    local totalScore = shootDistance + hitDistance
+                    if totalScore < bestScore then bestScore = totalScore bestShootPos = shootPos bestHitPos = hitPos end
+                end
+            end
+        end
+    end
+    if not bestShootPos or not bestHitPos then
+        local randomY = math.random(-16, -14)
+        local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
+        local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
+        cachedBestPositions.shootPos = fallbackShootPos cachedBestPositions.hitPos = fallbackHitPos cachedBestPositions.target = target
+        return fallbackShootPos, fallbackHitPos
+    end
+    cachedBestPositions.shootPos = bestShootPos cachedBestPositions.hitPos = bestHitPos cachedBestPositions.target = target
+    return bestShootPos, bestHitPos
+end
+local function createTracer(startPos, endPos)
+    if not getgenv().CONFIG.Ragebot.Tracers then return end
+    local tracerModel = Instance.new("Model") tracerModel.Name = "TracerBeam"
+    local beam = Instance.new("Beam") beam.Color = ColorSequence.new(getgenv().CONFIG.Ragebot.TracerColor) beam.Width0 = getgenv().CONFIG.Ragebot.TracerWidth beam.Width1 = getgenv().CONFIG.Ragebot.TracerWidth beam.Texture = "rbxassetid://7136858729" beam.TextureSpeed = 1 beam.Brightness = 2 beam.LightEmission = 2 beam.FaceCamera = true
+    local a0 = Instance.new("Attachment") local a1 = Instance.new("Attachment") a0.WorldPosition = startPos a1.WorldPosition = endPos beam.Attachment0 = a0 beam.Attachment1 = a1
+    beam.Parent = tracerModel a0.Parent = tracerModel a1.Parent = tracerModel tracerModel.Parent = Workspace
+    local tweenInfo = TweenInfo.new(getgenv().CONFIG.Ragebot.TracerLifetime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(beam, tweenInfo, {Brightness = 0}) tween:Play()
+    tween.Completed:Connect(function() if tracerModel then tracerModel:Destroy() end end)
+end
+local function RandomString(length)
+    local charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    local result = ""
+    for i = 1, length do result = result .. charset:sub(math.random(1, #charset), math.random(1, #charset)) end
+    return result
+end
+local function autoReload()
+    if not getgenv().CONFIG.Ragebot.AutoReload then return end
+    local tool = getCurrentTool() if not tool then return end
+    local values = tool:FindFirstChild("Values") if not values then return end
+    local ammo = values:FindFirstChild("SERVER_Ammo") local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo") if not ammo or not storedAmmo then return end
+    if ammo.Value <= 0 and storedAmmo.Value > 0 then local args = {tick(), "KLWE89U0", tool} local GNX_R = ReplicatedStorage:WaitForChild("Events"):WaitForChild("GNX_R") GNX_R:FireServer(unpack(args)) end
+end
+local function shootAtTarget(targetHead)
+    if not targetHead then return false end
+    local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") if not localHead then return false end
+    local tool = getCurrentTool() if not tool then return false end
+    local values = tool:FindFirstChild("Values") local hitMarker = tool:FindFirstChild("Hitmarker") if not values or not hitMarker then return false end
+    local ammo = values:FindFirstChild("SERVER_Ammo") local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo") if not ammo or not storedAmmo then return false end
+    if ammo.Value <= 0 then autoReload() return false end
+    local bestShootPos, bestHitPos = wallbang() if not bestShootPos or not bestHitPos then return false end
+    local hitPosition = bestHitPos
+    if getgenv().CONFIG.Ragebot.Prediction then local velocity = targetHead.Velocity or Vector3.zero hitPosition = hitPosition + velocity * getgenv().CONFIG.Ragebot.PredictionAmount end
+    local hitDirection = (hitPosition - bestShootPos).Unit local randomKey = RandomString(30) .. "0"
+    local args1 = {tick(), randomKey, tool, "FDS9I83", bestShootPos, {hitDirection}, false}
+    local args2 = {"🧈", tool, randomKey, 1, targetHead, hitPosition, hitDirection}
+    local events = ReplicatedStorage:WaitForChild("Events") local GNX_S = events:WaitForChild("GNX_S") local ZFKLF__H = events:WaitForChild("ZFKLF__H")
+    local targetPlayer = Players:GetPlayerFromCharacter(targetHead.Parent) if targetPlayer then getgenv().createHitNotification(tool.Name, (bestShootPos - localHead.Position).Magnitude, targetPlayer.Name) getgenv().playHitSound() end
+    coroutine.wrap(function() GNX_S:FireServer(unpack(args1)) ZFKLF__H:FireServer(unpack(args2)) end)()
+    hitMarker:Fire(targetHead) storedAmmo.Value = storedAmmo.Value createTracer(bestShootPos, hitPosition) return true
+end
+local lastShotTime = 0
+RunService.RenderStepped:Connect(function()
+    if not getgenv().CONFIG.Ragebot.Enabled then return end if not LocalPlayer.Character then return end if not LocalPlayer.Character:FindFirstChild("Head") then return end
+    local target = getClosestTarget() if not target then return end
+    local currentTime = tick() local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 0.05) local WaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
+    if getgenv().CONFIG.Ragebot.RapidFire then local rapidWaitTime = baseWaitTime * 0.01 if currentTime - lastShotTime >= rapidWaitTime then shootAtTarget(target) lastShotTime = currentTime end
+    else if currentTime - lastShotTime >= WaitTime then shootAtTarget(target) lastShotTime = currentTime end end
+end)
+local fovCircle = Drawing.new("Circle") fovCircle.Visible = getgenv().CONFIG.Ragebot.ShowFOV fovCircle.Radius = getgenv().CONFIG.Ragebot.FOV fovCircle.Color = Color3.fromRGB(255, 255, 255) fovCircle.Thickness = 1 fovCircle.Filled = false
+RunService.RenderStepped:Connect(function() fovCircle.Visible = getgenv().CONFIG.Ragebot.ShowFOV and getgenv().CONFIG.Ragebot.Enabled fovCircle.Radius = getgenv().CONFIG.Ragebot.FOV fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2) end)
+local function enableSpeed()
+    if getgenv().CONFIG.Misc.SpeedConnection then getgenv().CONFIG.Misc.SpeedConnection:Disconnect() getgenv().CONFIG.Misc.SpeedConnection = nil end
+    getgenv().CONFIG.Misc.SpeedConnection = RunService.RenderStepped:Connect(function()
+        local player = Players.LocalPlayer local character = player.Character if not character then return end
+        local humanoid = character:FindFirstChild("Humanoid") if not humanoid then return end humanoid.WalkSpeed = getgenv().CONFIG.Misc.SpeedValue
+    end)
+end
+local function disableSpeed()
+    if getgenv().CONFIG.Misc.SpeedConnection then getgenv().CONFIG.Misc.SpeedConnection:Disconnect() getgenv().CONFIG.Misc.SpeedConnection = nil end
+    local character = Players.LocalPlayer.Character if character then local humanoid = character:FindFirstChild("Humanoid") if humanoid then humanoid.WalkSpeed = 16 end end
+end
+local function enableJumpPower()
+    if getgenv().CONFIG.Misc.JumpPowerConnection then getgenv().CONFIG.Misc.JumpPowerConnection:Disconnect() getgenv().CONFIG.Misc.JumpPowerConnection = nil end
+    getgenv().CONFIG.Misc.JumpPowerConnection = RunService.Heartbeat:Connect(function()
+        if not getgenv().CONFIG.Misc.JumpPowerEnabled then return end if not Players.LocalPlayer.Character then return end
+        local humanoid = Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid") if not humanoid then return end
+        local hrp = Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") if not hrp then return end
+        if humanoid:GetState() == Enum.HumanoidStateType.Jumping then hrp.Velocity = Vector3.new(hrp.Velocity.X, getgenv().CONFIG.Misc.JumpPowerValue, hrp.Velocity.Z) end
+    end)
+end
+local function disableJumpPower()
+    if getgenv().CONFIG.Misc.JumpPowerConnection then getgenv().CONFIG.Misc.JumpPowerConnection:Disconnect() getgenv().CONFIG.Misc.JumpPowerConnection = nil end
+end
+local function enableLoopFOV()
+    if getgenv().CONFIG.Misc.FOVConnection then getgenv().CONFIG.Misc.FOVConnection:Disconnect() getgenv().CONFIG.Misc.FOVConnection = nil end
+    getgenv().CONFIG.Misc.FOVConnection = RunService.RenderStepped:Connect(function() workspace.CurrentCamera.FieldOfView = 120 end)
+end
+local function disableLoopFOV()
+    if getgenv().CONFIG.Misc.FOVConnection then getgenv().CONFIG.Misc.FOVConnection:Disconnect() getgenv().CONFIG.Misc.FOVConnection = nil end
+end
+local runserviceConnection = nil local originalMotors = {} local toolTransparencies = {}
+local function hideHeadFE()
+    if not Players.LocalPlayer.Character then return end local char = Players.LocalPlayer.Character local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso") if not torso then return end
+    local tool = getCurrentTool() if not tool then return end local values = tool:FindFirstChild("Values") if not values then return end
+    local ammo = values:FindFirstChild("SERVER_Ammo") local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo") if not ammo or not storedAmmo then return end
+    originalMotors = {} for _, motor in pairs(torso:GetChildren()) do if motor:IsA("Motor6D") then originalMotors[motor] = {C0 = motor.C0, C1 = motor.C1} end end
+    toolTransparencies = {} for _, part in pairs(tool:GetDescendants()) do if part:IsA("BasePart") then toolTransparencies[part] = part.Transparency part.Transparency = 1 end end
+    if runserviceConnection then runserviceConnection:Disconnect() end
+    runserviceConnection = RunService.RenderStepped:Connect(function() for motor, original in pairs(originalMotors) do if motor and motor.Parent then motor.C0 = original.C0 motor.C1 = original.C1 end end end)
+end
+local function showHeadFE()
+    if runserviceConnection then runserviceConnection:Disconnect() runserviceConnection = nil end
+    for part, transparency in pairs(toolTransparencies) do if part and part.Parent then part.Transparency = transparency end end toolTransparencies = {} originalMotors = {}
+end
+local function enableNoFallDmg()
+    if getgenv().CONFIG.Misc.NoFallHook then getgenv().CONFIG.Misc.NoFallHook = nil end
+    getgenv().CONFIG.Misc.NoFallHook = hookmetamethod(game, "__namecall", function(self, ...)
+        local args = {...} if getnamecallmethod() == "FireServer" and not checkcaller() and args[1] == "FlllD" and args[4] == false then args[2] = 0 args[3] = 0 end
+        return getgenv().CONFIG.Misc.NoFallHook(self, unpack(args))
+    end)
+end
+local function disableNoFallDmg()
+    if getgenv().CONFIG.Misc.NoFallHook then getgenv().CONFIG.Misc.NoFallHook = nil end
+end
+local function enableInfStamina()
+    local module for i, v in pairs(game:GetService("StarterPlayer").StarterPlayerScripts:GetDescendants()) do if v:IsA("ModuleScript") and v.Name == "XIIX" then module = v break end end
+    if module then module = require(module) local ac = module["XIIX"] local glob = getfenv(ac)["_G"] local stamina = getupvalues((getupvalues(glob["S_Check"]))[2])[1]
+        if stamina ~= nil then getgenv().CONFIG.Misc.InfStaminaHook = hookfunction(stamina, function() return 100, 100 end) end end
+end
+local function disableInfStamina()
+    if getgenv().CONFIG.Misc.InfStaminaHook then getgenv().CONFIG.Misc.InfStaminaHook = nil end
+end
+function Arrow:GetRelative(pos, char)
+    if not char then return Vector2.new(0,0) end local rootP = char.PrimaryPart.Position local camP = Arrow.Camera.CFrame.Position
+    local relative = CFrame.new(Vector3.new(rootP.X, camP.Y, rootP.Z), camP):PointToObjectSpace(pos) return Vector2.new(relative.X, relative.Z)
+end
+function Arrow:RelativeToCenter(v) return Arrow.Camera.ViewportSize/2 - v end
+function Arrow:RotateVect(v, a) a = math.rad(a) local x = v.x * math.cos(a) - v.y * math.sin(a) local y = v.x * math.sin(a) + v.y * math.cos(a) return Vector2.new(x, y) end
+function Arrow:AntiA(v) if not Arrow.AntiAliasing then return v end return Vector2.new(math.round(v.x), math.round(v.y)) end
+function Arrow:DrawTriangleLines(color)
+    local line1 = Drawing.new("Line") local line2 = Drawing.new("Line") local line3 = Drawing.new("Line")
+    line1.Visible = false line2.Visible = false line3.Visible = false line1.Color = color line2.Color = color line3.Color = color
+    line1.Thickness = Arrow.TriangleThickness line2.Thickness = Arrow.TriangleThickness line3.Thickness = Arrow.TriangleThickness
+    line1.Transparency = 1-Arrow.TriangleTransparency line2.Transparency = 1-Arrow.TriangleTransparency line3.Transparency = 1-Arrow.TriangleTransparency
+    return {line1, line2, line3}
+end
+function Arrow:UpdateTriangleLines(lines, pointA, pointB, pointC) lines[1].From = pointA lines[1].To = pointB lines[2].From = pointB lines[2].To = pointC lines[3].From = pointC lines[3].To = pointA end
+function Arrow:ShowArrow(player)
+    local lines = Arrow:DrawTriangleLines(Arrow.TriangleColor) Arrow.ArrowDrawings[player] = lines
+    local connection = Arrow.RS.RenderStepped:Connect(function()
+        if not Arrow.ArrowDrawings[player] or not Arrow.Enabled then connection:Disconnect() return end
+        if player and player.Character and Arrow.LocalPlayer and Arrow.LocalPlayer.Character then
+            local CHAR = player.Character local HUM = CHAR:FindFirstChildOfClass("Humanoid")
+            if HUM and CHAR.PrimaryPart ~= nil and HUM.Health > 0 then
+                local _,vis = Arrow.Camera:WorldToViewportPoint(CHAR.PrimaryPart.Position)
+                if vis == false then
+                    local rel = Arrow:GetRelative(CHAR.PrimaryPart.Position, Arrow.LocalPlayer.Character) local direction = rel.Unit
+                    local base = direction * Arrow.DistFromCenter local sideLength = Arrow.TriangleWidth/2
+                    local baseL = base + Arrow:RotateVect(direction, 90) * sideLength local baseR = base + Arrow:RotateVect(direction, -90) * sideLength
+                    local tip = direction * (Arrow.DistFromCenter + Arrow.TriangleHeight)
+                    local pointA = Arrow:AntiA(Arrow:RelativeToCenter(baseL)) local pointB = Arrow:AntiA(Arrow:RelativeToCenter(baseR)) local pointC = Arrow:AntiA(Arrow:RelativeToCenter(tip))
+                    Arrow:UpdateTriangleLines(lines, pointA, pointB, pointC) lines[1].Visible = true lines[2].Visible = true lines[3].Visible = true
+                else lines[1].Visible = false lines[2].Visible = false lines[3].Visible = false end
+            else lines[1].Visible = false lines[2].Visible = false lines[3].Visible = false end
+        else lines[1].Visible = false lines[2].Visible = false lines[3].Visible = false end
+    end)
+end
+function Arrow:RemoveArrow(player) if Arrow.ArrowDrawings[player] then local lines = Arrow.ArrowDrawings[player] for _, line in ipairs(lines) do line.Visible = false end Arrow.ArrowDrawings[player] = nil end end
+function Arrow:UpdateAllArrows()
+    if not Arrow.Enabled then return end for player, lines in pairs(Arrow.ArrowDrawings) do
+        if player and player.Parent and player.Character and Arrow.LocalPlayer and Arrow.LocalPlayer.Character then
+            local CHAR = player.Character local HUM = CHAR:FindFirstChildOfClass("Humanoid")
+            if HUM and CHAR.PrimaryPart ~= nil and HUM.Health > 0 then
+                local _,vis = Arrow.Camera:WorldToViewportPoint(CHAR.PrimaryPart.Position)
+                if vis == false then
+                    local rel = Arrow:GetRelative(CHAR.PrimaryPart.Position, Arrow.LocalPlayer.Character) local direction = rel.Unit
+                    local base = direction * Arrow.DistFromCenter local sideLength = Arrow.TriangleWidth/2
+                    local baseL = base + Arrow:RotateVect(direction, 90) * sideLength local baseR = base + Arrow:RotateVect(direction, -90) * sideLength
+                    local tip = direction * (Arrow.DistFromCenter + Arrow.TriangleHeight)
+                    local pointA = Arrow:AntiA(Arrow:RelativeToCenter(baseL)) local pointB = Arrow:AntiA(Arrow:RelativeToCenter(baseR)) local pointC = Arrow:AntiA(Arrow:RelativeToCenter(tip))
+                    Arrow:UpdateTriangleLines(lines, pointA, pointB, pointC) lines[1].Visible = true lines[2].Visible = true lines[3].Visible = true
+                else lines[1].Visible = false lines[2].Visible = false lines[3].Visible = false end
+            else lines[1].Visible = false lines[2].Visible = false lines[3].Visible = false end
+        else lines[1].Visible = false lines[2].Visible = false lines[3].Visible = false end end
+end
+function Arrow:CleanUpArrows() for player, lines in pairs(Arrow.ArrowDrawings) do if not player or not player.Parent then for _, line in ipairs(lines) do line.Visible = false end Arrow.ArrowDrawings[player] = nil end end end
+function Arrow:Init()
+    Arrow.ArrowDrawings = {} for _, player in pairs(Arrow.Players:GetChildren()) do if player ~= Arrow.LocalPlayer then Arrow:ShowArrow(player) end end
+    Arrow.Players.PlayerAdded:Connect(function(player) if player ~= Arrow.LocalPlayer then Arrow:ShowArrow(player) end end)
+    Arrow.Players.PlayerRemoving:Connect(function(player) Arrow:RemoveArrow(player) end)
+    Arrow.RS.RenderStepped:Connect(function() if Arrow.Enabled then Arrow:CleanUpArrows() Arrow:UpdateAllArrows() end end)
+end
+function Arrow:UpdateSettings()
+    for player, lines in pairs(Arrow.ArrowDrawings) do if lines and #lines >= 3 then
+        lines[1].Color = Arrow.TriangleColor lines[2].Color = Arrow.TriangleColor lines[3].Color = Arrow.TriangleColor
+        lines[1].Thickness = Arrow.TriangleThickness lines[2].Thickness = Arrow.TriangleThickness lines[3].Thickness = Arrow.TriangleThickness
+        lines[1].Transparency = 1-Arrow.TriangleTransparency lines[2].Transparency = 1-Arrow.TriangleTransparency lines[3].Transparency = 1-Arrow.TriangleTransparency
+    end end
+end
+function Arrow:Enable(enabled) Arrow.Enabled = enabled if enabled then Arrow:Init() else for player, _ in pairs(Arrow.ArrowDrawings) do Arrow:RemoveArrow(player) end Arrow.ArrowDrawings = {} end end
+local function createHitNotification(toolName, offsetValue, playerName)
+    if not getgenv().CONFIG.Ragebot.HitNotify then return end
+    local ScreenGui = game:GetService("CoreGui"):FindFirstChild("HitNotifications") or Instance.new("ScreenGui") ScreenGui.Name = "HitNotifications" ScreenGui.Parent = game:GetService("CoreGui")
+    local scrollFrame = ScreenGui:FindFirstChild("NotificationScroll") or Instance.new("ScrollingFrame") scrollFrame.Name = "NotificationScroll" scrollFrame.Parent = ScreenGui
+    scrollFrame.BackgroundTransparency = 1 scrollFrame.Size = UDim2.new(0, 400, 0, 200) scrollFrame.Position = UDim2.new(0, 30, 0, 10) scrollFrame.ScrollingEnabled = false scrollFrame.CanvasSize = UDim2.new(0, 400, 0, 0) scrollFrame.ScrollBarThickness = 0
+    local box = Instance.new("Frame") box.Parent = scrollFrame box.BackgroundColor3 = Color3.new(0, 0, 0) box.BackgroundTransparency = 1 box.BorderSizePixel = 0 box.AnchorPoint = Vector2.new(0, 0)
+    local parts = {{"Using ", Color3.fromRGB(255, 255, 255)},{toolName.." ", getgenv().CONFIG.Ragebot.HitColor},{"On ", Color3.fromRGB(255, 255, 255)},{string.format("%.2f", offsetValue).." ", getgenv().CONFIG.Ragebot.HitColor},{"in the ", Color3.fromRGB(255, 255, 255)},{"head ", getgenv().CONFIG.Ragebot.HitColor},{"to hit ", Color3.fromRGB(255, 255, 255)},{playerName, getgenv().CONFIG.Ragebot.HitColor},{"on via cache", Color3.fromRGB(255, 255, 255)},}
+    local offsetX = 8 local totalW, maxH = 0, 0
+    for _, seg in ipairs(parts) do local txt, col = seg[1], seg[2] local label = Instance.new("TextLabel") label.Parent = box label.BackgroundTransparency = 1 label.BorderSizePixel = 0 label.TextColor3 = col label.FontFace = Font.new("rbxassetid://12187371840") label.TextSize = 10 label.TextYAlignment = Enum.TextYAlignment.Center label.Text = txt label.AutomaticSize = Enum.AutomaticSize.XY label.Position = UDim2.new(0, offsetX, 0, 0) offsetX = offsetX + label.TextBounds.X totalW = offsetX maxH = math.max(maxH, label.TextBounds.Y) end
+    box.Size = UDim2.new(0, totalW + 16, 0, maxH + 8) local hitNotifications = getgenv().hitNotifications or {} table.insert(hitNotifications, {box = box, createTime = tick()}) getgenv().hitNotifications = hitNotifications
+    local function updateScrollFrame()
+        local allFrames = {} for _, notif in ipairs(hitNotifications) do if notif.box and notif.box.Parent then table.insert(allFrames, notif) end end hitNotifications = allFrames getgenv().hitNotifications = hitNotifications
+        local visibleCount = math.min(#hitNotifications, 15) scrollFrame.CanvasSize = UDim2.new(0, 400, 0, visibleCount * (box.AbsoluteSize.Y + 5))
+        for i, notif in ipairs(hitNotifications) do local yPos = (i - 1) * (notif.box.AbsoluteSize.Y + 5) notif.box.Position = UDim2.new(0, 0, 0, yPos) if i <= 15 then notif.box.Visible = true else notif.box.Visible = false end end
+    end updateScrollFrame()
+    task.delay(getgenv().CONFIG.Ragebot.HitNotifyDuration, function()
+        for i, notif in ipairs(hitNotifications) do if notif.box == box then table.remove(hitNotifications, i) box:Destroy() break end end updateScrollFrame()
+    end)
+end
+getgenv().createHitNotification = createHitNotification
+local function playHitSound()
+    if not getgenv().CONFIG.Ragebot.HitSound then return end
+    local soundIds = {["skeet"] = "rbxassetid://4817809188", ["xp level"] = "rbxassetid://17148249625", ["bell"] = "rbxassetid://6534948092"}
+    local soundId = soundIds[getgenv().CONFIG.Ragebot.SelectedHitSound] or soundIds["skeet"]
+    local sound = Instance.new("Sound") sound.SoundId = soundId sound.Volume = 0.75 sound.Parent = Workspace sound:Play() game:GetService("Debris"):AddItem(sound, 0.75)
+end
+getgenv().playHitSound = playHitSound
+local bodyPartsForcefield = {} local originalMaterials = {} local originalColors = {} local originalTransparency = {}
+local function applyForcefieldToBodyParts()
+    if LocalPlayer and LocalPlayer.Character then local char = LocalPlayer.Character local bodyParts = {"Head", "Left Arm", "Left Leg", "Right Arm", "Right Leg", "Torso", "UpperTorso", "LowerTorso"}
+        for _, partName in pairs(bodyParts) do local part = char:FindFirstChild(partName) if part and part:IsA("BasePart") then
+                if not originalMaterials[part] then originalMaterials[part] = part.Material originalColors[part] = part.Color originalTransparency[part] = part.Transparency end
+                part.Material = Enum.Material.ForceField part.Color = getgenv().CONFIG.Visualize.ForcefieldColor part.Transparency = getgenv().CONFIG.Visualize.ForcefieldTransparency bodyPartsForcefield[part] = true
+        end end
+    end
+end
+local function removeForcefieldFromBodyParts()
+    if LocalPlayer and LocalPlayer.Character then local char = LocalPlayer.Character
+        for part, _ in pairs(bodyPartsForcefield) do if part and part.Parent == char then
+                if originalMaterials[part] then part.Material = originalMaterials[part] end if originalColors[part] then part.Color = originalColors[part] end if originalTransparency[part] then part.Transparency = originalTransparency[part] end
+        end end
+        bodyPartsForcefield = {} originalMaterials = {} originalColors = {} originalTransparency = {}
+    end
+end
+local ESP_Functions = {} function ESP_Functions:Create(Class, Properties) local _Instance = typeof(Class) == 'string' and Instance.new(Class) or Class for Property, Value in pairs(Properties) do _Instance[Property] = Value end return _Instance end
+function ESP_Functions:FadeOutOnDist(element, distance) local transparency = math.max(0.1, 1 - (distance / 500)) if element:IsA("TextLabel") then element.TextTransparency = 1 - transparency elseif element:IsA("ImageLabel") then element.ImageTransparency = 1 - transparency elseif element:IsA("UIStroke") then element.Transparency = 1 - transparency elseif element:IsA("Frame") then element.BackgroundTransparency = 1 - transparency elseif element:IsA("Highlight") then element.FillTransparency = 1 - transparency element.OutlineTransparency = 1 - transparency end end
+local ESP_CONFIG = {Enabled = false, TeamCheck = true, MaxDistance = 500, FontSize = 13}
+local ESPScreenGui = ESP_Functions:Create("ScreenGui", {Parent = game:GetService("CoreGui"), Name = "ESPHolder", Enabled = false})
+local ESPCache = {}
+local function ESP_InitializePlayer(plr)
+    if plr == LocalPlayer then return end if ESPCache[plr] then return end
+    local Name = ESP_Functions:Create("TextLabel", {Parent = ESPScreenGui, Position = UDim2.new(0.5, 0, 0, -11), Size = UDim2.new(0, 100, 0, 20), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, TextColor3 = Color3.fromRGB(255, 255, 255), FontFace = Font.new("rbxassetid://12187371840"), TextSize = 13, TextStrokeTransparency = 0, TextStrokeColor3 = Color3.fromRGB(0, 0, 0), RichText = true, Visible = false})
+    local Box = ESP_Functions:Create("Frame", {Parent = ESPScreenGui, BackgroundColor3 = Color3.fromRGB(78, 150, 50), BackgroundTransparency = 0.5, BorderSizePixel = 0, Visible = false})
+    local Healthbar = ESP_Functions:Create("Frame", {Parent = ESPScreenGui, BackgroundColor3 = Color3.fromRGB(0, 255, 0), BackgroundTransparency = 0, Visible = false})
+    ESPCache[plr] = {Name = Name, Box = Box, Healthbar = Healthbar, Player = plr, Connection = nil}
+    local function HideESP() Name.Visible = false Box.Visible = false Healthbar.Visible = false end
+    local connection = RunService.RenderStepped:Connect(function()
+        if not ESP_CONFIG.Enabled then HideESP() return end if not plr or not plr.Character then HideESP() return end
+        local character = plr.Character local hrp = character:FindFirstChild("HumanoidRootPart") local humanoid = character:FindFirstChild("Humanoid")
+        if not hrp or not humanoid or humanoid.Health <= 0 then HideESP() return end
+        local camera = Workspace.CurrentCamera local pos, onScreen = camera:WorldToScreenPoint(hrp.Position) local dist = (camera.CFrame.Position - hrp.Position).Magnitude / 3.5714285714
+        if not onScreen or dist > ESP_CONFIG.MaxDistance then HideESP() return end
+        if ESP_CONFIG.TeamCheck and LocalPlayer.Team and plr.Team and LocalPlayer.Team == plr.Team then HideESP() return end
+        local size = hrp.Size.Y local scaleFactor = (size * camera.ViewportSize.Y) / (pos.Z * 2) local w, h = 3 * scaleFactor, 4.5 * scaleFactor
+        Box.Position = UDim2.new(0, pos.X - w/2, 0, pos.Y - h/2) Box.Size = UDim2.new(0, w, 0, h) Box.Visible = true
+        local health = humanoid.Health / humanoid.MaxHealth Healthbar.Visible = true Healthbar.Position = UDim2.new(0, pos.X - w/2 - 6, 0, pos.Y - h/2 + h * (1 - health)) Healthbar.Size = UDim2.new(0, 3, 0, h * health)
+        Name.Visible = true Name.Position = UDim2.new(0, pos.X, 0, pos.Y - h/2 - 9) Name.Text = plr.Name
+    end) ESPCache[plr].Connection = connection
+end
+local function ESP_RemovePlayer(plr) if ESPCache[plr] then if ESPCache[plr].Connection then ESPCache[plr].Connection:Disconnect() end local elements = ESPCache[plr] elements.Name:Destroy() elements.Box:Destroy() elements.Healthbar:Destroy() ESPCache[plr] = nil end end
+local function ESP_Toggle(state)
+    ESP_CONFIG.Enabled = state ESPScreenGui.Enabled = state
+    if not state then for player, data in pairs(ESPCache) do ESP_RemovePlayer(player) end
+    else for _, player in ipairs(Players:GetPlayers()) do if player ~= LocalPlayer then ESP_InitializePlayer(player) end end
+        Players.PlayerAdded:Connect(function(player) task.wait(1) ESP_InitializePlayer(player) end)
+        Players.PlayerRemoving:Connect(function(player) ESP_RemovePlayer(player) end)
+    end
+end
+local function applyAllGunMods()
+    if getgenv().CONFIG.GunMod.NoRecoil then local configs_found = {} for _, config_table in pairs(getgc(true)) do if type(config_table) == "table" and rawget(config_table, "Recoil") then table.insert(configs_found, config_table) end end
+        for _, current_config_data in ipairs(configs_found) do local function set_config_value(config_field, field_value) if rawget(current_config_data, config_field) then rawset(current_config_data, config_field, field_value) end end
+            set_config_value("Recoil", 0) set_config_value("RecoilSpeed", 0) set_config_value("RecoilDamper", 1)
+        end
+    end
+    if getgenv().CONFIG.GunMod.NoSpread then local configs_found = {} for _, config_table in pairs(getgc(true)) do if type(config_table) == "table" and rawget(config_table, "Spread") then table.insert(configs_found, config_table) end end
+        for _, current_config_data in ipairs(configs_found) do if rawget(current_config_data, "Spread") then rawset(current_config_data, "Spread", 0) end end
+    end
+    if getgenv().CONFIG.GunMod.NoEquipTime then local configs_found = {} for _, config_table in pairs(getgc(true)) do if type(config_table) == "table" and rawget(config_table, "EquipTime") then table.insert(configs_found, config_table) end end
+        for _, current_config_data in ipairs(configs_found) do if rawget(current_config_data, "EquipTime") then rawset(current_config_data, "EquipTime", 0) end end
+    end
+end
+local FlyConnection = nil local FlySpeed = 50
+local function StartFlying()
+    local Char = Player.Character if not Char then return end local Hum = Char:FindFirstChildOfClass("Humanoid") local Root = Char:FindFirstChild("HumanoidRootPart") if not Hum or not Root then return end
+    local RagdollEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("__RZDONL") RagdollEvent:FireServer("__---r", Vector3.zero, CFrame.new(-4574, 3, -443, 0, 0, 1, 0, 1, 0, -1, 0, 0), false)
+    for _, child in ipairs(Char:GetDescendants()) do if child:IsA("Motor6D") then child.Enabled = false end end Hum.PlatformStand = true Hum:ChangeState(Enum.HumanoidStateType.Freefall)
+    local flyMotors = {} for _, part in ipairs(Char:GetDescendants()) do if part:IsA("BasePart") and part ~= Root then local motor = Instance.new("Motor6D") motor.Name = "FlyMotor" motor.Part0 = Root motor.Part1 = part motor.C1 = CFrame.new() motor.C0 = Root.CFrame:ToObjectSpace(part.CFrame) motor.Parent = part table.insert(flyMotors, motor) end end
+    FlyConnection = RunService.Heartbeat:Connect(function()
+        if not getgenv().CONFIG.Misc.FlyEnabled then if FlyConnection then FlyConnection:Disconnect() FlyConnection = nil end Hum.PlatformStand = false Root.Velocity = Vector3.new(0, 0, 0) Hum:ChangeState(Enum.HumanoidStateType.Running)
+            RagdollEvent:FireServer("__---r", Vector3.zero, CFrame.new(-4574, 3, -443, 0, 0, 1, 0, 1, 0, -1, 0, 0), true) for _, motor in ipairs(flyMotors) do motor:Destroy() end
+            for _, child in ipairs(Char:GetDescendants()) do if child:IsA("Motor6D") and child.Name ~= "FlyMotor" then child.Enabled = true end end return end
+        local Cam = workspace.CurrentCamera if not Cam then return end local cameraLook = Cam.CFrame.LookVector local IsMoving = Hum.MoveDirection.Magnitude > 0
+        if IsMoving then local moveVector = Vector3.new(cameraLook.X, cameraLook.Y, cameraLook.Z).Unit Root.Velocity = moveVector * FlySpeed RagdollEvent:FireServer("__---r", Vector3.zero, CFrame.new(-4574, 3, -443, 0, 0, 1, 0, 1, 0, -1, 0, 0), false)
+        else Root.Velocity = Vector3.new(0, 0, 0) end
+    end)
+end
+
+local Window = library:New({Name = "gamesense.cc", Accent = Color3.fromRGB(133, 87, 242), sizeX = 500, sizeY = 400})
+local RagePage = Window:Page({Name = "Rage"}) local LegitPage = Window:Page({Name = "Legit"}) local VisualPage = Window:Page({Name = "Visual"}) local MiscPage = Window:Page({Name = "Misc"}) local ConfigPage = Window:Page({Name = "Config"})
+local RageLeft = RagePage:Section({Name = "Ragebot", Side = "Left", Max = 6}) local RageRight = RagePage:Section({Name = "Settings", Side = "Right", Max = 6}) local LegitLeft = LegitPage:Section({Name = "Aimbot", Side = "Left", Max = 5}) local LegitRight = LegitPage:Section({Name = "Gun Mod", Side = "Right", Max = 3}) local VisualLeft = VisualPage:Section({Name = "ESP", Side = "Left", Max = 5}) local VisualRight = VisualPage:Section({Name = "Visuals", Side = "Right", Max = 5}) local MiscLeft = MiscPage:Section({Name = "Movement", Side = "Left", Max = 5}) local MiscRight = MiscPage:Section({Name = "Other", Side = "Right", Max = 5}) local ConfigLeft = ConfigPage:Section({Name = "Configs", Side = "Left", Max = 4}) local ConfigRight = ConfigPage:Section({Name = "Lists", Side = "Right", Max = 4})
+
+RageLeft:Toggle({Name = "Enable Ragebot", Default = false, Pointer = "rage_enable", callback = function(state) getgenv().CONFIG.Ragebot.Enabled = state end})
+RageLeft:Toggle({Name = "Rapid Fire", Default = false, Pointer = "rage_rapidfire", callback = function(state) getgenv().CONFIG.Ragebot.RapidFire = state end})
+RageLeft:Toggle({Name = "Auto Reload", Default = true, Pointer = "rage_autoreload", callback = function(state) getgenv().CONFIG.Ragebot.AutoReload = state end})
+RageLeft:Toggle({Name = "Hit Sound", Default = true, Pointer = "rage_hitsound", callback = function(state) getgenv().CONFIG.Ragebot.HitSound = state end})
+RageLeft:Slider({Name = "Fire Rate", Minimum = 1, Maximum = 1000, Default = 30, Pointer = "rage_firerate", callback = function(value) getgenv().CONFIG.Ragebot.FireRate = value end})
+RageLeft:Dropdown({Name = "Hit Sound", Options = {"skeet", "xp level", "bell"}, Default = "skeet", Pointer = "rage_hitsoundlist", callback = function(option) getgenv().CONFIG.Ragebot.SelectedHitSound = option end})
+RageRight:Toggle({Name = "Team Check", Default = false, Pointer = "rage_teamcheck", callback = function(state) getgenv().CONFIG.Ragebot.TeamCheck = state end})
+RageRight:Toggle({Name = "Wallbang", Default = true, Pointer = "rage_wallbang", callback = function(state) getgenv().CONFIG.Ragebot.Wallbang = state end})
+RageRight:Toggle({Name = "Show FOV", Default = true, Pointer = "rage_showfov", callback = function(state) getgenv().CONFIG.Ragebot.ShowFOV = state end})
+RageRight:Slider({Name = "FOV", Minimum = 10, Maximum = 360, Default = 120, Pointer = "rage_fov", callback = function(value) getgenv().CONFIG.Ragebot.FOV = value end})
+RageRight:Toggle({Name = "Tracers", Default = true, Pointer = "rage_tracers", callback = function(state) getgenv().CONFIG.Ragebot.Tracers = state end})
+RageRight:Toggle({Name = "Tracers", Default = true, Pointer = "rage_tracers", callback = function(state) getgenv().CONFIG.Ragebot.Tracers = state end}):Colorpicker({Name = "Tracer Color", Default = Color3.fromRGB(255, 0, 0), Pointer = "rage_tracercolor", callback = function(color) getgenv().CONFIG.Ragebot.TracerColor = color end})
+
+LegitLeft:Toggle({Name = "Silent Aim", Default = false, Pointer = "legit_silentaim", callback = function(state) getgenv().CONFIG.Legitbot.SilentAim.Enabled = state end})
+LegitLeft:Slider({Name = "FOV", Minimum = 10, Maximum = 500, Default = 100, Pointer = "legit_fov", callback = function(value) getgenv().CONFIG.Legitbot.SilentAim.FOV = value end})
+LegitLeft:Toggle({Name = "Team Check", Default = true, Pointer = "legit_teamcheck", callback = function(state) getgenv().CONFIG.Legitbot.SilentAim.TeamCheck = state end})
+LegitLeft:Slider({Name = "Head Chance", Minimum = 0, Maximum = 100, Default = 30, Pointer = "legit_headchance", callback = function(value) getgenv().CONFIG.Legitbot.SilentAim.HeadChance = value end})
+LegitLeft:Toggle({Name = "Legit Tracers", Default = true, Pointer = "legit_tracers", callback = function(state) getgenv().CONFIG.Legitbot.Tracers.Enabled = state end}):Colorpicker({Name = "Tracer Color", Default = Color3.fromRGB(255, 50, 50), Pointer = "legit_tracercolor", callback = function(color) getgenv().CONFIG.Legitbot.Tracers.Color = color end})
+LegitRight:Toggle({Name = "No Recoil", Default = true, Pointer = "gun_norecoil", callback = function(state) getgenv().CONFIG.GunMod.NoRecoil = state if state then applyAllGunMods() end end})
+LegitRight:Toggle({Name = "No Spread", Default = true, Pointer = "gun_nospread", callback = function(state) getgenv().CONFIG.GunMod.NoSpread = state if state then applyAllGunMods() end end})
+LegitRight:Toggle({Name = "No Equip Time", Default = true, Pointer = "gun_noequiptime", callback = function(state) getgenv().CONFIG.GunMod.NoEquipTime = state if state then applyAllGunMods() end end})
+
+VisualLeft:Toggle({Name = "Enable ESP", Default = false, Pointer = "esp_enable", callback = function(state) ESP_Toggle(state) end})
+VisualLeft:Toggle({Name = "Team Check", Default = true, Pointer = "esp_teamcheck", callback = function(state) ESP_CONFIG.TeamCheck = state end})
+VisualLeft:Slider({Name = "Max Distance", Minimum = 100, Maximum = 2000, Default = 500, Pointer = "esp_distance", callback = function(value) ESP_CONFIG.MaxDistance = value end})
+VisualLeft:Toggle({Name = "Box ESP", Default = true, Pointer = "esp_box", callback = function(state) getgenv().CONFIG.Visualize.ESP.Enabled = state end}):Colorpicker({Name = "Box Color", Default = Color3.fromRGB(78, 150, 50), Pointer = "esp_boxcolor", callback = function(color) getgenv().CONFIG.Visualize.ESP.BoxColor = color end})
+VisualRight:Toggle({Name = "Arrow Indicators", Default = false, Pointer = "visual_arrow", callback = function(state) Arrow:Enable(state) end}):Colorpicker({Name = "Arrow Color", Default = Color3.fromRGB(255, 255, 255), Pointer = "arrow_color", callback = function(color) Arrow.TriangleColor = color Arrow:UpdateSettings() end})
+VisualRight:Slider({Name = "Arrow Size", Minimum = 8, Maximum = 32, Default = 16, Pointer = "arrow_size", callback = function(value) Arrow.TriangleHeight = value Arrow.TriangleWidth = value end})
+VisualRight:Toggle({Name = "Forcefield", Default = false, Pointer = "visual_forcefield", callback = function(state) getgenv().CONFIG.Visualize.LocalForcefieldEnabled = state if state then applyForcefieldToBodyParts() else removeForcefieldFromBodyParts() end end}):Colorpicker({Name = "Forcefield Color", Default = Color3.fromRGB(255, 255, 255), Pointer = "forcefield_color", callback = function(color) getgenv().CONFIG.Visualize.ForcefieldColor = color if getgenv().CONFIG.Visualize.LocalForcefieldEnabled then applyForcefieldToBodyParts() end end})
+
+MiscLeft:Toggle({Name = "Speed", Default = false, Pointer = "misc_speed", callback = function(state) getgenv().CONFIG.Misc.SpeedEnabled = state if state then enableSpeed() else disableSpeed() end end})
+MiscLeft:Slider({Name = "Speed Value", Minimum = 10, Maximum = 200, Default = 50, Pointer = "misc_speedvalue", callback = function(value) getgenv().CONFIG.Misc.SpeedValue = value end})
+MiscLeft:Toggle({Name = "Jump Power", Default = false, Pointer = "misc_jumppower", callback = function(state) getgenv().CONFIG.Misc.JumpPowerEnabled = state if state then enableJumpPower() else disableJumpPower() end end})
+MiscLeft:Slider({Name = "Jump Value", Minimum = 50, Maximum = 300, Default = 100, Pointer = "misc_jumpvalue", callback = function(value) getgenv().CONFIG.Misc.JumpPowerValue = value end})
+MiscLeft:Toggle({Name = "Fly", Default = false, Pointer = "misc_fly", callback = function(state) getgenv().CONFIG.Misc.FlyEnabled = state if state then StartFlying() end end}):Slider({Name = "Fly Speed", Minimum = 10, Maximum = 200, Default = 50, Pointer = "misc_flyspeed", callback = function(value) FlySpeed = value end})
+MiscRight:Toggle({Name = "Inf Stamina", Default = false, Pointer = "misc_infstamina", callback = function(state) getgenv().CONFIG.Misc.InfStaminaEnabled = state if state then enableInfStamina() else disableInfStamina() end end})
+MiscRight:Toggle({Name = "No Fall Damage", Default = false, Pointer = "misc_nofall", callback = function(state) getgenv().CONFIG.Misc.NoFallDmgEnabled = state if state then enableNoFallDmg() else disableNoFallDmg() end end})
+MiscRight:Toggle({Name = "Hide Head", Default = false, Pointer = "misc_hidehead", callback = function(state) getgenv().CONFIG.Misc.HideHeadEnabled = state if state then hideHeadFE() else showHeadFE() end end})
+MiscRight:Toggle({Name = "Loop FOV", Default = false, Pointer = "misc_loopfov", callback = function(state) getgenv().CONFIG.Misc.LoopFOVEnabled = state if state then enableLoopFOV() else disableLoopFOV() end end})
+MiscRight:Toggle({Name = "Instant Prompt", Default = false, Pointer = "misc_instantprompt", callback = function(state) for _, obj in pairs(game:GetDescendants()) do if obj:IsA("ProximityPrompt") then obj.HoldDuration = state and 0 or 1 end end end})
+
+ConfigLeft:Box({Name = "Config Name", Placeholder = "Enter config name", Pointer = "config_name", callback = function(text) getgenv().currentConfigName = text end})
+ConfigLeft:Button({Name = "Save Config", callback = function()
+    if writefile then local allConfigs = {} local genv = getgenv() for key, value in pairs(genv) do if type(value) == "table" then allConfigs[key] = value elseif type(value) == "Color3" then allConfigs[key] = {R = value.R, G = value.G, B = value.B, __type = "Color3"} else allConfigs[key] = value end end
+        allConfigs["Arrow"] = {Enabled = Arrow.Enabled, DistFromCenter = Arrow.DistFromCenter, TriangleHeight = Arrow.TriangleHeight, TriangleWidth = Arrow.TriangleWidth, TriangleTransparency = Arrow.TriangleTransparency, TriangleThickness = Arrow.TriangleThickness, TriangleColor = {R = Arrow.TriangleColor.R, G = Arrow.TriangleColor.G, B = Arrow.TriangleColor.B, __type = "Color3"}, AntiAliasing = Arrow.AntiAliasing}
+        writefile("gamesense_config.json", game:GetService("HttpService"):JSONEncode(allConfigs)) print("Config saved!") end
+end})
+ConfigLeft:Button({Name = "Load Config", callback = function()
+    if readfile and isfile and isfile("gamesense_config.json") then local success, data = pcall(function() return game:GetService("HttpService"):JSONDecode(readfile("gamesense_config.json")) end)
+        if success and data then for key, value in pairs(data) do
+                if key == "Arrow" then Arrow.Enabled = value.Enabled Arrow.DistFromCenter = value.DistFromCenter Arrow.TriangleHeight = value.TriangleHeight Arrow.TriangleWidth = value.TriangleWidth Arrow.TriangleTransparency = value.TriangleTransparency Arrow.TriangleThickness = value.TriangleThickness
+                    if value.TriangleColor and value.TriangleColor.__type == "Color3" then Arrow.TriangleColor = Color3.fromRGB(value.TriangleColor.R, value.TriangleColor.G, value.TriangleColor.B) end Arrow.AntiAliasing = value.AntiAliasing
+                else if type(value) == "table" and value.__type == "Color3" then getgenv()[key] = Color3.fromRGB(value.R, value.G, value.B) else getgenv()[key] = value end end
+            end print("Config loaded!") end
+    end
+end})
+ConfigLeft:Button({Name = "Reset Config", callback = function()
+    getgenv().CONFIG = {Ragebot = {Enabled = false, RapidFire = false, FireRate = 30, Prediction = true, PredictionAmount = 0.12, TeamCheck = false, VisibilityCheck = true, FOV = 120, ShowFOV = true, Wallbang = true, Tracers = true, TracerColor = Color3.fromRGB(255, 0, 0), TracerWidth = 1, TracerLifetime = 3, ShootRange = 15, HitRange = 15, HitNotify = true, AutoReload = true, HitSound = true, HitColor = Color3.fromRGB(255, 182, 193), UseTargetList = false, UseWhitelist = false, HitNotifyDuration = 5, LowHealthCheck = false, SelectedHitSound = "skeet"}, Misc = {SpeedEnabled = false, SpeedValue = 50, JumpPowerEnabled = false, JumpPowerValue = 100, LoopFOVEnabled = false, HideHeadEnabled = false, InfStaminaEnabled = false, NoFallDmgEnabled = false, FlyEnabled = false, FlySpeed = 50, SpeedConnection = nil, FOVConnection = nil, JumpPowerConnection = nil, NoFallHook = nil, InfStaminaHook = nil}, Visualize = {ESP = {Enabled = false, BoxColor = Color3.fromRGB(78, 150, 50), OutlineColor = Color3.fromRGB(78, 150, 50), TextColor = Color3.fromRGB(255, 255, 255), MaxDistance = 1000}, ForcefieldColor = Color3.fromRGB(255, 255, 255), ForcefieldTransparency = 0.5, LocalForcefieldEnabled = false, ArrowEnabled = false, ArrowColor = Color3.fromRGB(255, 255, 255), ArrowDistance = 80, ArrowSize = 16, ArrowThickness = 1, ArrowAA = false}, Legitbot = {Enabled = false, SilentAim = {Enabled = false, FOV = 100, TeamCheck = true, HitPart = "Torso", HeadChance = 30, Prediction = 0.165}, Tracers = {Enabled = true, Color = Color3.fromRGB(255, 50, 50), Width = 0.3, Brightness = 2, LightEmission = 1, Lifetime = 0.5}}, GunMod = {NoRecoil = true, NoSpread = true, NoEquipTime = true}}
+    getgenv().Lists = {TargetList = {}, Whitelist = {}} print("Config reset!")
+end})
+ConfigRight:Box({Name = "Add to Target List", Placeholder = "Player name", Pointer = "targetlist_add", callback = function(text) if text and text ~= "" then table.insert(getgenv().Lists.TargetList, text) print("Added to Target List:", text) end end})
+ConfigRight:Button({Name = "Clear Target List", callback = function() getgenv().Lists.TargetList = {} print("Target List cleared!") end})
+ConfigRight:Box({Name = "Add to Whitelist", Placeholder = "Player name", Pointer = "whitelist_add", callback = function(text) if text and text ~= "" then table.insert(getgenv().Lists.Whitelist, text) print("Added to Whitelist:", text) end end})
+ConfigRight:Button({Name = "Clear Whitelist", callback = function() getgenv().Lists.Whitelist = {} print("Whitelist cleared!") end})
+ConfigPage:Section({Name = "Controls", Side = "Left"}):Toggle({Name = "Use Target List", Default = false, Pointer = "use_targetlist", callback = function(state) getgenv().CONFIG.Ragebot.UseTargetList = state end})
+ConfigPage:Section({Name = "Controls", Side = "Right"}):Toggle({Name = "Use Whitelist", Default = false, Pointer = "use_whitelist", callback = function(state) getgenv().CONFIG.Ragebot.UseWhitelist = state end})
+ConfigPage:Section({Name = "UI", Side = "Left"}):Keybind({Name = "UI Toggle", Default = Enum.KeyCode.RightShift, Blacklist = {Enum.UserInputType.MouseButton1}, Pointer = "ui_toggle", callback = function(key, fromsetting) if not fromsetting then library:Toggle() end end})
+ConfigPage:Section({Name = "UI", Side = "Right"}):Colorpicker({Name = "Accent Color", Default = Color3.fromRGB(133, 87, 242), Pointer = "accent_color", callback = function(color) library:ChangeAccent(color) end})
+
+library:Initialize()
+task.spawn(function() task.wait(2) applyAllGunMods() LocalPlayer.CharacterAdded:Connect(function(character) task.wait(1) applyAllGunMods() end) LocalPlayer.Backpack.ChildAdded:Connect(function(tool) if tool:IsA("Tool") then task.wait(0.1) applyAllGunMods() end end) end)
+local watermark = library:Watermark({"gamesense.cc", "v2.0.0", "FPS: 60"}) task.spawn(function() local frames = 0 RunService.RenderStepped:Connect(function() frames = frames + 1 end) while task.wait(1) do watermark:Update({"gamesense.cc", "v2.0.0", "FPS: " .. frames}) frames = 0 end end)
+print("gamesense.cc Loaded Successfully!")
+print("Press RightShift to toggle UI")
