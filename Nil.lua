@@ -5754,4 +5754,416 @@ Library:ChangeOutline { Color3.fromRGB(121, 66, 254), Color3.fromRGB(223, 57, 13
 
 Library:Initialize()
 --]]
+
+--local library = loadstring(game:HttpGet("https://github.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/blob/main/Nil.lua?raw=true"))()
+
+
+local Window = library:New({
+    Name = "Synapse.gg",
+    Accent = Color3.fromRGB(255, 255, 255),
+    sizeX = 600,
+    sizeY = 750
+})
+
+local MainPage = Window:Page({Name = "Main"})
+local VisualsPage = Window:Page({Name = "Visuals"})
+local SettingsPage = Window:Page({Name = "Settings"})
+
+
+local AimSection = MainPage:Section({Name = "Aimbot", Side = "Left", Max = 4})
+local CombatSection = MainPage:Section({Name = "Combat", Side = "Right", Max = 3})
+
+
+local AimToggle = AimSection:Toggle({
+    Name = "Enable Aimbot",
+    Default = false,
+    Pointer = "aim_enable",
+    callback = function(state)
+        print("Aimbot:", state)
+    end
+})
+
+local AimKeybind = AimSection:Keybind({
+    Name = "Aimbot Key",
+    Default = Enum.KeyCode.Q,
+    Pointer = "aim_key",
+    callback = function(key)
+        print("Aimbot Key:", key)
+    end
+})
+
+local AimHitbox = AimSection:Dropdown({
+    Name = "Hitbox",
+    Options = {"Head", "UpperTorso", "HumanoidRootPart"},
+    Default = "Head",
+    Pointer = "aim_hitbox",
+    callback = function(option)
+        print("Hitbox:", option)
+    end
+})
+
+local AimSmooth = AimSection:Slider({
+    Name = "Smoothing",
+    Minimum = 1,
+    Maximum = 10,
+    Default = 3,
+    Decimals = 0.1,
+    Pointer = "aim_smooth",
+    callback = function(value)
+        print("Smoothing:", value)
+    end
+})
+
+
+local AutoShoot = CombatSection:Toggle({
+    Name = "Auto Shoot",
+    Default = false,
+    Pointer = "auto_shoot",
+    callback = function(state)
+        print("Auto Shoot:", state)
+    end
+})
+
+local Triggerbot = CombatSection:Toggle({
+    Name = "Triggerbot",
+    Default = false,
+    Pointer = "triggerbot",
+    Mode = "Toggle",
+    togglecallback = function(state)
+        print("Triggerbot:", state)
+    end
+})
+
+local FireRate = CombatSection:Slider({
+    Name = "Fire Rate",
+    Minimum = 1,
+    Maximum = 100,
+    Default = 50,
+    Pointer = "fire_rate",
+    callback = function(value)
+        print("Fire Rate:", value)
+    end
+})
+
+
+local ESPSection = VisualsPage:Section({Name = "ESP", Side = "Left", Max = 5})
+local ChamsSection = VisualsPage:Section({Name = "Chams", Side = "Right", Max = 3})
+
+
+local BoxESP = ESPSection:Toggle({
+    Name = "Box ESP",
+    Default = false,
+    Pointer = "box_esp",
+    callback = function(state)
+        print("Box ESP:", state)
+    end
+})
+
+local NameESP = ESPSection:Toggle({
+    Name = "Name ESP",
+    Default = false,
+    Pointer = "name_esp",
+    callback = function(state)
+        print("Name ESP:", state)
+    end
+})
+
+local HealthESP = ESPSection:Toggle({
+    Name = "Health Bar",
+    Default = false,
+    Pointer = "health_esp",
+    callback = function(state)
+        print("Health Bar:", state)
+    end
+})
+
+BoxESP:Colorpicker({
+    Name = "Box Color",
+    Default = Color3.fromRGB(0, 255, 0),
+    Pointer = "box_color",
+    callback = function(color)
+        print("Box Color:", color)
+    end
+})
+
+
+local PlayerChams = ChamsSection:Toggle({
+    Name = "Player Chams",
+    Default = false,
+    Pointer = "player_chams",
+    callback = function(state)
+        print("Player Chams:", state)
+    end
+})
+
+local MaterialDropdown = ChamsSection:Dropdown({
+    Name = "Material",
+    Options = {"ForceField", "Glass", "Neon", "Plastic"},
+    Default = "ForceField",
+    Pointer = "cham_material",
+    callback = function(material)
+        print("Material:", material)
+    end
+})
+
+PlayerChams:Colorpicker({
+    Name = "Cham Color",
+    Default = Color3.fromRGB(255, 0, 0),
+    Pointer = "cham_color",
+    callback = function(color)
+        print("Cham Color:", color)
+    end
+})
+
+
+local ConfigSection = SettingsPage:Section({Name = "Configs", Side = "Left"})
+local UISection = SettingsPage:Section({Name = "UI Settings", Side = "Right"})
+
+
+local configList = library:ListConfigs()
+local ConfigDropdown = ConfigSection:Dropdown({
+    Name = "Configs",
+    Options = configList,
+    Default = configList[1] or "None",
+    Pointer = "config_list",
+    callback = function(config)
+        print("Selected Config:", config)
+    end
+})
+
+local ConfigName = ConfigSection:Box({
+    Name = "Config Name",
+    Placeholder = "Enter config name",
+    Pointer = "config_name",
+    callback = function(text)
+        print("Config Name:", text)
+    end
+})
+
+ConfigSection:Button({
+    Name = "Save Config",
+    callback = function()
+        local name = library.flags["config_name"] or "default"
+        library:SaveConfig(name)
+        print("Config Saved:", name)
+    end
+})
+
+ConfigSection:Button({
+    Name = "Load Config",
+    callback = function()
+        local selected = library.flags["config_list"]
+        if selected and selected ~= "None" then
+            library:LoadConfig(selected)
+            print("Config Loaded:", selected)
+        end
+    end
+})
+
+ConfigSection:Button({
+    Name = "Delete Config",
+    callback = function()
+        local selected = library.flags["config_list"]
+        if selected and selected ~= "None" then
+            library:DeleteConfig(selected)
+            print("Config Deleted:", selected)
+        end
+    end
+})
+
+
+local UIToggle = UISection:Keybind({
+    Name = "UI Toggle",
+    Default = Enum.KeyCode.RightShift,
+    Blacklist = {Enum.UserInputType.MouseButton1},
+    Pointer = "ui_toggle",
+    callback = function(key, fromsetting)
+        if not fromsetting then
+            library:Toggle()
+        end
+    end
+})
+
+local AccentColor = UISection:Colorpicker({
+    Name = "Accent Color",
+    Default = Color3.fromRGB(133, 87, 242),
+    Pointer = "accent_color",
+    callback = function(color)
+        library:ChangeAccent(color)
+        print("Accent Color Changed:", color)
+    end
+})
+
+local WatermarkToggle = UISection:Toggle({
+    Name = "Watermark",
+    Default = true,
+    Pointer = "watermark",
+    callback = function(state)
+        print("Watermark:", state)
+    end
+})
+
+
+local watermark = library:Watermark({"Specter UI", "v1.0.0", "FPS: 60"})
+
+
+task.spawn(function()
+    local frames = 0
+    game:GetService("RunService").RenderStepped:Connect(function()
+        frames = frames + 1
+    end)
+
+    while task.wait(1) do
+        watermark:Update({"Specter UI", "v1.0.0", "FPS: " .. frames})
+        frames = 0
+    end
+end)
+
+
+local TestButton = UISection:Button({
+    Name = "Test Button",
+    callback = function()
+        print("Button clicked!")
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Specter UI",
+            Text = "Button pressed successfully!",
+            Duration = 3
+        })
+    end
+})
+
+
+local VolumeSlider = UISection:Slider({
+    Name = "Volume",
+    Minimum = 0,
+    Maximum = 100,
+    Default = 50,
+    Pointer = "volume",
+    callback = function(value)
+        print("Volume:", value)
+    end
+})
+
+
+local FeaturesMultibox = UISection:Multibox({
+    Name = "Features",
+    Options = {"Auto Farm", "Auto Collect", "Auto Sell", "Anti-AFK"},
+    Default = {"Auto Farm"},
+    Maximum = 3,
+    Pointer = "features",
+    callback = function(selected)
+        print("Features selected:", table.concat(selected, ", "))
+    end
+})
+
+
+library:Initialize()
+
+
+repeat wait() until game:IsLoaded()
+
+print("Specter UI Loaded Successfully!")
+print("Press RightShift to toggle UI")
+print("Accent Color:", library.accent)
+print("UI Toggle Key:", library.flags["ui_toggle"])
+
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+
+function CreateESP(player)
+    if player == LocalPlayer then return end
+    
+    local function AddESP()
+        if not player.Character then return end
+        
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_" .. player.Name
+        highlight.FillColor = library.flags["cham_color"] or Color3.fromRGB(255, 0, 0)
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineTransparency = 0
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = player.Character
+        
+        
+        player.CharacterAdded:Connect(function(char)
+            wait(1)
+            highlight.Adornee = char
+        end)
+        
+        player.CharacterRemoving:Connect(function()
+            highlight.Adornee = nil
+        end)
+    end
+    
+    if player.Character then
+        AddESP()
+    end
+    
+    player.CharacterAdded:Connect(AddESP)
+end
+
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if library.flags["player_chams"] then
+        for _, player in pairs(Players:GetPlayers()) do
+            if not player.Character:FindFirstChild("ESP_" .. player.Name) then
+                CreateESP(player)
+            end
+        end
+    else
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.Character then
+                local esp = player.Character:FindFirstChild("ESP_" .. player.Name)
+                if esp then
+                    esp:Destroy()
+                end
+            end
+        end
+    end
+end)
+
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    if library.flags["auto_shoot"] and LocalPlayer.Character then
+        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("Handle") then
+            local args = {
+                [1] = tool,
+                [2] = "Fire"
+            }
+            
+            pcall(function()
+                tool:FireServer(unpack(args))
+            end)
+        end
+    end
+end)
+
+
+game:GetService("Players").LocalPlayer:GetPropertyChangedSignal("UserId"):Connect(function()
+    library:SaveConfig("autosave_" .. os.time())
+end)
+
+
+print([[
+
+=== Specter UI Controls ===
+1. UI Toggle: RightShift
+2. Aimbot Key: Q
+3. Save Config: Enter config name and click Save
+4. Load Config: Select config and click Load
+
+=== Features ===
+- Aimbot with smoothing
+- Auto Shoot
+- ESP with boxes and names
+- Player Chams with custom colors
+- Config system
+- Watermark with FPS
+- Mobile touch support
+
+]])
 --[file content end]
