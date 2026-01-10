@@ -5753,7 +5753,7 @@ Library:ChangeAccent(Color3.fromRGB(133, 87, 242))
 Library:ChangeOutline { Color3.fromRGB(121, 66, 254), Color3.fromRGB(223, 57, 137) }
 
 Library:Initialize()
---]]
+
 
 --local library = loadstring(game:HttpGet("https://github.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/blob/main/Nil.lua?raw=true"))()
 
@@ -6148,7 +6148,7 @@ game:GetService("Players").LocalPlayer:GetPropertyChangedSignal("UserId"):Connec
 end)
 
 
-print([[
+[[
 
 === Specter UI Controls ===
 1. UI Toggle: RightShift
@@ -6165,5 +6165,7 @@ print([[
 - Watermark with FPS
 - Mobile touch support
 
-]])
+]]
+--]]
+
 --[file content end]
