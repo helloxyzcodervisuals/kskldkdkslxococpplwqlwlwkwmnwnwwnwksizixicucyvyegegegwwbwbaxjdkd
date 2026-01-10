@@ -4515,7 +4515,6 @@ local_player.CharacterAdded:Connect(function()
         setup_auto_fire()
     end
 end)
-repeat task.wait() until game:IsLoaded()
 
 local players = game:GetService("Players")
 local run_service = game:GetService("RunService")
@@ -4524,19 +4523,19 @@ local workspace = game:GetService("Workspace")
 local local_player = players.LocalPlayer
 
 getgenv().GLOW_CHAMS_CONFIG = {
-    Enabled = false,
+    Enabled = true,
     TeamCheck = true,
     FriendCheck = false,
     OnlyVisible = false,
     MaxDistance = 500,
-    GlowColor = Color3.fromRGB(255, 87, 242),
-    GlowTransparency = 0.5,
-    BoxColor = Color3.fromRGB(255, 87, 242),
-    BoxTransparency = 0.3,
-    Thickness = 0.2,
-    GlowEnabled = true,
-    BoxEnabled = true,
-    PriorityList = {}
+    InnerColor = Color3.fromRGB(255, 255, 255),
+    OuterColor = Color3.fromRGB(200, 200, 255),
+    InnerTransparency = 0.3,
+    OuterTransparency = 0,
+    InnerThickness = 0.15,
+    OuterThickness = 0.3,
+    InnerEnabled = true,
+    OuterEnabled = true
 }
 
 local glow_chams_cache = {}
@@ -4559,65 +4558,48 @@ local function apply_glow_chams(player, character)
     if not character then return end
     if glow_chams_cache[player] then return end
     
-    local glow_data = {}
+    local glow_data = {inner_boxes = {}, outer_boxes = {}}
     glow_chams_cache[player] = glow_data
     
-    if getgenv().GLOW_CHAMS_CONFIG.GlowEnabled then
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "GlowChams_Highlight"
-        highlight.FillColor = getgenv().GLOW_CHAMS_CONFIG.GlowColor
-        highlight.FillTransparency = getgenv().GLOW_CHAMS_CONFIG.GlowTransparency
-        highlight.OutlineColor = getgenv().GLOW_CHAMS_CONFIG.GlowColor
-        highlight.OutlineTransparency = 0
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        highlight.Adornee = character
-        highlight.Parent = character
-        highlight.Enabled = getgenv().GLOW_CHAMS_CONFIG.Enabled
-        
-        glow_data.highlight = highlight
+    local function create_box(part, color, thickness, transparency)
+        local box = Instance.new("BoxHandleAdornment")
+        box.Name = "GlowChams_Box"
+        box.Adornee = part
+        box.AlwaysOnTop = true
+        box.ZIndex = 1
+        box.Size = part.Size + Vector3.new(thickness, thickness, thickness)
+        box.Color3 = color
+        box.Transparency = transparency
+        box.Visible = getgenv().GLOW_CHAMS_CONFIG.Enabled
+        box.Parent = part
+        return box
     end
     
-    if getgenv().GLOW_CHAMS_CONFIG.BoxEnabled then
-        for _, part in pairs(character:GetChildren()) do
-            if part:IsA("BasePart") then
-                local box = Instance.new("BoxHandleAdornment")
-                box.Name = "GlowChams_Box"
-                box.Adornee = part
-                box.AlwaysOnTop = true
-                box.ZIndex = 1
-                box.Size = part.Size + Vector3.new(getgenv().GLOW_CHAMS_CONFIG.Thickness, getgenv().GLOW_CHAMS_CONFIG.Thickness, getgenv().GLOW_CHAMS_CONFIG.Thickness)
-                box.Color3 = getgenv().GLOW_CHAMS_CONFIG.BoxColor
-                box.Transparency = getgenv().GLOW_CHAMS_CONFIG.BoxTransparency
-                box.Visible = getgenv().GLOW_CHAMS_CONFIG.Enabled
-                box.Parent = part
-                
-                if not glow_data.boxes then glow_data.boxes = {} end
-                table.insert(glow_data.boxes, box)
+    for _, part in pairs(character:GetChildren()) do
+        if part:IsA("BasePart") then
+            if getgenv().GLOW_CHAMS_CONFIG.InnerEnabled then
+                local inner_box = create_box(part, getgenv().GLOW_CHAMS_CONFIG.InnerColor, getgenv().GLOW_CHAMS_CONFIG.InnerThickness, getgenv().GLOW_CHAMS_CONFIG.InnerTransparency)
+                table.insert(glow_data.inner_boxes, inner_box)
+            end
+            
+            if getgenv().GLOW_CHAMS_CONFIG.OuterEnabled then
+                local outer_box = create_box(part, getgenv().GLOW_CHAMS_CONFIG.OuterColor, getgenv().GLOW_CHAMS_CONFIG.OuterThickness, getgenv().GLOW_CHAMS_CONFIG.OuterTransparency)
+                table.insert(glow_data.outer_boxes, outer_box)
             end
         end
     end
     
     local connection = run_service.Heartbeat:Connect(function()
         if not getgenv().GLOW_CHAMS_CONFIG.Enabled then
-            if glow_data.highlight then
-                glow_data.highlight.Enabled = false
-            end
-            if glow_data.boxes then
-                for _, box in pairs(glow_data.boxes) do
-                    box.Visible = false
-                end
-            end
+            for _, box in pairs(glow_data.inner_boxes) do box.Visible = false end
+            for _, box in pairs(glow_data.outer_boxes) do box.Visible = false end
             return
         end
         
         if not player or not player.Parent or not character or not character.Parent then
             connection:Disconnect()
-            if glow_data.highlight then glow_data.highlight:Destroy() end
-            if glow_data.boxes then
-                for _, box in pairs(glow_data.boxes) do
-                    box:Destroy()
-                end
-            end
+            for _, box in pairs(glow_data.inner_boxes) do box:Destroy() end
+            for _, box in pairs(glow_data.outer_boxes) do box:Destroy() end
             glow_chams_cache[player] = nil
             return
         end
@@ -4625,12 +4607,8 @@ local function apply_glow_chams(player, character)
         local humanoid = character:FindFirstChild("Humanoid")
         if humanoid and humanoid.Health <= 0 then
             connection:Disconnect()
-            if glow_data.highlight then glow_data.highlight:Destroy() end
-            if glow_data.boxes then
-                for _, box in pairs(glow_data.boxes) do
-                    box:Destroy()
-                end
-            end
+            for _, box in pairs(glow_data.inner_boxes) do box:Destroy() end
+            for _, box in pairs(glow_data.outer_boxes) do box:Destroy() end
             glow_chams_cache[player] = nil
             return
         end
@@ -4639,62 +4617,25 @@ local function apply_glow_chams(player, character)
         if not root then return end
         
         if getgenv().GLOW_CHAMS_CONFIG.TeamCheck and player.Team and local_player.Team and player.Team == local_player.Team then
-            if glow_data.highlight then glow_data.highlight.Enabled = false end
-            if glow_data.boxes then
-                for _, box in pairs(glow_data.boxes) do
-                    box.Visible = false
-                end
-            end
+            for _, box in pairs(glow_data.inner_boxes) do box.Visible = false end
+            for _, box in pairs(glow_data.outer_boxes) do box.Visible = false end
             return
         end
         
         if getgenv().GLOW_CHAMS_CONFIG.FriendCheck and not is_friend(player) then
-            if glow_data.highlight then glow_data.highlight.Enabled = false end
-            if glow_data.boxes then
-                for _, box in pairs(glow_data.boxes) do
-                    box.Visible = false
-                end
-            end
+            for _, box in pairs(glow_data.inner_boxes) do box.Visible = false end
+            for _, box in pairs(glow_data.outer_boxes) do box.Visible = false end
             return
         end
         
-        if getgenv().GLOW_CHAMS_CONFIG.OnlyVisible then
-            local camera = workspace.CurrentCamera
-            local ray = Ray.new(camera.CFrame.Position, (root.Position - camera.CFrame.Position).Unit * 1000)
-            local part = workspace:FindPartOnRayWithIgnoreList(ray, {local_player.Character, camera})
-            if part and part:IsDescendantOf(character) then
-                if glow_data.highlight then glow_data.highlight.Enabled = true end
-                if glow_data.boxes then
-                    for _, box in pairs(glow_data.boxes) do
-                        box.Visible = true
-                    end
-                end
-            else
-                if glow_data.highlight then glow_data.highlight.Enabled = false end
-                if glow_data.boxes then
-                    for _, box in pairs(glow_data.boxes) do
-                        box.Visible = false
-                    end
-                end
-            end
+        local distance = (root.Position - (local_player.Character and get_humanoid_root_part(local_player.Character).Position or Vector3.new())).Magnitude
+        
+        if distance <= getgenv().GLOW_CHAMS_CONFIG.MaxDistance then
+            for _, box in pairs(glow_data.inner_boxes) do box.Visible = getgenv().GLOW_CHAMS_CONFIG.InnerEnabled end
+            for _, box in pairs(glow_data.outer_boxes) do box.Visible = getgenv().GLOW_CHAMS_CONFIG.OuterEnabled end
         else
-            local distance = (root.Position - (local_player.Character and get_humanoid_root_part(local_player.Character).Position or Vector3.new())).Magnitude
-            
-            if distance <= getgenv().GLOW_CHAMS_CONFIG.MaxDistance then
-                if glow_data.highlight then glow_data.highlight.Enabled = true end
-                if glow_data.boxes then
-                    for _, box in pairs(glow_data.boxes) do
-                        box.Visible = true
-                    end
-                end
-            else
-                if glow_data.highlight then glow_data.highlight.Enabled = false end
-                if glow_data.boxes then
-                    for _, box in pairs(glow_data.boxes) do
-                        box.Visible = false
-                    end
-                end
-            end
+            for _, box in pairs(glow_data.inner_boxes) do box.Visible = false end
+            for _, box in pairs(glow_data.outer_boxes) do box.Visible = false end
         end
     end)
     
@@ -4704,17 +4645,9 @@ end
 local function remove_glow_chams(player)
     if glow_chams_cache[player] then
         local glow_data = glow_chams_cache[player]
-        if glow_data.connection then
-            glow_data.connection:Disconnect()
-        end
-        if glow_data.highlight then
-            glow_data.highlight:Destroy()
-        end
-        if glow_data.boxes then
-            for _, box in pairs(glow_data.boxes) do
-                box:Destroy()
-            end
-        end
+        if glow_data.connection then glow_data.connection:Disconnect() end
+        for _, box in pairs(glow_data.inner_boxes) do box:Destroy() end
+        for _, box in pairs(glow_data.outer_boxes) do box:Destroy() end
         glow_chams_cache[player] = nil
     end
 end
@@ -4725,186 +4658,149 @@ local function toggle_glow_chams(state)
     if state then
         for _, player in pairs(players:GetPlayers()) do
             if player == local_player then continue end
-            if player.Character then
-                apply_glow_chams(player, player.Character)
-            end
-            
-            player.CharacterAdded:Connect(function(character)
-                apply_glow_chams(player, character)
-            end)
+            if player.Character then apply_glow_chams(player, player.Character) end
+            player.CharacterAdded:Connect(function(character) apply_glow_chams(player, character) end)
         end
-        
         players.PlayerAdded:Connect(function(player)
             if player == local_player then return end
-            player.CharacterAdded:Connect(function(character)
-                apply_glow_chams(player, character)
-            end)
+            player.CharacterAdded:Connect(function(character) apply_glow_chams(player, character) end)
         end)
-        
-        players.PlayerRemoving:Connect(function(player)
-            remove_glow_chams(player)
-        end)
+        players.PlayerRemoving:Connect(function(player) remove_glow_chams(player) end)
     else
-        for player, _ in pairs(glow_chams_cache) do
-            remove_glow_chams(player)
-        end
+        for player, _ in pairs(glow_chams_cache) do remove_glow_chams(player) end
     end
 end
-local ChamsPage = Window:Page({Name = "Glow Chams"})
-local ChamsMainSection = ChamsPage:Section({Name = "Glow Chams", Side = "Left", Max = 5})
-local ChamsSettingsSection = ChamsPage:Section({Name = "Settings", Side = "Right", Max = 5})
 
-ChamsMainSection:Toggle({
-    Name = "Enable Glow Chams",
-    Default = false,
-    Pointer = "glowchams_enable",
+local MainPage = Window:Page({Name = "Visual"})
+
+local GlowSection = MainPage:Section({Name = "Glow Settings", Side = "Left", Max = 6})
+local BoxSection = MainPage:Section({Name = "Box Settings", Side = "Right", Max = 6})
+
+GlowSection:Toggle({
+    Name = "Enable Box Glow",
+    Default = true,
+    Pointer = "boxglow_enable",
     callback = function(state)
+        getgenv().GLOW_CHAMS_CONFIG.Enabled = state
         toggle_glow_chams(state)
     end
 })
 
-ChamsMainSection:Toggle({
+GlowSection:Toggle({
     Name = "Team Check",
     Default = true,
-    Pointer = "glowchams_teamcheck",
+    Pointer = "boxglow_teamcheck",
     callback = function(state)
         getgenv().GLOW_CHAMS_CONFIG.TeamCheck = state
     end
 })
 
-ChamsMainSection:Toggle({
+GlowSection:Toggle({
     Name = "Friend Only",
     Default = false,
-    Pointer = "glowchams_friendonly",
+    Pointer = "boxglow_friendonly",
     callback = function(state)
         getgenv().GLOW_CHAMS_CONFIG.FriendCheck = state
     end
 })
 
-ChamsMainSection:Toggle({
-    Name = "Only Visible",
-    Default = false,
-    Pointer = "glowchams_onlyvisible",
-    callback = function(state)
-        getgenv().GLOW_CHAMS_CONFIG.OnlyVisible = state
-    end
-})
-
-ChamsMainSection:Slider({
+GlowSection:Slider({
     Name = "Max Distance",
     Minimum = 50,
     Maximum = 2000,
     Default = 500,
-    Pointer = "glowchams_distance",
+    Pointer = "boxglow_distance",
     callback = function(value)
         getgenv().GLOW_CHAMS_CONFIG.MaxDistance = value
     end
 })
 
-ChamsSettingsSection:Toggle({
-    Name = "Glow Enabled",
+BoxSection:Toggle({
+    Name = "Inner Box",
     Default = true,
-    Pointer = "glowchams_glowenabled",
+    Pointer = "boxglow_innerenabled",
     callback = function(state)
-        getgenv().GLOW_CHAMS_CONFIG.GlowEnabled = state
+        getgenv().GLOW_CHAMS_CONFIG.InnerEnabled = state
         toggle_glow_chams(getgenv().GLOW_CHAMS_CONFIG.Enabled)
     end
 }):Colorpicker({
-    Name = "Glow Color",
-    Default = Color3.fromRGB(255, 87, 242),
-    Pointer = "glowchams_glowcolor",
+    Name = "Inner Color",
+    Default = Color3.fromRGB(255, 255, 255),
+    Pointer = "boxglow_innercolor",
     callback = function(color)
-        getgenv().GLOW_CHAMS_CONFIG.GlowColor = color
+        getgenv().GLOW_CHAMS_CONFIG.InnerColor = color
         for player, glow_data in pairs(glow_chams_cache) do
-            if glow_data.highlight then
-                glow_data.highlight.FillColor = color
-                glow_data.highlight.OutlineColor = color
+            for _, box in pairs(glow_data.inner_boxes) do
+                box.Color3 = color
             end
         end
     end
 })
 
-ChamsSettingsSection:Slider({
-    Name = "Glow Transparency",
-    Minimum = 0,
-    Maximum = 1,
-    Default = 0.5,
-    Decimals = 0.1,
-    Pointer = "glowchams_glowtrans",
-    callback = function(value)
-        getgenv().GLOW_CHAMS_CONFIG.GlowTransparency = value
-        for player, glow_data in pairs(glow_chams_cache) do
-            if glow_data.highlight then
-                glow_data.highlight.FillTransparency = value
-            end
-        end
-    end
-})
-
-ChamsSettingsSection:Toggle({
-    Name = "Box Enabled",
-    Default = true,
-    Pointer = "glowchams_boxenabled",
-    callback = function(state)
-        getgenv().GLOW_CHAMS_CONFIG.BoxEnabled = state
-        toggle_glow_chams(getgenv().GLOW_CHAMS_CONFIG.Enabled)
-    end
-}):Colorpicker({
-    Name = "Box Color",
-    Default = Color3.fromRGB(255, 87, 242),
-    Pointer = "glowchams_boxcolor",
-    callback = function(color)
-        getgenv().GLOW_CHAMS_CONFIG.BoxColor = color
-        for player, glow_data in pairs(glow_chams_cache) do
-            if glow_data.boxes then
-                for _, box in pairs(glow_data.boxes) do
-                    box.Color3 = color
-                end
-            end
-        end
-    end
-})
-
-ChamsSettingsSection:Slider({
-    Name = "Box Transparency",
-    Minimum = 0,
-    Maximum = 1,
-    Default = 0.3,
-    Decimals = 0.1,
-    Pointer = "glowchams_boxtrans",
-    callback = function(value)
-        getgenv().GLOW_CHAMS_CONFIG.BoxTransparency = value
-        for player, glow_data in pairs(glow_chams_cache) do
-            if glow_data.boxes then
-                for _, box in pairs(glow_data.boxes) do
-                    box.Transparency = value
-                end
-            end
-        end
-    end
-})
-
-ChamsSettingsSection:Slider({
-    Name = "Box Thickness",
+BoxSection:Slider({
+    Name = "Inner Thickness",
     Minimum = 0.1,
     Maximum = 1,
-    Default = 0.2,
-    Decimals = 0.1,
-    Pointer = "glowchams_thickness",
+    Default = 0.15,
+    Decimals = 0.01,
+    Pointer = "boxglow_innerthickness",
     callback = function(value)
-        getgenv().GLOW_CHAMS_CONFIG.Thickness = value
+        getgenv().GLOW_CHAMS_CONFIG.InnerThickness = value
         for player, glow_data in pairs(glow_chams_cache) do
-            if glow_data.boxes then
-                for _, box in pairs(glow_data.boxes) do
-                    local part = box.Adornee
-                    if part then
-                        box.Size = part.Size + Vector3.new(value, value, value)
-                    end
+            for _, box in pairs(glow_data.inner_boxes) do
+                local part = box.Adornee
+                if part then
+                    box.Size = part.Size + Vector3.new(value, value, value)
                 end
             end
         end
     end
 })
+
+BoxSection:Toggle({
+    Name = "Outer Box",
+    Default = true,
+    Pointer = "boxglow_outerenabled",
+    callback = function(state)
+        getgenv().GLOW_CHAMS_CONFIG.OuterEnabled = state
+        toggle_glow_chams(getgenv().GLOW_CHAMS_CONFIG.Enabled)
+    end
+}):Colorpicker({
+    Name = "Outer Color",
+    Default = Color3.fromRGB(200, 200, 255),
+    Pointer = "boxglow_outercolor",
+    callback = function(color)
+        getgenv().GLOW_CHAMS_CONFIG.OuterColor = color
+        for player, glow_data in pairs(glow_chams_cache) do
+            for _, box in pairs(glow_data.outer_boxes) do
+                box.Color3 = color
+            end
+        end
+    end
+})
+
+BoxSection:Slider({
+    Name = "Outer Thickness",
+    Minimum = 0.1,
+    Maximum = 1,
+    Default = 0.3,
+    Decimals = 0.01,
+    Pointer = "boxglow_outerthickness",
+    callback = function(value)
+        getgenv().GLOW_CHAMS_CONFIG.OuterThickness = value
+        for player, glow_data in pairs(glow_chams_cache) do
+            for _, box in pairs(glow_data.outer_boxes) do
+                local part = box.Adornee
+                if part then
+                    box.Size = part.Size + Vector3.new(value, value, value)
+                end
+            end
+        end
+    end
+})
+
+toggle_glow_chams(true)
+
 print("skegg-agent Loaded Successfully!")
 print("Silent Aim Mode:", getgenv().SKEGG_CONFIG.SilentAim.Mode)
 print("FOV Size:", getgenv().SKEGG_CONFIG.SilentAim.FOV)
