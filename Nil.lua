@@ -1,5 +1,5 @@
-[file name]: Example (8).txt
-[file content begin]
+--[file name]: Example (8).txt
+--[file content begin]
 repeat
     wait()
 until game:IsLoaded()
@@ -5753,4 +5753,4 @@ Library:ChangeAccent(Color3.fromRGB(133, 87, 242))
 Library:ChangeOutline { Color3.fromRGB(121, 66, 254), Color3.fromRGB(223, 57, 137) }
 
 Library:Initialize()
-[file content end]
+--[file content end]
