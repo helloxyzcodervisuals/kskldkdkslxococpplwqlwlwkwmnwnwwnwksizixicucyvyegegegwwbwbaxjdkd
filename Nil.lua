@@ -3915,7 +3915,7 @@ do
         library:Initialize()
     end
 end
-
+--[[
 local ScriptProperties = {
     ScriptName = "specter.lua",
     ScriptSizeOne = 700,
@@ -5753,4 +5753,5 @@ Library:ChangeAccent(Color3.fromRGB(133, 87, 242))
 Library:ChangeOutline { Color3.fromRGB(121, 66, 254), Color3.fromRGB(223, 57, 137) }
 
 Library:Initialize()
+--]]
 --[file content end]
