@@ -11,7 +11,9 @@ local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 
 local client = Players.LocalPlayer
-
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CPREGui"
+screenGui.Parent = CoreGui
 local utility = {}
 local totalunnamedflags = 0
 
@@ -1260,7 +1262,7 @@ function library:new_window(cfg)
         Size = UDim2.new(0,size_x,0,size_y),
         Position = UDim2.new(0.5, -(size_x / 2), 0.5, -(size_y / 2)),
         BorderSizePixel = 0,
-        Parent = CoreGui
+        Parent = screenGui
     })
     
     local outline = utility.outline(window_outline, "Window Border")
