@@ -66,7 +66,7 @@ do
         speed = speed or 0
 
         object.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
                 start = input.Position
                 objectPosition = object.Position
@@ -74,13 +74,13 @@ do
         end)
 
         object.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = false
             end
         end)
 
         services.InputService.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+            if input.UserInputType == Enum.UserInputType.MouseMovement and dragging or input.UserInputType == Enum.UserInputType.Touch then
                 utility.tween(object, { speed }, { Position = UDim2.new(objectPosition.X.Scale, objectPosition.X.Offset + (input.Position - start).X, objectPosition.Y.Scale, objectPosition.Y.Offset + (input.Position - start).Y) })
             end
         end)
@@ -3919,8 +3919,8 @@ end
 local ScriptProperties = {
     ScriptName = "specter.lua",
     ScriptSizeOne = 700,
-    ScriptSizeTwo = 500,
-    ScriptAccent = Color3.fromRGB(121, 66, 254),
+    ScriptSizeTwo = 700,
+    ScriptAccent = Color3.fromRGB(255, 255, 255),
 
     Perms = { 246220626, 2415886442, 2284385613, 2415886442 },
     Owners = { "tenaki", "happy", "xiba" },
