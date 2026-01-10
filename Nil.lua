@@ -4514,7 +4514,161 @@ local_player.CharacterAdded:Connect(function()
         setup_auto_fire()
     end
 end)
+local ChamsPage = Window:Page({Name = "Glow Chams"})
+local ChamsMainSection = ChamsPage:Section({Name = "Glow Chams", Side = "Left", Max = 5})
+local ChamsSettingsSection = ChamsPage:Section({Name = "Settings", Side = "Right", Max = 5})
 
+ChamsMainSection:Toggle({
+    Name = "Enable Glow Chams",
+    Default = false,
+    Pointer = "glowchams_enable",
+    callback = function(state)
+        toggle_glow_chams(state)
+    end
+})
+
+ChamsMainSection:Toggle({
+    Name = "Team Check",
+    Default = true,
+    Pointer = "glowchams_teamcheck",
+    callback = function(state)
+        getgenv().GLOW_CHAMS_CONFIG.TeamCheck = state
+    end
+})
+
+ChamsMainSection:Toggle({
+    Name = "Friend Only",
+    Default = false,
+    Pointer = "glowchams_friendonly",
+    callback = function(state)
+        getgenv().GLOW_CHAMS_CONFIG.FriendCheck = state
+    end
+})
+
+ChamsMainSection:Toggle({
+    Name = "Only Visible",
+    Default = false,
+    Pointer = "glowchams_onlyvisible",
+    callback = function(state)
+        getgenv().GLOW_CHAMS_CONFIG.OnlyVisible = state
+    end
+})
+
+ChamsMainSection:Slider({
+    Name = "Max Distance",
+    Minimum = 50,
+    Maximum = 2000,
+    Default = 500,
+    Pointer = "glowchams_distance",
+    callback = function(value)
+        getgenv().GLOW_CHAMS_CONFIG.MaxDistance = value
+    end
+})
+
+ChamsSettingsSection:Toggle({
+    Name = "Glow Enabled",
+    Default = true,
+    Pointer = "glowchams_glowenabled",
+    callback = function(state)
+        getgenv().GLOW_CHAMS_CONFIG.GlowEnabled = state
+        toggle_glow_chams(getgenv().GLOW_CHAMS_CONFIG.Enabled)
+    end
+}):Colorpicker({
+    Name = "Glow Color",
+    Default = Color3.fromRGB(255, 87, 242),
+    Pointer = "glowchams_glowcolor",
+    callback = function(color)
+        getgenv().GLOW_CHAMS_CONFIG.GlowColor = color
+        for player, glow_data in pairs(glow_chams_cache) do
+            if glow_data.highlight then
+                glow_data.highlight.FillColor = color
+                glow_data.highlight.OutlineColor = color
+            end
+        end
+    end
+})
+
+ChamsSettingsSection:Slider({
+    Name = "Glow Transparency",
+    Minimum = 0,
+    Maximum = 1,
+    Default = 0.5,
+    Decimals = 0.1,
+    Pointer = "glowchams_glowtrans",
+    callback = function(value)
+        getgenv().GLOW_CHAMS_CONFIG.GlowTransparency = value
+        for player, glow_data in pairs(glow_chams_cache) do
+            if glow_data.highlight then
+                glow_data.highlight.FillTransparency = value
+            end
+        end
+    end
+})
+
+ChamsSettingsSection:Toggle({
+    Name = "Box Enabled",
+    Default = true,
+    Pointer = "glowchams_boxenabled",
+    callback = function(state)
+        getgenv().GLOW_CHAMS_CONFIG.BoxEnabled = state
+        toggle_glow_chams(getgenv().GLOW_CHAMS_CONFIG.Enabled)
+    end
+}):Colorpicker({
+    Name = "Box Color",
+    Default = Color3.fromRGB(255, 87, 242),
+    Pointer = "glowchams_boxcolor",
+    callback = function(color)
+        getgenv().GLOW_CHAMS_CONFIG.BoxColor = color
+        for player, glow_data in pairs(glow_chams_cache) do
+            if glow_data.boxes then
+                for _, box in pairs(glow_data.boxes) do
+                    box.Color3 = color
+                end
+            end
+        end
+    end
+})
+
+ChamsSettingsSection:Slider({
+    Name = "Box Transparency",
+    Minimum = 0,
+    Maximum = 1,
+    Default = 0.3,
+    Decimals = 0.1,
+    Pointer = "glowchams_boxtrans",
+    callback = function(value)
+        getgenv().GLOW_CHAMS_CONFIG.BoxTransparency = value
+        for player, glow_data in pairs(glow_chams_cache) do
+            if glow_data.boxes then
+                for _, box in pairs(glow_data.boxes) do
+                    box.Transparency = value
+                end
+            end
+        end
+    end
+})
+
+ChamsSettingsSection:Slider({
+    Name = "Box Thickness",
+    Minimum = 0.1,
+    Maximum = 1,
+    Default = 0.2,
+    Decimals = 0.1,
+    Pointer = "glowchams_thickness",
+    callback = function(value)
+        getgenv().GLOW_CHAMS_CONFIG.Thickness = value
+        for player, glow_data in pairs(glow_chams_cache) do
+            if glow_data.boxes then
+                for _, box in pairs(glow_data.boxes) do
+                    local part = box.Adornee
+                    if part then
+                        box.Size = part.Size + Vector3.new(value, value, value)
+                    end
+                end
+            end
+        end
+    end
+})
 print("skegg-agent Loaded Successfully!")
 print("Silent Aim Mode:", getgenv().SKEGG_CONFIG.SilentAim.Mode)
 print("FOV Size:", getgenv().SKEGG_CONFIG.SilentAim.FOV)
