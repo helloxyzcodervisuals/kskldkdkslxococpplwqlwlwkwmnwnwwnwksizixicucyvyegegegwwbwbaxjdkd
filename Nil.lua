@@ -80,7 +80,7 @@ do
         end)
 
         services.InputService.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement and dragging or input.UserInputType == Enum.UserInputType.Touch then
+            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                 utility.tween(object, { speed }, { Position = UDim2.new(objectPosition.X.Scale, objectPosition.X.Offset + (input.Position - start).X, objectPosition.Y.Scale, objectPosition.Y.Offset + (input.Position - start).Y) })
             end
         end)
@@ -432,7 +432,7 @@ do
         local accent = options.accent or library.accent
         local outlinecolor = options.outline or { accent, utility.changecolor(accent, -100) }
         local sizeX = options.sizeX or 550
-        local sizeY = options.sizeY or 350
+        local sizeY = options.sizeY or 650
 
         library.accent = accent
         library.outline = outlinecolor
