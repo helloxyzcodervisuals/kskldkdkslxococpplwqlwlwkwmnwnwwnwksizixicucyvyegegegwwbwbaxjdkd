@@ -6167,7 +6167,7 @@ end)
 
 ]]
 --]]
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/example/specter/main/library.lua"))()
+--local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/example/specter/main/library.lua"))()
 
 repeat task.wait() until game:IsLoaded()
 
