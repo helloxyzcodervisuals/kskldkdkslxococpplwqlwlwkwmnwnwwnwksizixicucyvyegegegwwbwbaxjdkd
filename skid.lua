@@ -6766,7 +6766,8 @@ local function StartFlying()
         else Root.Velocity = Vector3.new(0, 0, 0) end
     end)
 end
-
+local LightingEffects = {}
+local currentEffect = nil
 local Window = library:New({Name = "gamesense.cc", Accent = Color3.fromRGB(133, 87, 242), sizeX = 500, sizeY = 600})
 local RagePage = Window:Page({Name = "Rage"}) local LegitPage = Window:Page({Name = "Legit"}) local VisualPage = Window:Page({Name = "Visual"}) local MiscPage = Window:Page({Name = "Misc"}) local ConfigPage = Window:Page({Name = "Config"})
 local RageLeft = RagePage:Section({Name = "Ragebot", Side = "Left", Max = 20}) local RageRight = RagePage:Section({Name = "Settings", Side = "Right", Max = 20}) local LegitLeft = LegitPage:Section({Name = "Aimbot", Side = "Left", Max = 20}) local LegitRight = LegitPage:Section({Name = "Gun Mod", Side = "Right", Max = 20}) local VisualLeft = VisualPage:Section({Name = "ESP", Side = "Left", Max = 20}) local VisualRight = VisualPage:Section({Name = "Visuals", Side = "Right", Max = 20}) local MiscLeft = MiscPage:Section({Name = "Movement", Side = "Left", Max = 20}) local MiscRight = MiscPage:Section({Name = "Other", Side = "Right", Max = 20}) local ConfigLeft = ConfigPage:Section({Name = "Configs", Side = "Left", Max = 20}) local ConfigRight = ConfigPage:Section({Name = "Lists", Side = "Right", Max = 20})
