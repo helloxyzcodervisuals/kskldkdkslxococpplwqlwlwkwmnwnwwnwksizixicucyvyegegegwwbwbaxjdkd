@@ -4678,46 +4678,41 @@ end
 local function createTracer(startPos, endPos)
     if not Ragebot.ShowTracers then return end
     
-    if not tracersContainer then
-        tracersContainer = Instance.new("Folder")
-        tracersContainer.Name = "Tracers"
-        tracersContainer.Parent = workspace
-    end
-    
-    local part = Instance.new("Part")
-    part.Anchored = true
-    part.CanCollide = false
-    part.Transparency = 1
-    part.Size = Vector3.new(0.1, 0.1, 0.1)
-    part.CFrame = CFrame.lookAt(startPos, endPos)
-    part.Parent = tracersContainer
-    
-    local distance = (startPos - endPos).Magnitude
+    local beam = Instance.new("Beam")
     
     local attachment0 = Instance.new("Attachment")
-    attachment0.Position = Vector3.new(0, 0, 0)
-    attachment0.Parent = part
+    attachment0.WorldPosition = startPos
+    attachment0.Parent = beam
     
     local attachment1 = Instance.new("Attachment")
-    attachment1.Position = Vector3.new(0, 0, -distance)
-    attachment1.Parent = part
+    attachment1.WorldPosition = endPos
+    attachment1.Parent = beam
     
-    local beam = Instance.new("Beam")
     beam.Attachment0 = attachment0
     beam.Attachment1 = attachment1
     beam.Color = ColorSequence.new(Ragebot.TracerColor)
     beam.Width0 = Ragebot.TracerWidth
     beam.Width1 = Ragebot.TracerWidth
     beam.FaceCamera = true
-    beam.Parent = part
+    beam.LightEmission = 1
+    beam.LightInfluence = 0
+    
+    if Ragebot.TracerTexture then
+        beam.Texture = Ragebot.TracerTexture
+        beam.TextureLength = (startPos - endPos).Magnitude
+        beam.TextureMode = Enum.TextureMode.Stretch
+        beam.TextureSpeed = 5
+    end
+    
+    beam.Segments = 10
+    beam.Parent = workspace
     
     table.insert(tracers, {
-        Part = part,
         Beam = beam,
         Time = tick()
     })
     
-    game:GetService("Debris"):AddItem(part, Ragebot.TracerLifeTime)
+    game:GetService("Debris"):AddItem(beam, Ragebot.TracerLifeTime)
 end
 
 local function clearOldTracers()
