@@ -4444,6 +4444,34 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local ShootEvent = ReplicatedStorage:WaitForChild("GunRemotes"):WaitForChild("ShootEvent")
+local Ragebot = {
+    Enabled = false,
+    FireRate = 1000,
+    AutoShoot = false,
+    HitChance = 100,
+    DoubleTap = false,
+    ShowTracers = false,
+    TracerColor = Color3.fromRGB(255, 165, 0),
+    TracerTexture = "rbxassetid://446111271",
+    TracerWidth = 0.2,
+    TracerLifeTime = 1,
+    TargetList = {},
+    Whitelist = {},
+    DoubleJump = false,
+    CFrameWalk = false,
+    WalkSpeed = 16,
+    WalkJumpPower = 50,
+    RichShader = false,
+    ShaderBrightness = 0,
+    ShaderContrast = 0,
+    ShaderSaturation = 0,
+    ShaderTintColor = Color3.fromRGB(255, 255, 255),
+    ForceField = false,
+    ForceFieldColor = Color3.fromRGB(0, 170, 255),
+    ForceFieldTransparency = 0.5,
+    ForceFieldMaterial = Enum.Material.Neon,
+    RapidFire = false
+}
 local function getNearestTarget()
     local myPos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if not myPos then return nil end
@@ -4477,35 +4505,6 @@ local function getNearestTarget()
 
     return nearest
 end
-local Ragebot = {
-    Enabled = false,
-    FireRate = 1000,
-    AutoShoot = false,
-    HitChance = 100,
-    DoubleTap = false,
-    ShowTracers = false,
-    TracerColor = Color3.fromRGB(255, 165, 0),
-    TracerTexture = "rbxassetid://446111271",
-    TracerWidth = 0.2,
-    TracerLifeTime = 1,
-    TargetList = {},
-    Whitelist = {},
-    DoubleJump = false,
-    CFrameWalk = false,
-    WalkSpeed = 16,
-    WalkJumpPower = 50,
-    RichShader = false,
-    ShaderBrightness = 0,
-    ShaderContrast = 0,
-    ShaderSaturation = 0,
-    ShaderTintColor = Color3.fromRGB(255, 255, 255),
-    ForceField = false,
-    ForceFieldColor = Color3.fromRGB(0, 170, 255),
-    ForceFieldTransparency = 0.5,
-    ForceFieldMaterial = Enum.Material.Neon,
-    RapidFire = false
-}
-
 local MaxDistance = 1500
 local lastShotTime = 0
 local tracers = {}
