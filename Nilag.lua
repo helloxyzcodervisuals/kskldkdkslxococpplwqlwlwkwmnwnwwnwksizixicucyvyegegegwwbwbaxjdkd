@@ -4444,7 +4444,39 @@ local Lighting = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local ShootEvent = ReplicatedStorage:WaitForChild("GunRemotes"):WaitForChild("ShootEvent")
+local function getNearestTarget()
+    local myPos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myPos then return nil end
+    myPos = myPos.Position
 
+    local nearest, minDist = nil, MaxDistance
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            if #Ragebot.TargetList > 0 and not table.find(Ragebot.TargetList, plr.Name) then
+                continue
+            end
+            
+            if table.find(Ragebot.Whitelist, plr.Name) then
+                continue
+            end
+            
+            local char = plr.Character
+            if char and char:FindFirstChild("Head") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+                if plr.Team == LocalPlayer.Team then continue end
+
+                local head = char.Head
+                local dist = (head.Position - myPos).Magnitude
+                if dist < minDist then
+                    minDist = dist
+                    nearest = head
+                end
+            end
+        end
+    end
+
+    return nearest
+end
 local Ragebot = {
     Enabled = false,
     FireRate = 1000,
@@ -4703,39 +4735,7 @@ local function clearOldTracers()
     end
 end
 
-local function getNearestTarget()
-    local myPos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not myPos then return nil end
-    myPos = myPos.Position
 
-    local nearest, minDist = nil, MaxDistance
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            if #Ragebot.TargetList > 0 and not table.find(Ragebot.TargetList, plr.Name) then
-                continue
-            end
-            
-            if table.find(Ragebot.Whitelist, plr.Name) then
-                continue
-            end
-            
-            local char = plr.Character
-            if char and char:FindFirstChild("Head") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
-                if plr.Team == LocalPlayer.Team then continue end
-
-                local head = char.Head
-                local dist = (head.Position - myPos).Magnitude
-                if dist < minDist then
-                    minDist = dist
-                    nearest = head
-                end
-            end
-        end
-    end
-
-    return nearest
-end
 
 local function enableDoubleJump()
     if not Ragebot.DoubleJump then return end
