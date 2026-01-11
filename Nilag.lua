@@ -3915,3 +3915,521 @@ do
         library:Initialize()
     end
 end
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Debris = game:GetService("Debris")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local ShootEvent = ReplicatedStorage:WaitForChild("GunRemotes"):WaitForChild("ShootEvent")
+
+local Ragebot = {
+    Enabled = false,
+    FireRate = 1000,
+    AutoShoot = false,
+    AutoWall = false,
+    Penetration = 3,
+    HitChance = 100,
+    DoubleTap = false,
+    FakeLag = false,
+    FakeLagAmount = 10,
+    Desync = false,
+    DesyncRange = 10,
+    AntiAim = false,
+    AntiAimType = "Jitter",
+    AntiAimSpeed = 5,
+    ShowTracers = false,
+    TracerColor = Color3.fromRGB(255, 165, 0),
+    TracerTexture = "rbxassetid://446111271",
+    TracerLifeTime = 1,
+    TargetList = {},
+    Whitelist = {}
+}
+
+local MaxDistance = 1500
+local lastShotTime = 0
+local tracers = {}
+
+local function getFireRateDelay()
+    if Ragebot.FireRate == 0 then return 0 end
+    return 1 / Ragebot.FireRate
+end
+
+local function shouldShoot()
+    if not Ragebot.AutoShoot then return false end
+    
+    local currentTime = tick()
+    local fireDelay = getFireRateDelay()
+    
+    if currentTime - lastShotTime >= fireDelay then
+        if Ragebot.HitChance == 100 then
+            return true
+        else
+            local random = math.random(1, 100)
+            return random <= Ragebot.HitChance
+        end
+    end
+    
+    return false
+end
+
+local function applyDesync()
+    if not Ragebot.Desync or not LocalPlayer.Character then return end
+    
+    local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    
+    local randomX = math.random(-Ragebot.DesyncRange, Ragebot.DesyncRange)
+    local randomZ = math.random(-Ragebot.DesyncRange, Ragebot.DesyncRange)
+    
+    hrp.CFrame = hrp.CFrame * CFrame.new(randomX, 0, randomZ)
+end
+
+local function applyAntiAim()
+    if not Ragebot.AntiAim or not LocalPlayer.Character then return end
+    
+    local head = LocalPlayer.Character:FindFirstChild("Head")
+    if not head then return end
+    
+    local existingWeld = head:FindFirstChild("AntiAimWeld")
+    
+    if Ragebot.AntiAimType == "Jitter" then
+        local angle = math.random(0, 360)
+        local rotation = CFrame.Angles(0, math.rad(angle), 0)
+        
+        if not existingWeld then
+            local weld = Instance.new("Weld")
+            weld.Name = "AntiAimWeld"
+            weld.Part0 = head
+            weld.Part1 = head
+            weld.C0 = CFrame.new()
+            weld.C1 = rotation
+            weld.Parent = head
+            
+            RunService.Heartbeat:Connect(function()
+                if Ragebot.AntiAim then
+                    local newAngle = math.random(0, 360)
+                    local newRotation = CFrame.Angles(0, math.rad(newAngle), 0)
+                    weld.C1 = newRotation
+                end
+            end)
+        end
+    elseif Ragebot.AntiAimType == "Spin" then
+        if not existingWeld then
+            local weld = Instance.new("Weld")
+            weld.Name = "AntiAimWeld"
+            weld.Part0 = head
+            weld.Part1 = head
+            weld.C0 = CFrame.new()
+            weld.Parent = head
+            
+            local spinSpeed = Ragebot.AntiAimSpeed
+            RunService.Heartbeat:Connect(function()
+                if Ragebot.AntiAim then
+                    local time = tick() * spinSpeed
+                    local rotation = CFrame.Angles(0, time % (2 * math.pi), 0)
+                    weld.C1 = rotation
+                end
+            end)
+        end
+    end
+end
+
+local function removeAntiAim()
+    if not LocalPlayer.Character then return end
+    
+    local head = LocalPlayer.Character:FindFirstChild("Head")
+    if not head then return end
+    
+    local weld = head:FindFirstChild("AntiAimWeld")
+    if weld then
+        weld:Destroy()
+    end
+end
+
+local function createTracer(startPos, endPos)
+    if not Ragebot.ShowTracers then return end
+    
+    local part = Instance.new("Part")
+    part.Anchored = true
+    part.CanCollide = false
+    part.Transparency = 1
+    part.Size = Vector3.new(1, 1, 1)
+    part.Position = Vector3.new(0, 0, 0)
+    part.Parent = workspace
+    
+    local attachment0 = Instance.new("Attachment")
+    attachment0.Position = Vector3.new(0, 0, 0)
+    attachment0.Parent = part
+    
+    local attachment1 = Instance.new("Attachment")
+    attachment1.Position = Vector3.new(0, 0, (startPos - endPos).Magnitude)
+    attachment1.Parent = part
+    
+    part.CFrame = CFrame.new(startPos, endPos)
+    
+    local beam = Instance.new("Beam")
+    beam.Attachment0 = attachment0
+    beam.Attachment1 = attachment1
+    beam.Color = ColorSequence.new(Ragebot.TracerColor)
+    beam.Width0 = 0.2
+    beam.Width1 = 0.2
+    beam.FaceCamera = true
+    beam.LightEmission = 1
+    beam.LightInfluence = 0
+    
+    beam.Texture = Ragebot.TracerTexture
+    beam.TextureLength = 10
+    beam.TextureMode = Enum.TextureMode.Stretch
+    beam.TextureSpeed = 5
+    beam.Segments = 10
+    
+    beam.Parent = part
+    
+    table.insert(tracers, {
+        Part = part,
+        Beam = beam,
+        Time = tick()
+    })
+    
+    Debris:AddItem(part, Ragebot.TracerLifeTime)
+end
+
+local function clearOldTracers()
+    local currentTime = tick()
+    for i = #tracers, 1, -1 do
+        if currentTime - tracers[i].Time > Ragebot.TracerLifeTime then
+            table.remove(tracers, i)
+        end
+    end
+end
+
+local function getNearestTarget()
+    local myPos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myPos then return nil end
+    myPos = myPos.Position
+
+    local nearest, minDist = nil, MaxDistance
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            if #Ragebot.TargetList > 0 and not table.find(Ragebot.TargetList, plr.Name) then
+                continue
+            end
+            
+            if table.find(Ragebot.Whitelist, plr.Name) then
+                continue
+            end
+            
+            local char = plr.Character
+            if char and char:FindFirstChild("Head") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+                if plr.Team == LocalPlayer.Team then continue end
+
+                local head = char.Head
+                local dist = (head.Position - myPos).Magnitude
+                if dist < minDist then
+                    minDist = dist
+                    nearest = head
+                end
+            end
+        end
+    end
+
+    return nearest
+end
+
+RunService.Heartbeat:Connect(function()
+    if not Ragebot.Enabled then 
+        removeAntiAim()
+        return 
+    end
+    
+    if Ragebot.AntiAim then
+        applyAntiAim()
+    else
+        removeAntiAim()
+    end
+    
+    if Ragebot.Desync then
+        applyDesync()
+    end
+    
+    if Ragebot.FakeLag then
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in ipairs(char:GetChildren()) do
+                if part:IsA("BasePart") then
+                    part.Anchored = true
+                    Debris:AddItem(part, Ragebot.FakeLagAmount / 1000)
+                end
+            end
+        end
+    end
+    
+    clearOldTracers()
+    
+    if Ragebot.AutoShoot then
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local tool = char and char:FindFirstChildOfClass("Tool")
+        
+        if not hrp or not tool or tool:GetAttribute("ToolType") ~= "Gun" then return end
+
+        if shouldShoot() then
+            local myPos = hrp.Position
+            local targetHead = getNearestTarget()
+            if not targetHead then return end
+
+            local hitPos = targetHead.Position
+            
+            if Ragebot.ShowTracers then
+                createTracer(myPos, hitPos)
+            end
+            
+            pcall(function()
+                ShootEvent:FireServer({
+                    {
+                        myPos,
+                        hitPos,
+                        targetHead
+                    }
+                })
+                lastShotTime = tick()
+            end)
+        end
+    end
+end)
+
+-- UI Setup
+local window = library:New({name = "Ragebot"})
+local page = window:Page({name = "Main"})
+local section = page:Section({name = "Ragebot", side = "left"})
+
+local enabledToggle = section:Toggle({
+    name = "Enable Ragebot",
+    pointer = "ragebot_enabled",
+    callback = function(state)
+        Ragebot.Enabled = state
+    end
+})
+
+local fireRateSlider = section:Slider({
+    name = "Fire Rate",
+    pointer = "ragebot_firerate",
+    min = 0,
+    max = 1000,
+    default = 1000,
+    callback = function(value)
+        Ragebot.FireRate = value
+    end
+})
+
+local autoShootToggle = section:Toggle({
+    name = "Auto Shoot",
+    pointer = "ragebot_autoshoot",
+    callback = function(state)
+        Ragebot.AutoShoot = state
+    end
+})
+
+local hitChanceSlider = section:Slider({
+    name = "Hit Chance %",
+    pointer = "ragebot_hitchance",
+    min = 0,
+    max = 100,
+    default = 100,
+    callback = function(value)
+        Ragebot.HitChance = value
+    end
+})
+
+local autoWallToggle = section:Toggle({
+    name = "Auto Wall",
+    pointer = "ragebot_autowall",
+    callback = function(state)
+        Ragebot.AutoWall = state
+    end
+})
+
+local penetrationSlider = section:Slider({
+    name = "Penetration",
+    pointer = "ragebot_penetration",
+    min = 1,
+    max = 5,
+    default = 3,
+    callback = function(value)
+        Ragebot.Penetration = value
+    end
+})
+
+local doubleTapToggle = section:Toggle({
+    name = "Double Tap",
+    pointer = "ragebot_doubletap",
+    callback = function(state)
+        Ragebot.DoubleTap = state
+    end
+})
+
+local fakeLagToggle = section:Toggle({
+    name = "Fake Lag",
+    pointer = "ragebot_fakelag",
+    callback = function(state)
+        Ragebot.FakeLag = state
+    end
+})
+
+local fakeLagSlider = section:Slider({
+    name = "Fake Lag Amount",
+    pointer = "ragebot_fakelagamount",
+    min = 1,
+    max = 50,
+    default = 10,
+    callback = function(value)
+        Ragebot.FakeLagAmount = value
+    end
+})
+
+local desyncToggle = section:Toggle({
+    name = "Desync",
+    pointer = "ragebot_desync",
+    callback = function(state)
+        Ragebot.Desync = state
+    end
+})
+
+local desyncSlider = section:Slider({
+    name = "Desync Range",
+    pointer = "ragebot_desyncrange",
+    min = 1,
+    max = 50,
+    default = 10,
+    callback = function(value)
+        Ragebot.DesyncRange = value
+    end
+})
+
+local antiAimToggle = section:Toggle({
+    name = "Anti Aim",
+    pointer = "ragebot_antiaim",
+    callback = function(state)
+        Ragebot.AntiAim = state
+        if not state then
+            removeAntiAim()
+        end
+    end
+})
+
+local antiAimDropdown = section:Dropdown({
+    name = "Anti Aim Type",
+    pointer = "ragebot_antiaimtype",
+    options = {"Jitter", "Spin"},
+    default = "Jitter",
+    callback = function(value)
+        Ragebot.AntiAimType = value
+        removeAntiAim()
+    end
+})
+
+local antiAimSlider = section:Slider({
+    name = "Anti Aim Speed",
+    pointer = "ragebot_antiaimspeed",
+    min = 1,
+    max = 10,
+    default = 5,
+    callback = function(value)
+        Ragebot.AntiAimSpeed = value
+    end
+})
+
+local tracerToggle = section:Toggle({
+    name = "Show Tracers",
+    pointer = "ragebot_showtracers",
+    callback = function(state)
+        Ragebot.ShowTracers = state
+    end
+})
+
+local tracerColorPicker = section:ColorPicker({
+    name = "Tracer Color",
+    pointer = "ragebot_tracercolor",
+    default = Color3.fromRGB(255, 165, 0),
+    callback = function(color)
+        Ragebot.TracerColor = color
+    end
+})
+
+local tracerLifeSlider = section:Slider({
+    name = "Tracer Life Time",
+    pointer = "ragebot_tracerlife",
+    min = 0.1,
+    max = 5,
+    default = 1,
+    callback = function(value)
+        Ragebot.TracerLifeTime = value
+    end
+})
+
+local playerList = {}
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        table.insert(playerList, player.Name)
+    end
+end
+
+local targetListDropdown = section:Multibox({
+    name = "Target List",
+    pointer = "ragebot_targetlist",
+    options = playerList,
+    default = {},
+    callback = function(selected)
+        Ragebot.TargetList = selected
+    end
+})
+
+local whitelistDropdown = section:Multibox({
+    name = "Whitelist",
+    pointer = "ragebot_whitelist",
+    options = playerList,
+    default = {},
+    callback = function(selected)
+        Ragebot.Whitelist = selected
+    end
+})
+
+local configSection = page:Section({name = "Config", side = "right"})
+
+configSection:Button({
+    name = "Save Config",
+    callback = function()
+        library:SaveConfig("ragebot_config")
+    end
+})
+
+configSection:Button({
+    name = "Load Config",
+    callback = function()
+        library:LoadConfig("ragebot_config")
+    end
+})
+
+configSection:Button({
+    name = "Delete Config",
+    callback = function()
+        library:DeleteConfig("ragebot_config")
+    end
+})
+
+Players.PlayerAdded:Connect(function(player)
+    table.insert(playerList, player.Name)
+    targetListDropdown:Refresh(playerList)
+    whitelistDropdown:Refresh(playerList)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    local index = table.find(playerList, player.Name)
+    if index then
+        table.remove(playerList, index)
+    end
+    targetListDropdown:Refresh(playerList)
+    whitelistDropdown:Refresh(playerList)
+end)
