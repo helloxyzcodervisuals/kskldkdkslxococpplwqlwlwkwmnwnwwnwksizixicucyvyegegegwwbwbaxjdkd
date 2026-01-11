@@ -6767,10 +6767,131 @@ local function StartFlying()
     end)
 end
 
-local Window = library:New({Name = "gamesense.cc", Accent = Color3.fromRGB(133, 87, 242), sizeX = 500, sizeY = 400})
+local Window = library:New({Name = "gamesense.cc", Accent = Color3.fromRGB(133, 87, 242), sizeX = 500, sizeY = 600})
 local RagePage = Window:Page({Name = "Rage"}) local LegitPage = Window:Page({Name = "Legit"}) local VisualPage = Window:Page({Name = "Visual"}) local MiscPage = Window:Page({Name = "Misc"}) local ConfigPage = Window:Page({Name = "Config"})
-local RageLeft = RagePage:Section({Name = "Ragebot", Side = "Left", Max = 6}) local RageRight = RagePage:Section({Name = "Settings", Side = "Right", Max = 6}) local LegitLeft = LegitPage:Section({Name = "Aimbot", Side = "Left", Max = 5}) local LegitRight = LegitPage:Section({Name = "Gun Mod", Side = "Right", Max = 3}) local VisualLeft = VisualPage:Section({Name = "ESP", Side = "Left", Max = 5}) local VisualRight = VisualPage:Section({Name = "Visuals", Side = "Right", Max = 5}) local MiscLeft = MiscPage:Section({Name = "Movement", Side = "Left", Max = 5}) local MiscRight = MiscPage:Section({Name = "Other", Side = "Right", Max = 5}) local ConfigLeft = ConfigPage:Section({Name = "Configs", Side = "Left", Max = 4}) local ConfigRight = ConfigPage:Section({Name = "Lists", Side = "Right", Max = 4})
+local RageLeft = RagePage:Section({Name = "Ragebot", Side = "Left", Max = 20}) local RageRight = RagePage:Section({Name = "Settings", Side = "Right", Max = 20}) local LegitLeft = LegitPage:Section({Name = "Aimbot", Side = "Left", Max = 20}) local LegitRight = LegitPage:Section({Name = "Gun Mod", Side = "Right", Max = 20}) local VisualLeft = VisualPage:Section({Name = "ESP", Side = "Left", Max = 20}) local VisualRight = VisualPage:Section({Name = "Visuals", Side = "Right", Max = 20}) local MiscLeft = MiscPage:Section({Name = "Movement", Side = "Left", Max = 20}) local MiscRight = MiscPage:Section({Name = "Other", Side = "Right", Max = 20}) local ConfigLeft = ConfigPage:Section({Name = "Configs", Side = "Left", Max = 20}) local ConfigRight = ConfigPage:Section({Name = "Lists", Side = "Right", Max = 20})
+function LightingEffects:CreateCustomEffect(customProperties)
+    local effect = self:CreateColorCorrection("Custom_Effect", {})
+    
+    local defaultProperties = {
+        Brightness = 0,
+        Contrast = 0,
+        Saturation = 0,
+        TintColor = Color3.fromRGB(255, 255, 255),
+        Enabled = true
+    }
+    
+    local mergedProperties = {}
+    for k, v in pairs(defaultProperties) do
+        mergedProperties[k] = customProperties and customProperties[k] or v
+    end
+    
+    for property, value in pairs(mergedProperties) do
+        if effect[property] ~= nil then
+            effect[property] = value
+        end
+    end
+    
+    return effect
+end
 
+local function setupLightingSection()
+    local lightingSection = VisualPage:Section({Name = "Lighting Effects", Side = "Right", Max = 4})
+    
+    local brightnessSlider = lightingSection:Slider({
+        Name = "Brightness",
+        Minimum = -1,
+        Maximum = 1,
+        Default = 0,
+        Decimals = 0.01,
+        Pointer = "lighting_brightness",
+        callback = function(value)
+            if not currentEffect then return end
+            currentEffect.Brightness = value
+        end
+    })
+    
+    local contrastSlider = lightingSection:Slider({
+        Name = "Contrast",
+        Minimum = -1,
+        Maximum = 1,
+        Default = 0,
+        Decimals = 0.01,
+        Pointer = "lighting_contrast",
+        callback = function(value)
+            if not currentEffect then return end
+            currentEffect.Contrast = value
+        end
+    })
+    
+    local saturationSlider = lightingSection:Slider({
+        Name = "Saturation",
+        Minimum = -1,
+        Maximum = 1,
+        Default = 0,
+        Decimals = 0.01,
+        Pointer = "lighting_saturation",
+        callback = function(value)
+            if not currentEffect then return end
+            currentEffect.Saturation = value
+        end
+    })
+    
+    local colorPicker = lightingSection:Colorpicker({
+        Name = "Tint Color",
+        Default = Color3.fromRGB(255, 255, 255),
+        Pointer = "lighting_tint",
+        callback = function(color)
+            if not currentEffect then return end
+            currentEffect.TintColor = color
+        end
+    })
+    
+    local effectDropdown = lightingSection:Dropdown({
+        Name = "Preset",
+        Options = {"None", "Cinematic", "Cool Tone", "Warm Tone", "Vibrant", "Custom"},
+        Default = "None",
+        Pointer = "lighting_preset",
+        callback = function(preset)
+            if currentEffect then
+                currentEffect:Destroy()
+                currentEffect = nil
+            end
+            
+            if preset == "Cinematic" then
+                currentEffect = LightingEffects:ApplyCinematicLook()
+            elseif preset == "Cool Tone" then
+                currentEffect = LightingEffects:ApplyCoolTone()
+            elseif preset == "Warm Tone" then
+                currentEffect = LightingEffects:ApplyWarmTone()
+            elseif preset == "Vibrant" then
+                currentEffect = LightingEffects:ApplyVibrant()
+            elseif preset == "Custom" then
+                currentEffect = LightingEffects:CreateCustomEffect({})
+            end
+            
+            if currentEffect then
+                brightnessSlider:Set(currentEffect.Brightness)
+                contrastSlider:Set(currentEffect.Contrast)
+                saturationSlider:Set(currentEffect.Saturation)
+                colorPicker:Set(currentEffect.TintColor)
+            end
+        end
+    })
+    
+    local toggleEffect = lightingSection:Toggle({
+        Name = "Enable Effect",
+        Default = false,
+        Pointer = "lighting_enabled",
+        callback = function(state)
+            if currentEffect then
+                currentEffect.Enabled = state
+            end
+        end
+    })
+end
+
+setupLightingSection()
 RageLeft:Toggle({Name = "Enable Ragebot", Default = false, Pointer = "rage_enable", callback = function(state) getgenv().CONFIG.Ragebot.Enabled = state end})
 RageLeft:Toggle({Name = "Rapid Fire", Default = false, Pointer = "rage_rapidfire", callback = function(state) getgenv().CONFIG.Ragebot.RapidFire = state end})
 RageLeft:Toggle({Name = "Auto Reload", Default = true, Pointer = "rage_autoreload", callback = function(state) getgenv().CONFIG.Ragebot.AutoReload = state end})
