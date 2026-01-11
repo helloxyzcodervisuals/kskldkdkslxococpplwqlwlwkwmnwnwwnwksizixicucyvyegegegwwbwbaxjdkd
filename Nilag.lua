@@ -3915,6 +3915,7 @@ do
         library:Initialize()
     end
 end
+--[[
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -4393,6 +4394,740 @@ local whitelistDropdown = section:Multibox({
     default = {},
     callback = function(selected)
         Ragebot.Whitelist = selected
+    end
+})
+
+local configSection = page:Section({name = "Config", side = "right"})
+
+configSection:Button({
+    name = "Save Config",
+    callback = function()
+        library:SaveConfig("ragebot_config")
+    end
+})
+
+configSection:Button({
+    name = "Load Config",
+    callback = function()
+        library:LoadConfig("ragebot_config")
+    end
+})
+
+configSection:Button({
+    name = "Delete Config",
+    callback = function()
+        library:DeleteConfig("ragebot_config")
+    end
+})
+
+Players.PlayerAdded:Connect(function(player)
+    table.insert(playerList, player.Name)
+    targetListDropdown:Refresh(playerList)
+    whitelistDropdown:Refresh(playerList)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    local index = table.find(playerList, player.Name)
+    if index then
+        table.remove(playerList, index)
+    end
+    targetListDropdown:Refresh(playerList)
+    whitelistDropdown:Refresh(playerList)
+end)
+--]]
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Debris = game:GetService("Debris")
+local Lighting = game:GetService("Lighting")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local ShootEvent = ReplicatedStorage:WaitForChild("GunRemotes"):WaitForChild("ShootEvent")
+
+local Ragebot = {
+    Enabled = false,
+    FireRate = 1000,
+    AutoShoot = false,
+    HitChance = 100,
+    DoubleTap = false,
+    ShowTracers = false,
+    TracerColor = Color3.fromRGB(255, 165, 0),
+    TracerTexture = "rbxassetid://446111271",
+    TracerWidth = 0.2,
+    TracerLifeTime = 1,
+    TargetList = {},
+    Whitelist = {},
+    DoubleJump = false,
+    CFrameWalk = false,
+    WalkSpeed = 16,
+    WalkJumpPower = 50,
+    RichShader = false,
+    ShaderBrightness = 0,
+    ShaderContrast = 0,
+    ShaderSaturation = 0,
+    ShaderTintColor = Color3.fromRGB(255, 255, 255),
+    ForceField = false,
+    ForceFieldColor = Color3.fromRGB(0, 170, 255),
+    ForceFieldTransparency = 0.5,
+    ForceFieldMaterial = Enum.Material.Neon,
+    RapidFire = false
+}
+
+local MaxDistance = 1500
+local lastShotTime = 0
+local tracers = {}
+local doubleJumpUsed = false
+local originalWalkSpeed = 16
+local originalJumpPower = 50
+local connections = {}
+local forceFields = {}
+local shotCount = 0
+local colorCorrection
+
+local function getFireRateDelay()
+    if Ragebot.FireRate == 0 then return 0 end
+    return 1 / Ragebot.FireRate
+end
+
+local function shouldShoot()
+    if not Ragebot.AutoShoot then return false end
+    
+    local currentTime = tick()
+    local fireDelay = getFireRateDelay()
+    
+    if currentTime - lastShotTime >= fireDelay then
+        if Ragebot.HitChance == 100 then
+            return true
+        else
+            local random = math.random(1, 100)
+            return random <= Ragebot.HitChance
+        end
+    end
+    
+    return false
+end
+
+local function applyRichShader()
+    if not Ragebot.RichShader then
+        if colorCorrection then
+            colorCorrection:Destroy()
+            colorCorrection = nil
+        end
+        return
+    end
+    
+    if not colorCorrection then
+        colorCorrection = Instance.new("ColorCorrectionEffect")
+        colorCorrection.Name = "RichShaderColorCorrection"
+        colorCorrection.Parent = Lighting
+    end
+    
+    colorCorrection.Brightness = Ragebot.ShaderBrightness / 100
+    colorCorrection.Contrast = Ragebot.ShaderContrast / 100
+    colorCorrection.Saturation = Ragebot.ShaderSaturation / 100
+    colorCorrection.TintColor = Ragebot.ShaderTintColor
+end
+
+local function applyForceField()
+    if not Ragebot.ForceField then
+        for player, parts in pairs(forceFields) do
+            for _, part in ipairs(parts) do
+                if part and part.Parent then
+                    part.Material = Enum.Material.Plastic
+                    part.Color = Color3.fromRGB(255, 255, 255)
+                    part.Transparency = 0
+                end
+            end
+        end
+        table.clear(forceFields)
+        return
+    end
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        local char = player.Character
+        if not char then continue end
+        
+        if not forceFields[player] then
+            forceFields[player] = {}
+        end
+        
+        for _, part in ipairs(char:GetChildren()) do
+            if part:IsA("BasePart") then
+                if not table.find(forceFields[player], part) then
+                    table.insert(forceFields[player], part)
+                end
+                
+                part.Material = Ragebot.ForceFieldMaterial
+                part.Color = Ragebot.ForceFieldColor
+                part.Transparency = Ragebot.ForceFieldTransparency
+            end
+        end
+    end
+end
+
+local function rapidShoot()
+    if not Ragebot.RapidFire then return end
+    
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local tool = char and char:FindFirstChildOfClass("Tool")
+    
+    if not hrp or not tool or tool:GetAttribute("ToolType") ~= "Gun" then return end
+    
+    local myPos = hrp.Position
+    local targetHead = getNearestTarget()
+    if not targetHead then return end
+    
+    local hitPos = targetHead.Position
+    
+    pcall(function()
+        ShootEvent:FireServer({
+            {
+                myPos,
+                hitPos,
+                targetHead
+            }
+        })
+        lastShotTime = tick()
+        shotCount = shotCount + 1
+    end)
+end
+
+local function shootOnHeartbeat()
+    if not Ragebot.Enabled or not Ragebot.AutoShoot then return end
+    
+    if Ragebot.RapidFire then
+        rapidShoot()
+        return
+    end
+    
+    if shouldShoot() then
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local tool = char and char:FindFirstChildOfClass("Tool")
+        
+        if not hrp or not tool or tool:GetAttribute("ToolType") ~= "Gun" then return end
+
+        local myPos = hrp.Position
+        local targetHead = getNearestTarget()
+        if not targetHead then return end
+
+        local hitPos = targetHead.Position
+        
+        if Ragebot.ShowTracers then
+            createTracer(myPos, hitPos)
+        end
+        
+        pcall(function()
+            ShootEvent:FireServer({
+                {
+                    myPos,
+                    hitPos,
+                    targetHead
+                }
+            })
+            lastShotTime = tick()
+        end)
+    end
+end
+
+local function shootOnStepped()
+    if not Ragebot.Enabled or not Ragebot.AutoShoot or not Ragebot.RapidFire then return end
+    
+    rapidShoot()
+end
+
+local function shootOnRenderStepped()
+    if not Ragebot.Enabled or not Ragebot.AutoShoot or not Ragebot.RapidFire then return end
+    
+    rapidShoot()
+end
+
+local function createTracer(startPos, endPos)
+    if not Ragebot.ShowTracers then return end
+    
+    local distance = (startPos - endPos).Magnitude
+    
+    local part = Instance.new("Part")
+    part.Anchored = true
+    part.CanCollide = false
+    part.Transparency = 1
+    part.Size = Vector3.new(1, 1, 1)
+    part.Position = Vector3.new(0, 0, 0)
+    part.Parent = workspace
+    
+    local attachment0 = Instance.new("Attachment")
+    attachment0.Position = Vector3.new(0, 0, 0)
+    attachment0.Parent = part
+    
+    local attachment1 = Instance.new("Attachment")
+    attachment1.Position = Vector3.new(0, 0, distance)
+    attachment1.Parent = part
+    
+    part.CFrame = CFrame.new(startPos, endPos)
+    
+    local beam = Instance.new("Beam")
+    beam.Attachment0 = attachment0
+    beam.Attachment1 = attachment1
+    beam.Color = ColorSequence.new(Ragebot.TracerColor)
+    beam.Width0 = Ragebot.TracerWidth
+    beam.Width1 = Ragebot.TracerWidth
+    beam.FaceCamera = true
+    beam.LightEmission = 1
+    beam.LightInfluence = 0
+    
+    beam.Texture = Ragebot.TracerTexture
+    beam.TextureLength = distance
+    beam.TextureMode = Enum.TextureMode.Stretch
+    beam.TextureSpeed = 5
+    beam.Segments = 10
+    
+    beam.Parent = part
+    
+    table.insert(tracers, {
+        Part = part,
+        Beam = beam,
+        Time = tick()
+    })
+    
+    Debris:AddItem(part, Ragebot.TracerLifeTime)
+end
+
+local function clearOldTracers()
+    local currentTime = tick()
+    for i = #tracers, 1, -1 do
+        if currentTime - tracers[i].Time > Ragebot.TracerLifeTime then
+            table.remove(tracers, i)
+        end
+    end
+end
+
+local function getNearestTarget()
+    local myPos = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myPos then return nil end
+    myPos = myPos.Position
+
+    local nearest, minDist = nil, MaxDistance
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            if #Ragebot.TargetList > 0 and not table.find(Ragebot.TargetList, plr.Name) then
+                continue
+            end
+            
+            if table.find(Ragebot.Whitelist, plr.Name) then
+                continue
+            end
+            
+            local char = plr.Character
+            if char and char:FindFirstChild("Head") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 then
+                if plr.Team == LocalPlayer.Team then continue end
+
+                local head = char.Head
+                local dist = (head.Position - myPos).Magnitude
+                if dist < minDist then
+                    minDist = dist
+                    nearest = head
+                end
+            end
+        end
+    end
+
+    return nearest
+end
+
+local function enableDoubleJump()
+    if not Ragebot.DoubleJump then return end
+    
+    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+    if not humanoid then return end
+    
+    humanoid.StateChanged:Connect(function(old, new)
+        if new == Enum.HumanoidStateType.Freefall and not doubleJumpUsed then
+            doubleJumpUsed = true
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            task.wait(0.1)
+        elseif new == Enum.HumanoidStateType.Landed then
+            doubleJumpUsed = false
+        end
+    end)
+end
+
+local function enableCFrameWalk()
+    if not Ragebot.CFrameWalk then return end
+    
+    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+    if not humanoid then return end
+    
+    originalWalkSpeed = humanoid.WalkSpeed
+    originalJumpPower = humanoid.JumpPower
+    
+    humanoid.WalkSpeed = Ragebot.WalkSpeed
+    humanoid.JumpPower = Ragebot.WalkJumpPower
+    
+    RunService.RenderStepped:Connect(function()
+        if not LocalPlayer.Character then return end
+        
+        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+        
+        local moveDirection = Vector3.new(0, 0, 0)
+        
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+            moveDirection = moveDirection + Camera.CFrame.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDirection = moveDirection - Camera.CFrame.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDirection = moveDirection - Camera.CFrame.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDirection = moveDirection + Camera.CFrame.RightVector
+        end
+        
+        if moveDirection.Magnitude > 0 then
+            moveDirection = moveDirection.Unit * Ragebot.WalkSpeed
+            hrp.CFrame = hrp.CFrame + moveDirection
+        end
+    end)
+end
+
+local function disableCFrameWalk()
+    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = originalWalkSpeed
+        humanoid.JumpPower = originalJumpPower
+    end
+end
+
+local function setupConnections()
+    table.clear(connections)
+    
+    connections.heartbeat = RunService.Heartbeat:Connect(function()
+        if not Ragebot.Enabled then 
+            disableCFrameWalk()
+            return 
+        end
+        
+        clearOldTracers()
+        applyRichShader()
+        applyForceField()
+        shootOnHeartbeat()
+    end)
+    
+    if Ragebot.RapidFire then
+        connections.stepped = RunService.Stepped:Connect(function()
+            if Ragebot.Enabled then
+                shootOnStepped()
+            end
+        end)
+        
+        connections.renderStepped = RunService.RenderStepped:Connect(function()
+            if Ragebot.Enabled then
+                shootOnRenderStepped()
+            end
+        end)
+    end
+end
+
+local function destroyConnections()
+    for _, connection in pairs(connections) do
+        if connection then
+            connection:Disconnect()
+        end
+    end
+    table.clear(connections)
+end
+
+RunService.Heartbeat:Connect(function()
+    if not Ragebot.Enabled then 
+        disableCFrameWalk()
+        return 
+    end
+    
+    if Ragebot.DoubleJump then
+        enableDoubleJump()
+    end
+    
+    if Ragebot.CFrameWalk then
+        enableCFrameWalk()
+    end
+end)
+
+-- UI Setup
+local window = library:New({name = "Ragebot"})
+local page = window:Page({name = "Main"})
+local section = page:Section({name = "Ragebot", side = "left"})
+
+local enabledToggle = section:Toggle({
+    name = "Enable Ragebot",
+    pointer = "ragebot_enabled",
+    callback = function(state)
+        Ragebot.Enabled = state
+        if state then
+            setupConnections()
+        else
+            destroyConnections()
+            disableCFrameWalk()
+        end
+    end
+})
+
+local fireRateSlider = section:Slider({
+    name = "Fire Rate",
+    pointer = "ragebot_firerate",
+    min = 0,
+    max = 1000,
+    default = 1000,
+    callback = function(value)
+        Ragebot.FireRate = value
+    end
+})
+
+local autoShootToggle = section:Toggle({
+    name = "Auto Shoot",
+    pointer = "ragebot_autoshoot",
+    callback = function(state)
+        Ragebot.AutoShoot = state
+    end
+})
+
+local hitChanceSlider = section:Slider({
+    name = "Hit Chance %",
+    pointer = "ragebot_hitchance",
+    min = 0,
+    max = 100,
+    default = 100,
+    callback = function(value)
+        Ragebot.HitChance = value
+    end
+})
+
+local doubleTapToggle = section:Toggle({
+    name = "Double Tap",
+    pointer = "ragebot_doubletap",
+    callback = function(state)
+        Ragebot.DoubleTap = state
+    end
+})
+
+local rapidFireToggle = section:Toggle({
+    name = "Rapid Fire",
+    pointer = "ragebot_rapidfire",
+    callback = function(state)
+        Ragebot.RapidFire = state
+        destroyConnections()
+        setupConnections()
+    end
+})
+
+local tracerToggle = section:Toggle({
+    name = "Show Tracers",
+    pointer = "ragebot_showtracers",
+    callback = function(state)
+        Ragebot.ShowTracers = state
+    end
+})
+
+local tracerWidthSlider = section:Slider({
+    name = "Tracer Width",
+    pointer = "ragebot_tracerwidth",
+    min = 0.1,
+    max = 2,
+    default = 0.2,
+    callback = function(value)
+        Ragebot.TracerWidth = value
+    end
+})
+
+local tracerColorPicker = section:ColorPicker({
+    name = "Tracer Color",
+    pointer = "ragebot_tracercolor",
+    default = Color3.fromRGB(255, 165, 0),
+    callback = function(color)
+        Ragebot.TracerColor = color
+    end
+})
+
+local tracerLifeSlider = section:Slider({
+    name = "Tracer Life Time",
+    pointer = "ragebot_tracerlife",
+    min = 0.1,
+    max = 5,
+    default = 1,
+    callback = function(value)
+        Ragebot.TracerLifeTime = value
+    end
+})
+
+local playerList = {}
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        table.insert(playerList, player.Name)
+    end
+end
+
+local targetListDropdown = section:Multibox({
+    name = "Target List",
+    pointer = "ragebot_targetlist",
+    options = playerList,
+    default = {},
+    callback = function(selected)
+        Ragebot.TargetList = selected
+    end
+})
+
+local whitelistDropdown = section:Multibox({
+    name = "Whitelist",
+    pointer = "ragebot_whitelist",
+    options = playerList,
+    default = {},
+    callback = function(selected)
+        Ragebot.Whitelist = selected
+    end
+})
+
+local movementSection = page:Section({name = "Movement", side = "right"})
+
+local doubleJumpToggle = movementSection:Toggle({
+    name = "Double Jump",
+    pointer = "ragebot_doublejump",
+    callback = function(state)
+        Ragebot.DoubleJump = state
+    end
+})
+
+local cframeWalkToggle = movementSection:Toggle({
+    name = "CFrame Walk",
+    pointer = "ragebot_cframewalk",
+    callback = function(state)
+        Ragebot.CFrameWalk = state
+        if not state then
+            disableCFrameWalk()
+        end
+    end
+})
+
+local walkSpeedSlider = movementSection:Slider({
+    name = "Walk Speed",
+    pointer = "ragebot_walkspeed",
+    min = 16,
+    max = 100,
+    default = 16,
+    callback = function(value)
+        Ragebot.WalkSpeed = value
+    end
+})
+
+local walkJumpSlider = movementSection:Slider({
+    name = "Jump Power",
+    pointer = "ragebot_walkjumppower",
+    min = 50,
+    max = 200,
+    default = 50,
+    callback = function(value)
+        Ragebot.WalkJumpPower = value
+    end
+})
+
+local visualSection = page:Section({name = "Visual", side = "right"})
+
+local richShaderToggle = visualSection:Toggle({
+    name = "Rich Shader",
+    pointer = "ragebot_richshader",
+    callback = function(state)
+        Ragebot.RichShader = state
+        applyRichShader()
+    end
+})
+
+local brightnessSlider = visualSection:Slider({
+    name = "Brightness",
+    pointer = "ragebot_shaderbrightness",
+    min = -100,
+    max = 100,
+    default = 0,
+    callback = function(value)
+        Ragebot.ShaderBrightness = value
+        applyRichShader()
+    end
+})
+
+local contrastSlider = visualSection:Slider({
+    name = "Contrast",
+    pointer = "ragebot_shadercontrast",
+    min = -100,
+    max = 100,
+    default = 0,
+    callback = function(value)
+        Ragebot.ShaderContrast = value
+        applyRichShader()
+    end
+})
+
+local saturationSlider = visualSection:Slider({
+    name = "Saturation",
+    pointer = "ragebot_shadersaturation",
+    min = -100,
+    max = 100,
+    default = 0,
+    callback = function(value)
+        Ragebot.ShaderSaturation = value
+        applyRichShader()
+    end
+})
+
+local tintColorPicker = visualSection:ColorPicker({
+    name = "Tint Color",
+    pointer = "ragebot_shadertintcolor",
+    default = Color3.fromRGB(255, 255, 255),
+    callback = function(color)
+        Ragebot.ShaderTintColor = color
+        applyRichShader()
+    end
+})
+
+local forceFieldToggle = visualSection:Toggle({
+    name = "Force Field",
+    pointer = "ragebot_forcefield",
+    callback = function(state)
+        Ragebot.ForceField = state
+        applyForceField()
+    end
+})
+
+local forceFieldColorPicker = visualSection:ColorPicker({
+    name = "Force Field Color",
+    pointer = "ragebot_forcefieldcolor",
+    default = Color3.fromRGB(0, 170, 255),
+    callback = function(color)
+        Ragebot.ForceFieldColor = color
+        applyForceField()
+    end
+})
+
+local transparencySlider = visualSection:Slider({
+    name = "Transparency",
+    pointer = "ragebot_forcefieldtransparency",
+    min = 0,
+    max = 1,
+    default = 0.5,
+    callback = function(value)
+        Ragebot.ForceFieldTransparency = value
+        applyForceField()
+    end
+})
+
+local materialDropdown = visualSection:Dropdown({
+    name = "Material",
+    pointer = "ragebot_forcefieldmaterial",
+    options = {"Plastic", "Wood", "Slate", "Concrete", "CorrodedMetal", "DiamondPlate", "Foil", "Grass", "Ice", "Marble", "Granite", "Brick", "Pebble", "Sand", "Fabric", "SmoothPlastic", "Metal", "WoodPlanks", "Cobblestone", "Air", "Water", "Rock", "Glacier", "Snow", "Sandstone", "Mud", "Basalt", "Ground", "CrackedLava", "Neon", "Glass", "ForceField"},
+    default = "Neon",
+    callback = function(value)
+        Ragebot.ForceFieldMaterial = Enum.Material[value]
+        applyForceField()
     end
 })
 
