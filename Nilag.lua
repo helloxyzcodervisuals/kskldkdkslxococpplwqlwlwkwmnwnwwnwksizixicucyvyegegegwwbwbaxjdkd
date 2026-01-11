@@ -4678,25 +4678,29 @@ end
 local function createTracer(startPos, endPos)
     if not Ragebot.ShowTracers then return end
     
-    local distance = (startPos - endPos).Magnitude
+    if not tracersContainer then
+        tracersContainer = Instance.new("Folder")
+        tracersContainer.Name = "Tracers"
+        tracersContainer.Parent = workspace
+    end
     
     local part = Instance.new("Part")
     part.Anchored = true
     part.CanCollide = false
     part.Transparency = 1
-    part.Size = Vector3.new(1, 1, 1)
-    part.Position = Vector3.new(0, 0, 0)
-    part.Parent = workspace
+    part.Size = Vector3.new(0.1, 0.1, 0.1)
+    part.CFrame = CFrame.lookAt(startPos, endPos)
+    part.Parent = tracersContainer
+    
+    local distance = (startPos - endPos).Magnitude
     
     local attachment0 = Instance.new("Attachment")
     attachment0.Position = Vector3.new(0, 0, 0)
     attachment0.Parent = part
     
     local attachment1 = Instance.new("Attachment")
-    attachment1.Position = Vector3.new(0, 0, distance)
+    attachment1.Position = Vector3.new(0, 0, -distance)
     attachment1.Parent = part
-    
-    part.CFrame = CFrame.new(startPos, endPos)
     
     local beam = Instance.new("Beam")
     beam.Attachment0 = attachment0
@@ -4705,15 +4709,6 @@ local function createTracer(startPos, endPos)
     beam.Width0 = Ragebot.TracerWidth
     beam.Width1 = Ragebot.TracerWidth
     beam.FaceCamera = true
-    beam.LightEmission = 1
-    beam.LightInfluence = 0
-    
-    beam.Texture = Ragebot.TracerTexture
-    beam.TextureLength = distance
-    beam.TextureMode = Enum.TextureMode.Stretch
-    beam.TextureSpeed = 5
-    beam.Segments = 10
-    
     beam.Parent = part
     
     table.insert(tracers, {
@@ -4722,7 +4717,7 @@ local function createTracer(startPos, endPos)
         Time = tick()
     })
     
-    Debris:AddItem(part, Ragebot.TracerLifeTime)
+    game:GetService("Debris"):AddItem(part, Ragebot.TracerLifeTime)
 end
 
 local function clearOldTracers()
