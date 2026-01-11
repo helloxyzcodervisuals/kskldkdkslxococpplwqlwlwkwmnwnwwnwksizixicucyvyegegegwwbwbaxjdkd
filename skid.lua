@@ -6843,7 +6843,203 @@ ConfigPage:Section({Name = "Controls", Side = "Left"}):Toggle({Name = "Use Targe
 ConfigPage:Section({Name = "Controls", Side = "Right"}):Toggle({Name = "Use Whitelist", Default = false, Pointer = "use_whitelist", callback = function(state) getgenv().CONFIG.Ragebot.UseWhitelist = state end})
 ConfigPage:Section({Name = "UI", Side = "Left"}):Keybind({Name = "UI Toggle", Default = Enum.KeyCode.RightShift, Blacklist = {Enum.UserInputType.MouseButton1}, Pointer = "ui_toggle", callback = function(key, fromsetting) if not fromsetting then library:Toggle() end end})
 ConfigPage:Section({Name = "UI", Side = "Right"}):Colorpicker({Name = "Accent Color", Default = Color3.fromRGB(133, 87, 242), Pointer = "accent_color", callback = function(color) library:ChangeAccent(color) end})
+local NoFailLockpick_Enabled = false
+local lockpickAddedConnection = nil
+local RunService = game:GetService("RunService")
 
+local function setupLockpickFunctionality()
+    local Player = game:GetService("Players").LocalPlayer
+    local PlayerGui = Player:FindFirstChild("PlayerGui")
+    if not PlayerGui then return end
+    
+    local function lockpick(gui)
+        for _, a in pairs(gui:GetDescendants()) do
+            if a:IsA("ImageLabel") and a.Name == "Bar" and a.Parent.Name ~= "Attempts" then
+                local oldsize = a.Size
+                RunService.RenderStepped:Connect(function()
+                    if _G.LockpickEnabled then
+                        a.Size = UDim2.new(0, 280, 0, 280)
+                    else
+                        a.Size = oldsize
+                    end
+                end)
+            end
+        end
+    end
+    
+    if lockpickAddedConnection then
+        lockpickAddedConnection:Disconnect()
+    end
+    
+    lockpickAddedConnection = PlayerGui.ChildAdded:Connect(function(child)
+        if child:IsA("ScreenGui") and child.Name == "LockpickGUI" then
+            lockpick(child)
+        end
+    end)
+    
+    for _, child in pairs(PlayerGui:GetChildren()) do
+        if child:IsA("ScreenGui") and child.Name == "LockpickGUI" then
+            lockpick(child)
+        end
+    end
+end
+
+local function cleanupLockpickFunctionality()
+    if lockpickAddedConnection then
+        lockpickAddedConnection:Disconnect()
+        lockpickAddedConnection = nil
+    end
+end
+
+local SafeESP = {
+    Enabled = false,
+    Safes = {},
+    Visuals = {}
+}
+
+function SafeESP:AddSafeESP(model)
+    if not model or not model.Parent then return end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.FillColor = Color3.fromRGB(255, 215, 0)
+    highlight.FillTransparency = 0.7
+    highlight.OutlineColor = Color3.fromRGB(255, 140, 0)
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = model
+    highlight.Parent = model
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "SafeESP"
+    billboard.Adornee = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    billboard.AlwaysOnTop = true
+    billboard.MaxDistance = 100
+    
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+    textLabel.TextSize = 14
+    textLabel.FontFace = Font.new("rbxassetid://12187371840")
+    textLabel.TextStrokeTransparency = 0.5
+    textLabel.Text = model.Name
+    
+    local distanceLabel = Instance.new("TextLabel")
+    distanceLabel.Size = UDim2.new(1, 0, 0, 20)
+    distanceLabel.Position = UDim2.new(0, 0, 0, 20)
+    distanceLabel.BackgroundTransparency = 1
+    distanceLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    distanceLabel.TextSize = 12
+    distanceLabel.FontFace = Font.new("rbxassetid://12187371840")
+    distanceLabel.TextStrokeTransparency = 0.5
+    
+    textLabel.Parent = billboard
+    distanceLabel.Parent = billboard
+    billboard.Parent = model
+    
+    SafeESP.Safes[model] = true
+    SafeESP.Visuals[model] = {highlight = highlight, billboard = billboard, textLabel = textLabel, distanceLabel = distanceLabel}
+    
+    RunService.Heartbeat:Connect(function()
+        if not SafeESP.Enabled or not model.Parent then
+            highlight:Destroy()
+            billboard:Destroy()
+            SafeESP.Safes[model] = nil
+            SafeESP.Visuals[model] = nil
+            return
+        end
+        
+        local localPlayer = game:GetService("Players").LocalPlayer
+        if localPlayer and localPlayer.Character then
+            local humanoidRootPart = localPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if humanoidRootPart and billboard.Adornee then
+                local distance = (humanoidRootPart.Position - billboard.Adornee.Position).Magnitude
+                distanceLabel.Text = string.format("%d studs", math.floor(distance))
+                billboard.Enabled = true
+            end
+        end
+    end)
+end
+
+function SafeESP:ScanWorkspace()
+    for _, item in pairs(workspace:GetDescendants()) do
+        if item:IsA("Model") then
+            local itemName = item.Name:lower()
+            if itemName:find("mediumsafe") or itemName:find("smallsafe") then
+                if not SafeESP.Safes[item] then
+                    SafeESP:AddSafeESP(item)
+                end
+            end
+        end
+    end
+end
+
+function SafeESP:Enable(value)
+    SafeESP.Enabled = value
+    
+    if value then
+        SafeESP:ScanWorkspace()
+        
+        workspace.DescendantAdded:Connect(function(item)
+            if item:IsA("Model") then
+                local itemName = item.Name:lower()
+                if itemName:find("mediumsafe") or itemName:find("smallsafe") then
+                    task.wait(0.1)
+                    SafeESP:AddSafeESP(item)
+                end
+            end
+        end)
+    else
+        for model, visuals in pairs(SafeESP.Visuals) do
+            if visuals.highlight then visuals.highlight:Destroy() end
+            if visuals.billboard then visuals.billboard:Destroy() end
+        end
+        SafeESP.Safes = {}
+        SafeESP.Visuals = {}
+    end
+end
+
+MiscLeft:Toggle({
+    Name = "No Fail Lockpick", 
+    Default = false, 
+    Pointer = "misc_nofail_lockpick", 
+    callback = function(state) 
+        _G.LockpickEnabled = state
+        NoFailLockpick_Enabled = state
+        
+        if state then
+            setupLockpickFunctionality()
+        else
+            cleanupLockpickFunctionality()
+        end
+    end
+})
+
+MiscLeft:Toggle({
+    Name = "Safe ESP", 
+    Default = false, 
+    Pointer = "misc_safe_esp", 
+    callback = function(state) 
+        SafeESP:Enable(state)
+    end
+})
+
+MiscLeft:Colorpicker({
+    Name = "Safe Color",
+    Default = Color3.fromRGB(255, 215, 0),
+    Pointer = "misc_safe_color",
+    callback = function(color)
+        for model, visuals in pairs(SafeESP.Visuals) do
+            if visuals.highlight then
+                visuals.highlight.FillColor = color
+            end
+            if visuals.textLabel then
+                visuals.textLabel.TextColor3 = color
+            end
+        end
+    end
+})
 library:Initialize()
 task.spawn(function() task.wait(2) applyAllGunMods() LocalPlayer.CharacterAdded:Connect(function(character) task.wait(1) applyAllGunMods() end) LocalPlayer.Backpack.ChildAdded:Connect(function(tool) if tool:IsA("Tool") then task.wait(0.1) applyAllGunMods() end end) end)
 local watermark = library:Watermark({"gamesense.cc", "v2.0.0", "FPS: 60"}) task.spawn(function() local frames = 0 RunService.RenderStepped:Connect(function() frames = frames + 1 end) while task.wait(1) do watermark:Update({"gamesense.cc", "v2.0.0", "FPS: " .. frames}) frames = 0 end end)
