@@ -6420,186 +6420,64 @@ local function checkClearPath(startPos, endPos)
     end
     return true
 end
+                 
 local function wallbang()
-    local cachedBestPositions = {
-        points = {},
-        maxPoints = math.random(5, 10),
-        lastUpdate = tick()
-    }
-    
     local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
     if not localHead then return nil end
-    
     local target = getClosestTarget()
-    if not target then
-        for i = #cachedBestPositions.points, 1, -1 do
-            if cachedBestPositions.points[i].target == target then
-                table.remove(cachedBestPositions.points, i)
-            end
-        end
-        return nil, nil
-    end
-    
+    if not target then cachedBestPositions.shootPos = nil cachedBestPositions.hitPos = nil cachedBestPositions.target = nil return nil, nil end
     local startPos = localHead.Position
     local targetPos = target.Position
-    
-    if not getgenv().CONFIG.Ragebot.Wallbang then
-        local directPos = {
-            shootPos = startPos,
-            hitPos = targetPos,
-            target = target,
-            score = 0
-        }
-        
-        if #cachedBestPositions.points < cachedBestPositions.maxPoints then
-            table.insert(cachedBestPositions.points, directPos)
-        end
-        
-        return startPos, targetPos
-    end
-    
+    if not getgenv().CONFIG.Ragebot.Wallbang then cachedBestPositions.shootPos = startPos cachedBestPositions.hitPos = targetPos cachedBestPositions.target = target return startPos, targetPos end
     local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
     raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-    
     local direction = targetPos - startPos
     local distance = direction.Magnitude
     local directRay = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
-    
-    if not directRay then
-        local directPos = {
-            shootPos = startPos,
-            hitPos = targetPos,
-            target = target,
-            score = 0
-        }
-        
-        if #cachedBestPositions.points < cachedBestPositions.maxPoints then
-            table.insert(cachedBestPositions.points, directPos)
-        end
-        
-        return startPos, targetPos
-    end
-    
-    local validCachedPoints = {}
-    for i, point in ipairs(cachedBestPositions.points) do
-        if point.target == target then
-            local shootDistance = (point.shootPos - startPos).Magnitude
-            local hitDistance = (point.hitPos - targetPos).Magnitude
-            
-            if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange and hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
-                local pathToShoot = checkClearPath(startPos, point.shootPos)
-                local pathToTarget = checkClearPath(point.shootPos, point.hitPos)
-                
-                if pathToShoot and pathToTarget then
-                    local shootToHitRay = Workspace:Raycast(point.shootPos, (point.hitPos - point.shootPos).Unit * (point.hitPos - point.shootPos).Magnitude, raycastParams)
-                    if not shootToHitRay then
-                        table.insert(validCachedPoints, point)
-                    end
-                end
+    if not directRay then cachedBestPositions.shootPos = startPos cachedBestPositions.hitPos = targetPos cachedBestPositions.target = target return startPos, targetPos end
+    if cachedBestPositions.shootPos and cachedBestPositions.target == target then
+        local cachedShootDistance = (cachedBestPositions.shootPos - startPos).Magnitude
+        local cachedHitDistance = (cachedBestPositions.hitPos - targetPos).Magnitude
+        if cachedShootDistance <= getgenv().CONFIG.Ragebot.ShootRange and cachedHitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+            local pathToShoot = checkClearPath(startPos, cachedBestPositions.shootPos)
+            local pathToTarget = checkClearPath(cachedBestPositions.shootPos, cachedBestPositions.hitPos)
+            if pathToShoot and pathToTarget then
+                local shootToHitRay = Workspace:Raycast(cachedBestPositions.shootPos, (cachedBestPositions.hitPos - cachedBestPositions.shootPos).Unit * (cachedBestPositions.hitPos - cachedBestPositions.shootPos).Magnitude, raycastParams)
+                if not shootToHitRay then return cachedBestPositions.shootPos, cachedBestPositions.hitPos end
             end
         end
+        cachedBestPositions.shootPos = nil cachedBestPositions.hitPos = nil
     end
-    
-    if #validCachedPoints > 0 then
-        table.sort(validCachedPoints, function(a, b)
-            return a.score < b.score
-        end)
-        
-        for i = #validCachedPoints, cachedBestPositions.maxPoints + 1, -1 do
-            table.remove(validCachedPoints, i)
-        end
-        
-        cachedBestPositions.points = validCachedPoints
-        return validCachedPoints[1].shootPos, validCachedPoints[1].hitPos
-    end
-    
-    for i = #cachedBestPositions.points, 1, -1 do
-        if cachedBestPositions.points[i].target == target then
-            table.remove(cachedBestPositions.points, i)
-        end
-    end
-    
-    if tick() - cachedBestPositions.lastUpdate > 5 then
-        for i = #cachedBestPositions.points, 1, -1 do
-            table.remove(cachedBestPositions.points, i)
-        end
-        cachedBestPositions.maxPoints = math.random(5, 10)
-        cachedBestPositions.lastUpdate = tick()
-    end
-    
-    local foundPoints = {}
-    
-    for i = 1, 200 do
-        if #foundPoints >= cachedBestPositions.maxPoints then break end
-        
-        local shootOffset = Vector3.new(
-            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange),
-            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange),
-            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange)
-        )
-        
+    local bestShootPos = nil local bestHitPos = nil local bestScore = math.huge
+    for i = 1, 150 do
+        local shootOffset = Vector3.new(math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange), math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange), math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange))
         local shootPos = startPos + shootOffset
-        local hitOffset = Vector3.new(
-            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange),
-            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange),
-            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange)
-        )
-        
+        local hitOffset = Vector3.new(math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange), math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange), math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange))
         local hitPos = targetPos + hitOffset
         local shootDistance = (shootPos - startPos).Magnitude
         local hitDistance = (hitPos - targetPos).Magnitude
-        
         if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange and hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
             local pathToShoot = checkClearPath(startPos, shootPos)
             local pathToTarget = checkClearPath(shootPos, hitPos)
-            
             if pathToShoot and pathToTarget then
                 local shootToHitRay = Workspace:Raycast(shootPos, (hitPos - shootPos).Unit * (hitPos - shootPos).Magnitude, raycastParams)
-                
                 if not shootToHitRay then
                     local totalScore = shootDistance + hitDistance
-                    
-                    table.insert(foundPoints, {
-                        shootPos = shootPos,
-                        hitPos = hitPos,
-                        target = target,
-                        score = totalScore
-                    })
+                    if totalScore < bestScore then bestScore = totalScore bestShootPos = shootPos bestHitPos = hitPos end
                 end
             end
         end
     end
-    
-    if #foundPoints > 0 then
-        table.sort(foundPoints, function(a, b)
-            return a.score < b.score
-        end)
-        
-        for i = #foundPoints, cachedBestPositions.maxPoints + 1, -1 do
-            table.remove(foundPoints, i)
-        end
-        
-        cachedBestPositions.points = foundPoints
-        cachedBestPositions.lastUpdate = tick()
-        return foundPoints[1].shootPos, foundPoints[1].hitPos
+    if not bestShootPos or not bestHitPos then
+        local randomY = math.random(-16, -14)
+        local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
+        local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
+        cachedBestPositions.shootPos = fallbackShootPos cachedBestPositions.hitPos = fallbackHitPos cachedBestPositions.target = target
+        return fallbackShootPos, fallbackHitPos
     end
-    
-    local fallbackShootPos = Vector3.new(startPos.X, math.random(-16, -14), startPos.Z)
-    local fallbackHitPos = Vector3.new(targetPos.X, math.random(-16, -14), targetPos.Z)
-    
-    local fallbackPoint = {
-        shootPos = fallbackShootPos,
-        hitPos = fallbackHitPos,
-        target = target,
-        score = math.huge
-    }
-    
-    if #cachedBestPositions.points < cachedBestPositions.maxPoints then
-        table.insert(cachedBestPositions.points, fallbackPoint)
-    end
-    
-    return fallbackShootPos, fallbackHitPos
+    cachedBestPositions.shootPos = bestShootPos cachedBestPositions.hitPos = bestHitPos cachedBestPositions.target = target
+    return bestShootPos, bestHitPos
 end
 local function createTracer(startPos, endPos)
     if not getgenv().CONFIG.Ragebot.Tracers then return end
@@ -6904,8 +6782,11 @@ RageRight:Toggle({Name = "Wallbang", Default = true, Pointer = "rage_wallbang", 
 RageRight:Toggle({Name = "Show FOV", Default = true, Pointer = "rage_showfov", callback = function(state) getgenv().CONFIG.Ragebot.ShowFOV = state end})
 RageRight:Slider({Name = "FOV", Minimum = 10, Maximum = 360, Default = 120, Pointer = "rage_fov", callback = function(value) getgenv().CONFIG.Ragebot.FOV = value end})
 RageRight:Toggle({Name = "Tracers", Default = true, Pointer = "rage_tracers", callback = function(state) getgenv().CONFIG.Ragebot.Tracers = state end})
-RageRight:Toggle({Name = "Tracers", Default = true, Pointer = "rage_tracers", callback = function(state) getgenv().CONFIG.Ragebot.Tracers = state end}):Colorpicker({Name = "Tracer Color", Default = Color3.fromRGB(255, 0, 0), Pointer = "rage_tracercolor", callback = function(color) getgenv().CONFIG.Ragebot.TracerColor = color end})
-
+RageRight:Toggle({Name = "Tracers Colors", Default = true, Pointer = "rage_tracers", callback = function(state) getgenv().CONFIG.Ragebot.Tracers = state end}):Colorpicker({Name = "Tracer Color", Default = Color3.fromRGB(255, 0, 0), Pointer = "rage_tracercolor", callback = function(color) getgenv().CONFIG.Ragebot.TracerColor = color end})
+RageRight:Slider({Name = "Tracer witdh", Minimum = 1, Maximum = 4, Default = 1, Pointer = "witdh", callback = function(value) getgenv().CONFIG.Ragebot.TracerWidth = value end})
+RageRight:Slider({Name = "Tracer Lifetime", Minimum = 10, Maximum = 100, Default = 5, Pointer = "time", callback = function(value) getgenv().CONFIG.Ragebot.TracerLifetime = value end})
+RageRight:Slider({Name = "shoot range", Minimum = 10, Maximum = 30, Default = 22, Pointer = "rangeshoot", callback = function(value) getgenv().CONFIG.Ragebot.ShootRange = value end})
+RageRight:Slider({Name = "hit range", Minimum = 10, Maximum = 30, Default = 16, Pointer = "hitrange", callback = function(value) getgenv().CONFIG.Ragebot.HitRange = value end})
 LegitLeft:Toggle({Name = "Silent Aim", Default = false, Pointer = "legit_silentaim", callback = function(state) getgenv().CONFIG.Legitbot.SilentAim.Enabled = state end})
 LegitLeft:Slider({Name = "FOV", Minimum = 10, Maximum = 500, Default = 100, Pointer = "legit_fov", callback = function(value) getgenv().CONFIG.Legitbot.SilentAim.FOV = value end})
 LegitLeft:Toggle({Name = "Team Check", Default = true, Pointer = "legit_teamcheck", callback = function(state) getgenv().CONFIG.Legitbot.SilentAim.TeamCheck = state end})
