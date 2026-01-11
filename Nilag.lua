@@ -4477,7 +4477,7 @@ local function getNearestTarget()
     if not myPos then return nil end
     myPos = myPos.Position
 
-    local nearest, minDist = nil, MaxDistance
+    local nearest, minDist = nil, 9e9
 
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer then
