@@ -4537,7 +4537,6 @@ local function shouldShoot()
     end
     
     return false
-end
 local function createTracer(startPos, endPos)
     if not Ragebot.ShowTracers then return nil end
     
@@ -4587,34 +4586,16 @@ local function createTracer(startPos, endPos)
     tracerModel.Parent = Workspace
     
     if Ragebot.TracerLifeTime > 0 then
-        local fadeTween = TweenService:Create(beam, TweenInfo.new(Ragebot.TracerLifeTime, Enum.EasingStyle.Linear), {
-            Transparency = NumberSequence.new(1)
-        })
-        
-        task.spawn(function()
-            task.wait(Ragebot.TracerLifeTime)
-            fadeTween:Play()
-            task.wait(Ragebot.TracerFadeTime)
+        task.delay(Ragebot.TracerLifeTime, function()
             if tracerModel and tracerModel.Parent then
                 tracerModel:Destroy()
             end
         end)
-        
-        if Ragebot.TracerFadeTime > 0 then
-            task.delay(Ragebot.TracerLifeTime, function()
-                if beam and beam.Parent then
-                    local brightnessTween = TweenService:Create(beam, TweenInfo.new(Ragebot.TracerFadeTime, Enum.EasingStyle.Linear), {
-                        Brightness = 0
-                    })
-                    brightnessTween:Play()
-                end
-            end)
-        end
     end
     
     return tracerModel
 end
-end
+
 local function applyRichShader()
     if not Ragebot.RichShader then
         if colorCorrection then
