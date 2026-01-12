@@ -4592,7 +4592,7 @@ local function createTracer(startPos, endPos)
         })
         
         task.spawn(function()
-            task.wait(Ragebot.TracerLifeTime - Ragebot.TracerFadeTime)
+            task.wait(Ragebot.TracerLifeTime)
             fadeTween:Play()
             task.wait(Ragebot.TracerFadeTime)
             if tracerModel and tracerModel.Parent then
@@ -4601,7 +4601,7 @@ local function createTracer(startPos, endPos)
         end)
         
         if Ragebot.TracerFadeTime > 0 then
-            task.delay(Ragebot.TracerLifeTime - Ragebot.TracerFadeTime, function()
+            task.delay(Ragebot.TracerLifeTime, function()
                 if beam and beam.Parent then
                     local brightnessTween = TweenService:Create(beam, TweenInfo.new(Ragebot.TracerFadeTime, Enum.EasingStyle.Linear), {
                         Brightness = 0
