@@ -4538,51 +4538,82 @@ local function shouldShoot()
     
     return false
 end
-local TweenService = game:GetService("TweenService")
 local function createTracer(startPos, endPos)
-    if not Ragebot.ShowTracers then return end
+    if not Ragebot.ShowTracers then return nil end
     
     local tracerModel = Instance.new("Model")
     tracerModel.Name = "TracerBeam"
     
+    local part0 = Instance.new("Part")
+    part0.Name = "Attachment0"
+    part0.Size = Vector3.new(0.1, 0.1, 0.1)
+    part0.Transparency = 1
+    part0.CanCollide = false
+    part0.Anchored = true
+    part0.Position = startPos
+    part0.Parent = tracerModel
+    
+    local part1 = Instance.new("Part")
+    part1.Name = "Attachment1"
+    part1.Size = Vector3.new(0.1, 0.1, 0.1)
+    part1.Transparency = 1
+    part1.CanCollide = false
+    part1.Anchored = true
+    part1.Position = endPos
+    part1.Parent = tracerModel
+    
+    local attachment0 = Instance.new("Attachment")
+    attachment0.Parent = part0
+    
+    local attachment1 = Instance.new("Attachment")
+    attachment1.Parent = part1
+    
     local beam = Instance.new("Beam")
+    beam.Attachment0 = attachment0
+    beam.Attachment1 = attachment1
     beam.Color = ColorSequence.new(Ragebot.TracerColor)
     beam.Width0 = Ragebot.TracerWidth
     beam.Width1 = Ragebot.TracerWidth
-    beam.Texture = "rbxassetid://7136858729"
-    beam.TextureSpeed = 1
-    beam.Brightness = 5
-    beam.LightEmission = 5
     beam.FaceCamera = true
-    
-    local a0 = Instance.new("Attachment")
-    local a1 = Instance.new("Attachment")
-    a0.WorldPosition = startPos
-    a1.WorldPosition = endPos
-    beam.Attachment0 = a0
-    beam.Attachment1 = a1
-    
+    beam.LightEmission = 1
+    beam.Brightness = 2
     beam.Parent = tracerModel
-    a0.Parent = tracerModel
-    a1.Parent = tracerModel
+    
+    if Ragebot.TracerTexture and Ragebot.TracerTexture ~= "" then
+        beam.Texture = Ragebot.TracerTexture
+        beam.TextureSpeed = 1
+    end
+    
     tracerModel.Parent = Workspace
     
-    local tweenInfo = TweenInfo.new(
-        Ragebot.TracerLifeTime,
-        Enum.EasingStyle.Linear,
-        Enum.EasingDirection.Out
-    )
-    
-    local tween = TweenService:Create(beam, tweenInfo, {
-        Brightness = 0
-    })
-    
-    tween:Play()
-    tween.Completed:Connect(function()
-        if tracerModel then 
-            tracerModel:Destroy() 
+    if Ragebot.TracerLifeTime > 0 then
+        local fadeTween = TweenService:Create(beam, TweenInfo.new(Ragebot.TracerLifeTime, Enum.EasingStyle.Linear), {
+            Transparency = NumberSequence.new(1)
+        })
+        
+        task.spawn(function()
+            task.wait(Ragebot.TracerLifeTime - Ragebot.TracerFadeTime)
+            fadeTween:Play()
+            task.wait(Ragebot.TracerFadeTime)
+            if tracerModel and tracerModel.Parent then
+                tracerModel:Destroy()
+            end
+        end)
+        
+        if Ragebot.TracerFadeTime > 0 then
+            task.delay(Ragebot.TracerLifeTime - Ragebot.TracerFadeTime, function()
+                if beam and beam.Parent then
+                    local brightnessTween = TweenService:Create(beam, TweenInfo.new(Ragebot.TracerFadeTime, Enum.EasingStyle.Linear), {
+                        Brightness = 0
+                    })
+                    brightnessTween:Play()
+                end
+            end)
         end
-    end)
+    end
+    
+    return tracerModel
+end
 end
 local function applyRichShader()
     if not Ragebot.RichShader then
