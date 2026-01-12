@@ -4538,7 +4538,52 @@ local function shouldShoot()
     
     return false
 end
-
+local TweenService = game:GetService("TweenService")
+local function createTracer(startPos, endPos)
+    if not Ragebot.ShowTracers then return end
+    
+    local tracerModel = Instance.new("Model")
+    tracerModel.Name = "TracerBeam"
+    
+    local beam = Instance.new("Beam")
+    beam.Color = ColorSequence.new(Ragebot.TracerColor)
+    beam.Width0 = Ragebot.TracerWidth
+    beam.Width1 = Ragebot.TracerWidth
+    beam.Texture = "rbxassetid://7136858729"
+    beam.TextureSpeed = 1
+    beam.Brightness = 5
+    beam.LightEmission = 5
+    beam.FaceCamera = true
+    
+    local a0 = Instance.new("Attachment")
+    local a1 = Instance.new("Attachment")
+    a0.WorldPosition = startPos
+    a1.WorldPosition = endPos
+    beam.Attachment0 = a0
+    beam.Attachment1 = a1
+    
+    beam.Parent = tracerModel
+    a0.Parent = tracerModel
+    a1.Parent = tracerModel
+    tracerModel.Parent = Workspace
+    
+    local tweenInfo = TweenInfo.new(
+        Ragebot.TracerLifeTime,
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.Out
+    )
+    
+    local tween = TweenService:Create(beam, tweenInfo, {
+        Brightness = 0
+    })
+    
+    tween:Play()
+    tween.Completed:Connect(function()
+        if tracerModel then 
+            tracerModel:Destroy() 
+        end
+    end)
+end
 local function applyRichShader()
     if not Ragebot.RichShader then
         if colorCorrection then
@@ -4673,52 +4718,6 @@ local function shootOnRenderStepped()
     if not Ragebot.Enabled or not Ragebot.AutoShoot or not Ragebot.RapidFire then return end
     
     rapidShoot()
-end
-
-local function createTracer(startPos, endPos)
-    if not Ragebot.ShowTracers then return end
-    
-    local tracerModel = Instance.new("Model")
-    tracerModel.Name = "TracerBeam"
-    
-    local beam = Instance.new("Beam")
-    beam.Color = ColorSequence.new(Ragebot.TracerColor)
-    beam.Width0 = Ragebot.TracerWidth
-    beam.Width1 = Ragebot.TracerWidth
-    beam.Texture = "rbxassetid://7136858729"
-    beam.TextureSpeed = 1
-    beam.Brightness = 5
-    beam.LightEmission = 5
-    beam.FaceCamera = true
-    
-    local a0 = Instance.new("Attachment")
-    local a1 = Instance.new("Attachment")
-    a0.WorldPosition = startPos
-    a1.WorldPosition = endPos
-    beam.Attachment0 = a0
-    beam.Attachment1 = a1
-    
-    beam.Parent = tracerModel
-    a0.Parent = tracerModel
-    a1.Parent = tracerModel
-    tracerModel.Parent = Workspace
-    
-    local tweenInfo = TweenInfo.new(
-        Ragebot.TracerLifeTime,
-        Enum.EasingStyle.Linear,
-        Enum.EasingDirection.Out
-    )
-    
-    local tween = TweenService:Create(beam, tweenInfo, {
-        Brightness = 0
-    })
-    
-    tween:Play()
-    tween.Completed:Connect(function()
-        if tracerModel then 
-            tracerModel:Destroy() 
-        end
-    end)
 end
 
 local function clearOldTracers()
