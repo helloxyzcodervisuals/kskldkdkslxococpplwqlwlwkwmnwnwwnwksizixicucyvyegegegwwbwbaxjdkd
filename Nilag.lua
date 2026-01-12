@@ -4678,41 +4678,47 @@ end
 local function createTracer(startPos, endPos)
     if not Ragebot.ShowTracers then return end
     
+    local tracerModel = Instance.new("Model")
+    tracerModel.Name = "TracerBeam"
+    
     local beam = Instance.new("Beam")
-    
-    local attachment0 = Instance.new("Attachment")
-    attachment0.WorldPosition = startPos
-    attachment0.Parent = beam
-    
-    local attachment1 = Instance.new("Attachment")
-    attachment1.WorldPosition = endPos
-    attachment1.Parent = beam
-    
-    beam.Attachment0 = attachment0
-    beam.Attachment1 = attachment1
     beam.Color = ColorSequence.new(Ragebot.TracerColor)
     beam.Width0 = Ragebot.TracerWidth
     beam.Width1 = Ragebot.TracerWidth
+    beam.Texture = "rbxassetid://7136858729"
+    beam.TextureSpeed = 1
+    beam.Brightness = 5
+    beam.LightEmission = 5
     beam.FaceCamera = true
-    beam.LightEmission = 1
-    beam.LightInfluence = 0
     
-    if Ragebot.TracerTexture then
-        beam.Texture = Ragebot.TracerTexture
-        beam.TextureLength = (startPos - endPos).Magnitude
-        beam.TextureMode = Enum.TextureMode.Stretch
-        beam.TextureSpeed = 5
-    end
+    local a0 = Instance.new("Attachment")
+    local a1 = Instance.new("Attachment")
+    a0.WorldPosition = startPos
+    a1.WorldPosition = endPos
+    beam.Attachment0 = a0
+    beam.Attachment1 = a1
     
-    beam.Segments = 10
-    beam.Parent = workspace
+    beam.Parent = tracerModel
+    a0.Parent = tracerModel
+    a1.Parent = tracerModel
+    tracerModel.Parent = Workspace
     
-    table.insert(tracers, {
-        Beam = beam,
-        Time = tick()
+    local tweenInfo = TweenInfo.new(
+        Ragebot.TracerLifeTime,
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.Out
+    )
+    
+    local tween = TweenService:Create(beam, tweenInfo, {
+        Brightness = 0
     })
     
-    game:GetService("Debris"):AddItem(beam, Ragebot.TracerLifeTime)
+    tween:Play()
+    tween.Completed:Connect(function()
+        if tracerModel then 
+            tracerModel:Destroy() 
+        end
+    end)
 end
 
 local function clearOldTracers()
