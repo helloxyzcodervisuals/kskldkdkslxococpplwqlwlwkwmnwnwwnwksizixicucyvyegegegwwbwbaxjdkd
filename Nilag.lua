@@ -4537,6 +4537,7 @@ local function shouldShoot()
     end
     
     return false
+end
 local function createTracer(startPos, endPos)
     if not Ragebot.ShowTracers then return nil end
     
