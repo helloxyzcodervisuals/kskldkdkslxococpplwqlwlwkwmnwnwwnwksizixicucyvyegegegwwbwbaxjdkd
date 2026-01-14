@@ -2054,7 +2054,7 @@ function library:new_window(cfg)
                 end
                 
                 toggle_frame.MouseButton1Click:Connect(setstate)
-                toggle_frame.TouchTap:Connect(setstate)
+            
                 
                 local function set(bool)
                     bool = type(bool) == "boolean" and bool or false
@@ -2093,140 +2093,131 @@ function library:new_window(cfg)
             end
             
             function section_tbl:new_slider(cfg)
-                local slider_tbl = {}
-                local name = cfg.name or cfg.Name or "new slider"
-                local min = cfg.min or cfg.minimum or 0
-                local max = cfg.max or cfg.maximum or 100
-                local text = cfg.text or ("[value]/"..max)
-                local float = cfg.float or 1
-                local default = cfg.default and math.clamp(cfg.default, min, max) or min
-                local flag = cfg.flag or utility.nextflag()
-                local callback = cfg.callback or function() end
-                
-                local holder = utility.create("Frame", {
-                    Name = "SliderHolder",
-                    Parent = section_content,
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 0, 20),
-                    ZIndex = 6
-                })
-                
-                local slider_frame = utility.create("Frame", {
-                    Name = "SliderFrame",
-                    Parent = holder,
-                    BackgroundColor3 = library.theme["Object Background"],
-                    BorderSizePixel = 0,
-                    Size = UDim2.new(1, 0, 0, 5),
-                    Position = UDim2.new(0, 0, 0, 15),
-                    ZIndex = 7
-                })
-                
-                local outline = utility.outline(slider_frame, "Section Inner Border")
-                utility.outline(outline, "Section Outer Border")
-                
-                local slider_title = utility.create("TextLabel", {
-                    Name = "SliderTitle",
-                    Parent = holder,
-                    Text = name,
-                    FontFace = customFont,
-                    TextSize = 13,
-                    Position = UDim2.new(0, -2, 0, -2),
-                    Size = UDim2.new(1, 0, 0, 13),
-                    TextColor3 = library.theme["Text"],
-                    BackgroundTransparency = 1,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = 6
-                })
-                
-                local slider_value = utility.create("TextLabel", {
-                    Name = "SliderValue",
-                    Parent = slider_frame,
-                    Text = text:gsub("%[value%]", string.format("%.14g", default)),
-                    FontFace = customFont,
-                    TextSize = 11,
-                    Position = UDim2.new(0.5, 0, 0.5, -5),
-                    Size = UDim2.new(1, 0, 1, 0),
-                    TextColor3 = library.theme["Text"],
-                    BackgroundTransparency = 1,
-                    TextXAlignment = Enum.TextXAlignment.Center,
-                    ZIndex = 8
-                })
-                
-                local slider_fill = utility.create("Frame", {
-                    Name = "SliderFill",
-                    Parent = slider_frame,
-                    BackgroundColor3 = library.theme["Accent"],
-                    BorderSizePixel = 0,
-                    Size = UDim2.new((default - min) / (max - min), 0, 1, 0),
-                    ZIndex = 7
-                })
-                
-                local slider_drag = utility.create("TextButton", {
-                    Name = "SliderDrag",
-                    Parent = slider_frame,
-                    BackgroundTransparency = 1,
-                    Size = UDim2.new(1, 0, 1, 0),
-                    ZIndex = 8,
-                    Text = "",
-                    AutoButtonColor = false
-                })
-                
-                local function set(value)
-                    value = math.clamp(utility.round(value, float), min, max)
-                    slider_value.Text = text:gsub("%[value%]", string.format("%.14g", value))
-                    local sizeX = ((value - min) / (max - min))
-                    slider_fill.Size = UDim2.new(sizeX, 0, 1, 0)
-                    library.flags[flag] = value
-                    callback(value)
-                end
-                
-                set(default)
-                
-                local sliding = false
-                
-                local function slide(input)
-                    local sizeX = (input.Position.X - slider_frame.AbsolutePosition.X) / slider_frame.AbsoluteSize.X
-                    local value = ((max - min) * sizeX) + min
-                    set(value)
-                end
-                
-                slider_drag.MouseButton1Down:Connect(function()
-                    sliding = true
-                end)
-                
-                slider_drag.MouseButton1Up:Connect(function()
-                    sliding = false
-                end)
-                
-                slider_drag.TouchLongPress:Connect(function()
-                    sliding = true
-                end)
-                
-                slider_drag.TouchEnded:Connect(function()
-                    sliding = false
-                end)
-                
-                slider_drag.MouseMoved:Connect(function(x, y)
-                    if sliding then
-                        local input = {Position = Vector2.new(x, y)}
-                        slide(input)
+                    local slider_tbl = {}
+                    local name = cfg.name or cfg.Name or "new slider"
+                    local min = cfg.min or cfg.minimum or 0
+                    local max = cfg.max or cfg.maximum or 100
+                    local text = cfg.text or ("[value]/"..max)
+                    local float = cfg.float or 1
+                    local default = cfg.default and math.clamp(cfg.default, min, max) or min
+                    local flag = cfg.flag or utility.nextflag()
+                    local callback = cfg.callback or function() end
+                    
+                    local UserInputService = game:GetService("UserInputService")
+                    
+                    local holder = utility.create("Frame", {
+                        Name = "SliderHolder",
+                        Parent = section_content,
+                        BackgroundTransparency = 1,
+                        Size = UDim2.new(1, 0, 0, 20),
+                        ZIndex = 6
+                    })
+                    
+                    local slider_frame = utility.create("Frame", {
+                        Name = "SliderFrame",
+                        Parent = holder,
+                        BackgroundColor3 = library.theme["Object Background"],
+                        BorderSizePixel = 0,
+                        Size = UDim2.new(1, 0, 0, 5),
+                        Position = UDim2.new(0, 0, 0, 15),
+                        ZIndex = 7
+                    })
+                    
+                    local outline = utility.outline(slider_frame, "Section Inner Border")
+                    utility.outline(outline, "Section Outer Border")
+                    
+                    local slider_title = utility.create("TextLabel", {
+                        Name = "SliderTitle",
+                        Parent = holder,
+                        Text = name,
+                        FontFace = customFont,
+                        TextSize = 13,
+                        Position = UDim2.new(0, -2, 0, -2),
+                        Size = UDim2.new(1, 0, 0, 13),
+                        TextColor3 = library.theme["Text"],
+                        BackgroundTransparency = 1,
+                        TextXAlignment = Enum.TextXAlignment.Left,
+                        ZIndex = 6
+                    })
+                    
+                    local slider_value = utility.create("TextLabel", {
+                        Name = "SliderValue",
+                        Parent = slider_frame,
+                        Text = text:gsub("%[value%]", string.format("%.14g", default)),
+                        FontFace = customFont,
+                        TextSize = 11,
+                        Position = UDim2.new(0.5, 0, 0.5, -5),
+                        Size = UDim2.new(1, 0, 1, 0),
+                        TextColor3 = library.theme["Text"],
+                        BackgroundTransparency = 1,
+                        TextXAlignment = Enum.TextXAlignment.Center,
+                        ZIndex = 8
+                    })
+                    
+                    local slider_fill = utility.create("Frame", {
+                        Name = "SliderFill",
+                        Parent = slider_frame,
+                        BackgroundColor3 = library.theme["Accent"],
+                        BorderSizePixel = 0,
+                        Size = UDim2.new((default - min) / (max - min), 0, 1, 0),
+                        ZIndex = 7
+                    })
+                    
+                    local slider_drag = utility.create("TextButton", {
+                        Name = "SliderDrag",
+                        Parent = slider_frame,
+                        BackgroundTransparency = 1,
+                        Size = UDim2.new(1, 0, 1, 0),
+                        ZIndex = 8,
+                        Text = "",
+                        AutoButtonColor = false
+                    })
+                    
+                    local function set(value)
+                        value = math.clamp(utility.round(value, float), min, max)
+                        slider_value.Text = text:gsub("%[value%]", string.format("%.14g", value))
+                        local sizeX = ((value - min) / (max - min))
+                        slider_fill.Size = UDim2.new(sizeX, 0, 1, 0)
+                        library.flags[flag] = value
+                        callback(value)
                     end
-                end)
-                
-                slider_drag.TouchMoved:Connect(function(touchPositions)
-                    if sliding then
-                        local input = {Position = touchPositions[1].Position}
-                        slide(input)
+                    
+                    set(default)
+                    
+                    local sliding = false
+                    
+                    local function slide(input)
+                        local sizeX = math.clamp((input.Position.X - slider_frame.AbsolutePosition.X) / slider_frame.AbsoluteSize.X, 0, 1)
+                        local value = ((max - min) * sizeX) + min
+                        set(value)
                     end
-                end)
-                
-                flags[flag] = set
-                
-                function slider_tbl:set(value)
-                    set(value)
-                end
-                
-                return slider_tbl
+                    
+                    slider_drag.InputBegan:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                            sliding = true
+                            slide(input)
+                        end
+                    end)
+                    
+                    UserInputService.InputEnded:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                            sliding = false
+                        end
+                    end)
+                    
+                    slider_drag.InputChanged:Connect(function(input)
+                        if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                            slide(input)
+                        end
+                    end)
+                    
+                    flags[flag] = set
+                    
+                    function slider_tbl:set(value)
+                        set(value)
+                    end
+                    
+                    return slider_tbl
             end
             
             function section_tbl:new_button(cfg)
