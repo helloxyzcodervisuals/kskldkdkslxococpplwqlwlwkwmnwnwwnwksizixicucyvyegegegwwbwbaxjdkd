@@ -1459,6 +1459,387 @@ function library.createlistbox(holder, content, flag, callback, default, max, si
     return listboxtypes
 end
 --]]
+function library.createlistbox(holder, content, flag, callback, default, max, size, islist)
+    local listbox = utility.create("Frame", {
+        Name = "ListBox",
+        Parent = holder,
+        BackgroundColor3 = library.theme["Object Background"],
+        BorderSizePixel = 0,
+        Size = islist and size == "Fill" and UDim2.new(1, 0, 1, -30) or islist and size ~= "Fill" and UDim2.new(1, 0, 0, size) or UDim2.new(1, 0, 0, 15),
+        Position = islist and UDim2.new(0, 0, 0, 14) or UDim2.new(0, 0, 1, -15),
+        ZIndex = 7,
+        ClipsDescendants = true
+    })
+    
+    local outline1 = utility.outline(listbox, "Section Inner Border")
+    utility.outline(outline1, "Section Outer Border")
+    
+    local title = utility.create("TextLabel", {
+        Name = "Title",
+        Parent = listbox,
+        Text = "Select...",
+        FontFace = customFont,
+        TextSize = 13,
+        Position = UDim2.new(0, 2, 0, 0),
+        Size = UDim2.new(1, -20, 1, 0),
+        TextColor3 = library.theme["Text"],
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 9
+    })
+    
+    local icon = utility.create("TextLabel", {
+        Name = "Icon",
+        Parent = listbox,
+        Text = "▼",
+        FontFace = customFont,
+        TextSize = 10,
+        Size = UDim2.new(0, 9, 0, 6),
+        Position = UDim2.new(1, -13, 0, 4),
+        TextColor3 = library.theme["Text"],
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 9
+    })
+    
+    local contentframe = utility.create("Frame", {
+        Name = "ContentFrame",
+        Parent = listbox,
+        BackgroundColor3 = library.theme["Object Background"],
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 0),
+        Position = UDim2.new(0, 0, 1, 2),
+        ZIndex = 12,
+        Visible = false,
+        ClipsDescendants = true
+    })
+    
+    local outline2 = utility.outline(contentframe, "Section Inner Border")
+    utility.outline(outline2, "Section Outer Border")
+    
+    local scrollframe = utility.create("ScrollingFrame", {
+        Name = "ScrollFrame",
+        Parent = contentframe,
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 1, 0),
+        ScrollBarThickness = 4,
+        ScrollBarImageColor3 = library.theme["Section Inner Border"],
+        CanvasSize = UDim2.new(0, 0, 0, 0)
+    })
+    
+    local contentholder = utility.create("Frame", {
+        Name = "ContentHolder",
+        Parent = scrollframe,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 0, 0)
+    })
+    
+    local uilistlayout = Instance.new("UIListLayout")
+    uilistlayout.Parent = contentholder
+    uilistlayout.Padding = UDim.new(0, 2)
+    uilistlayout.SortOrder = Enum.SortOrder.LayoutOrder
+    
+    local optioninstances = {}
+    local count = 0
+    local countindex = {}
+    local chosen = max and {}
+    local opened = false
+    
+    local function createoption(name)
+        optioninstances[name] = {}
+        countindex[name] = count + 1
+        
+        local button = utility.create("TextButton", {
+            Name = "Option_"..name,
+            Parent = contentholder,
+            BackgroundColor3 = library.theme["Object Background"],
+            BorderSizePixel = 0,
+            Size = UDim2.new(1, -4, 0, 16),
+            ZIndex = 14,
+            Text = "",
+            AutoButtonColor = false,
+            LayoutOrder = count + 1
+        })
+        
+        optioninstances[name].button = button
+        
+        local optionText = utility.create("TextLabel", {
+            Name = "Text",
+            Parent = button,
+            Text = name,
+            FontFace = customFont,
+            TextSize = 13,
+            Position = UDim2.new(0, 8, 0, 1),
+            Size = UDim2.new(1, -8, 1, 0),
+            TextColor3 = library.theme["Text"],
+            BackgroundTransparency = 1,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 15
+        })
+        
+        optioninstances[name].text = optionText
+        
+        count = count + 1
+        
+        contentholder.Size = UDim2.new(1, 0, 0, count * 18)
+        scrollframe.CanvasSize = UDim2.new(0, 0, 0, count * 18)
+        
+        if not islist then
+            contentframe.Size = UDim2.new(1, 0, 0, math.min(count * 18 + 4, 150))
+        end
+        
+        return button, optionText
+    end
+    
+    local function handleoptionclick(option, button, text)
+        button.MouseButton1Click:Connect(function()
+            if max then
+                if table.find(chosen, option) then
+                    table.remove(chosen, table.find(chosen, option))
+                    
+                    local textchosen = {}
+                    local cutobject = false
+                    
+                    for _, opt in next, chosen do
+                        table.insert(textchosen, opt)
+                        
+                        if utility.textlength(table.concat(textchosen, ", ") .. ", ...", customFont, 13).X > (listbox.AbsoluteSize.X - 18) then
+                            cutobject = true
+                            table.remove(textchosen, #textchosen)
+                        end
+                    end
+                    
+                    title.Text = #chosen == 0 and "Select..." or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
+                    
+                    utility.changeobjecttheme(text, "Text")
+                    
+                    library.flags[flag] = chosen
+                    callback(chosen)
+                else
+                    if #chosen == max then
+                        utility.changeobjecttheme(optioninstances[chosen[1]].text, "Text")
+                        table.remove(chosen, 1)
+                    end
+                    
+                    table.insert(chosen, option)
+                    
+                    local textchosen = {}
+                    local cutobject = false
+                    
+                    for _, opt in next, chosen do
+                        table.insert(textchosen, opt)
+                        
+                        if utility.textlength(table.concat(textchosen, ", ") .. ", ...", customFont, 13).X > (listbox.AbsoluteSize.X - 18) then
+                            cutobject = true
+                            table.remove(textchosen, #textchosen)
+                        end
+                    end
+                    
+                    title.Text = #chosen == 0 and "Select..." or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
+                    
+                    utility.changeobjecttheme(text, "Accent")
+                    
+                    library.flags[flag] = chosen
+                    callback(chosen)
+                end
+            else
+                for opt, tbl in next, optioninstances do
+                    if opt ~= option then
+                        utility.changeobjecttheme(tbl.text, "Text")
+                    end
+                end
+                
+                chosen = option
+                title.Text = option
+                utility.changeobjecttheme(text, "Accent")
+                
+                library.flags[flag] = option
+                callback(option)
+                
+                if not islist then
+                    contentframe.Visible = false
+                    opened = false
+                    icon.Text = "▼"
+                end
+            end
+        end)
+    end
+    
+    local function createoptions(tbl)
+        for _, option in next, tbl do
+            local button, text = createoption(option)
+            handleoptionclick(option, button, text)
+        end
+    end
+    
+    createoptions(content)
+    
+    local toggleButton = utility.create("TextButton", {
+        Name = "ToggleButton",
+        Parent = listbox,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        Text = "",
+        ZIndex = 10
+    })
+    
+    toggleButton.MouseButton1Click:Connect(function()
+        if not islist then
+            opened = not opened
+            contentframe.Visible = opened
+            icon.Text = opened and "▲" or "▼"
+        end
+    end)
+    
+    local set
+    set = function(option)
+        if max then
+            option = type(option) == "table" and option or {}
+            table.clear(chosen)
+            
+            for opt, tbl in next, optioninstances do
+                if not table.find(option, opt) then
+                    utility.changeobjecttheme(tbl.text, "Text")
+                end
+            end
+            
+            for i, opt in next, option do
+                if table.find(content, opt) and #chosen < max then
+                    table.insert(chosen, opt)
+                    utility.changeobjecttheme(optioninstances[opt].text, "Accent")
+                end
+            end
+            
+            local textchosen = {}
+            local cutobject = false
+            
+            for _, opt in next, chosen do
+                table.insert(textchosen, opt)
+                
+                if utility.textlength(table.concat(textchosen, ", ") .. ", ...", customFont, 13).X > (listbox.AbsoluteSize.X - 6) then
+                    cutobject = true
+                    table.remove(textchosen, #textchosen)
+                end
+            end
+            
+            title.Text = #chosen == 0 and "Select..." or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
+            
+            library.flags[flag] = chosen
+            callback(chosen)
+        end
+        
+        if not max then
+            for opt, tbl in next, optioninstances do
+                if opt ~= option then
+                    utility.changeobjecttheme(tbl.text, "Text")
+                end
+            end
+            
+            if table.find(content, option) then
+                chosen = option
+                title.Text = option
+                utility.changeobjecttheme(optioninstances[option].text, "Accent")
+                
+                library.flags[flag] = chosen
+                callback(chosen)
+            else
+                chosen = nil
+                title.Text = "Select..."
+                
+                library.flags[flag] = chosen
+                callback(chosen)
+            end
+        end
+    end
+    
+    flags[flag] = set
+    set(default)
+    
+    local listboxtypes = utility.table({}, true)
+    
+    function listboxtypes:set(option)
+        set(option)
+    end
+    
+    function listboxtypes:refresh(tbl)
+        content = table.clone(tbl)
+        count = 0
+        
+        for _, opt in next, optioninstances do
+            coroutine.wrap(function()
+                opt.button:Destroy()
+            end)()
+        end
+        
+        table.clear(optioninstances)
+        
+        createoptions(tbl)
+        
+        title.Text = ""
+        
+        if max then
+            table.clear(chosen)
+        else
+            chosen = nil
+        end
+        
+        library.flags[flag] = chosen
+        callback(chosen)
+    end
+    
+    function listboxtypes:addoption(option)
+        table.insert(content, option)
+        local button, text = createoption(option)
+        handleoptionclick(option, button, text)
+    end
+    
+    function listboxtypes:deleteoption(option)
+        if optioninstances[option] then
+            count = count - 1
+            
+            optioninstances[option].button:Destroy()
+            
+            contentholder.Size = UDim2.new(1, 0, 0, count * 18)
+            scrollframe.CanvasSize = UDim2.new(0, 0, 0, count * 18)
+            
+            if not islist then
+                contentframe.Size = UDim2.new(1, 0, 0, math.min(count * 18 + 4, 150))
+            end
+            
+            optioninstances[option] = nil
+            
+            if max then
+                if table.find(chosen, option) then
+                    table.remove(chosen, table.find(chosen, option))
+                    
+                    local textchosen = {}
+                    local cutobject = false
+                    
+                    for _, opt in next, chosen do
+                        table.insert(textchosen, opt)
+                        
+                        if utility.textlength(table.concat(textchosen, ", ") .. ", ...", customFont, 13).X > (listbox.AbsoluteSize.X - 6) then
+                            cutobject = true
+                            table.remove(textchosen, #textchosen)
+                        end
+                    end
+                    
+                    title.Text = #chosen == 0 and "Select..." or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
+                    
+                    library.flags[flag] = chosen
+                    callback(chosen)
+                end
+            end
+        end
+    end
+    
+    function listboxtypes:setoption(option)
+        set(option)
+    end
+    
+    return listboxtypes
+end
 local allowedcharacters = {}
 local shiftcharacters = {
     ["1"] = "!",
