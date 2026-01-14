@@ -1049,6 +1049,7 @@ function library.createcolorpicker(default, parent, count, flag, callback, offse
     
     return colorpickertypes, window
 end
+--[[
 function library.createlistbox(holder, content, flag, callback, default, max, size, islist)
     local listbox = utility.create("Frame", {
         Name = "ListBox",
@@ -1208,7 +1209,7 @@ function library.createlistbox(holder, content, flag, callback, default, max, si
                     callback(chosen)
                 else
                     if #chosen == max then
-                        utility.changeobjecttheme(optioninstances[chosen[1]].text, "Text")
+                        utility.changeobjecttheme(optioninstances[chosen[1]text, "Text")
                         table.remove(chosen, 1)
                     end
                     
@@ -1457,7 +1458,7 @@ function library.createlistbox(holder, content, flag, callback, default, max, si
     
     return listboxtypes
 end
-
+--]]
 local allowedcharacters = {}
 local shiftcharacters = {
     ["1"] = "!",
