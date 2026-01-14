@@ -381,7 +381,7 @@ function library:SetTheme(theme)
 end
 
 local pickers = {}
-
+--[[
 function library.createcolorpicker(default, parent, count, flag, callback, offset)
     local icon = utility.create("TextButton", {
         Name = "ColorPickerIcon",
@@ -712,6 +712,342 @@ function library.createcolorpicker(default, parent, count, flag, callback, offse
         end
     end)
     
+
+    
+    local colorpickertypes = {}
+    
+    function colorpickertypes:set(color)
+        set(color)
+    end
+    
+    return colorpickertypes, window
+end
+--]]
+function library.createcolorpicker(default, parent, count, flag, callback, offset)
+    local icon = utility.create("TextButton", {
+        Name = "ColorPickerIcon",
+        Parent = parent,
+        BackgroundColor3 = default,
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 17, 0, 9),
+        Position = UDim2.new(1, -17 - (count * 17) - (count * 6), 0, 4 + offset),
+        ZIndex = 8,
+        Text = "",
+        AutoButtonColor = false
+    })
+    
+    local outline = utility.outline(icon, "Section Inner Border")
+    utility.outline(outline, "Section Outer Border")
+    
+    local window = utility.create("Frame", {
+        Name = "ColorPickerWindow",
+        Parent = icon,
+        BackgroundColor3 = library.theme["Object Background"],
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 185, 0, 200),
+        Visible = false,
+        Position = UDim2.new(1, -185 + (count * 20) + (count * 6), 1, 6),
+        ZIndex = 20
+    })
+    
+    table.insert(pickers, window)
+    
+    local outline1 = utility.outline(window, "Section Inner Border")
+    utility.outline(outline1, "Section Outer Border")
+    
+    local saturation = utility.create("Frame", {
+        Name = "Saturation",
+        Parent = window,
+        BackgroundColor3 = default,
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 154, 0, 150),
+        Position = UDim2.new(0, 6, 0, 6),
+        ZIndex = 24
+    })
+    
+    utility.outline(saturation, "Section Inner Border")
+    
+    local hueframe = utility.create("Frame", {
+        Name = "HueFrame",
+        Parent = window,
+        BackgroundColor3 = Color3.fromRGB(255, 0, 0),
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 15, 0, 150),
+        Position = UDim2.new(0, 165, 0, 6),
+        ZIndex = 24
+    })
+    
+    utility.outline(hueframe, "Section Inner Border")
+    
+    local hueColors = {
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+        ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+        ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+        ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+        ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+    }
+    
+    local hueGradient = Instance.new("UIGradient")
+    hueGradient.Color = ColorSequence.new(hueColors)
+    hueGradient.Rotation = 90
+    hueGradient.Parent = hueframe
+    
+    local saturationpicker = utility.create("Frame", {
+        Name = "SaturationPicker",
+        Parent = saturation,
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 4, 0, 4),
+        Position = UDim2.new(0.5, -2, 0.5, -2),
+        ZIndex = 26
+    })
+    
+    local huepicker = utility.create("Frame", {
+        Name = "HuePicker",
+        Parent = hueframe,
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 2),
+        Position = UDim2.new(0, 0, 0, 0),
+        ZIndex = 26
+    })
+    
+    local rgbinput = utility.create("Frame", {
+        Name = "RGBInput",
+        Parent = window,
+        BackgroundColor3 = library.theme["Object Background"],
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, -12, 0, 14),
+        Position = UDim2.new(0, 6, 0, 160),
+        ZIndex = 24
+    })
+    
+    local outline2 = utility.outline(rgbinput, "Section Inner Border")
+    utility.outline(outline2, "Section Outer Border")
+    
+    local text = utility.create("TextLabel", {
+        Name = "RGBText",
+        Parent = rgbinput,
+        Text = string.format("%s, %s, %s", math.floor(default.R * 255), math.floor(default.G * 255), math.floor(default.B * 255)),
+        FontFace = customFont,
+        TextSize = 13,
+        Position = UDim2.new(0.5, 0, 0, 0),
+        Size = UDim2.new(1, 0, 1, 0),
+        TextColor3 = library.theme["Text"],
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 26
+    })
+    
+    local copy = utility.create("TextButton", {
+        Name = "CopyButton",
+        Parent = window,
+        BackgroundColor3 = library.theme["Object Background"],
+        BorderSizePixel = 0,
+        Size = UDim2.new(0.5, -20, 0, 12),
+        Position = UDim2.new(0, 6, 0, 180),
+        ZIndex = 24,
+        Text = "copy",
+        FontFace = customFont,
+        TextSize = 13,
+        TextColor3 = library.theme["Text"]
+    })
+    
+    local outline3 = utility.outline(copy, "Section Inner Border")
+    utility.outline(outline3, "Section Outer Border")
+    
+    local paste = utility.create("TextButton", {
+        Name = "PasteButton",
+        Parent = window,
+        BackgroundColor3 = library.theme["Object Background"],
+        BorderSizePixel = 0,
+        Size = UDim2.new(0.5, -20, 0, 12),
+        Position = UDim2.new(0.5, 15, 0, 180),
+        ZIndex = 24,
+        Text = "paste",
+        FontFace = customFont,
+        TextSize = 13,
+        TextColor3 = library.theme["Text"]
+    })
+    
+    local outline4 = utility.outline(paste, "Section Inner Border")
+    utility.outline(outline4, "Section Outer Border")
+    
+    local hue, sat, val = default:ToHSV()
+    local hsv = Color3.fromHSV(hue, sat, val)
+    local current_val = default
+    
+    copy.MouseButton1Click:Connect(function()
+        library.currentcolor = current_val
+    end)
+    
+    paste.MouseButton1Click:Connect(function()
+        if library.currentcolor ~= nil then
+            set(library.currentcolor, false, true)
+        end
+    end)
+    
+    copy.TouchTap:Connect(function()
+        library.currentcolor = current_val
+    end)
+    
+    paste.TouchTap:Connect(function()
+        if library.currentcolor ~= nil then
+            set(library.currentcolor, false, true)
+        end
+    end)
+    
+    local function set(color, nopos, setcolor)
+        if type(color) == "table" then
+            color = Color3.fromHex(color.color)
+        end
+        
+        if type(color) == "string" then
+            color = Color3.fromHex(color)
+        end
+        
+        local oldcolor = hsv
+        hue, sat, val = color:ToHSV()
+        hsv = Color3.fromHSV(hue, sat, val)
+        
+        if hsv ~= oldcolor then
+            icon.BackgroundColor3 = hsv
+            
+            if not nopos then
+                saturationpicker.Position = UDim2.new(sat, -2, 1 - val, -2)
+                huepicker.Position = UDim2.new(0, 0, hue, -1)
+                if setcolor then
+                    saturation.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+                end
+            end
+            
+            text.Text = string.format("%s, %s, %s", math.round(hsv.R * 255), math.round(hsv.G * 255), math.round(hsv.B * 255))
+            
+            if flag then
+                library.flags[flag] = utility.rgba(hsv.R * 255, hsv.G * 255, hsv.B * 255)
+            end
+            
+            callback(Color3.fromRGB(hsv.R * 255, hsv.G * 255, hsv.B * 255))
+            current_val = Color3.fromRGB(hsv.R * 255, hsv.G * 255, hsv.B * 255)
+        end
+    end
+    
+    flags[flag] = set
+    set(default)
+    
+    local curhuesizey = hue
+    
+    local function updatesatval(posX, posY)
+        local sizeX = math.clamp((posX - saturation.AbsolutePosition.X) / saturation.AbsoluteSize.X, 0, 1)
+        local sizeY = math.clamp((posY - saturation.AbsolutePosition.Y) / saturation.AbsoluteSize.Y, 0, 1)
+        
+        saturationpicker.Position = UDim2.new(sizeX, -2, sizeY, -2)
+        sat = sizeX
+        val = sizeY
+        
+        set(Color3.fromHSV(curhuesizey or hue, sat, val), true, false)
+    end
+    
+    local function updatehue(posY)
+        local sizeY = math.clamp((posY - hueframe.AbsolutePosition.Y) / hueframe.AbsoluteSize.Y, 0, 1)
+        
+        huepicker.Position = UDim2.new(0, 0, sizeY, -1)
+        saturation.BackgroundColor3 = Color3.fromHSV(sizeY, 1, 1)
+        curhuesizey = sizeY
+        hue = sizeY
+        
+        set(Color3.fromHSV(sizeY, sat, val), true, true)
+    end
+    
+    local saturationDrag = utility.create("TextButton", {
+        Name = "SaturationDrag",
+        Parent = saturation,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        ZIndex = 27,
+        Text = "",
+        AutoButtonColor = false
+    })
+    
+    local hueDrag = utility.create("TextButton", {
+        Name = "HueDrag",
+        Parent = hueframe,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        ZIndex = 27,
+        Text = "",
+        AutoButtonColor = false
+    })
+    
+    local function createDragSystem(dragButton, areaFrame, isHue)
+        local dragging = false
+        
+        dragButton.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                
+                if isHue then
+                    local posY = math.clamp(input.Position.Y - areaFrame.AbsolutePosition.Y, 0, areaFrame.AbsoluteSize.Y)
+                    updatehue(posY + areaFrame.AbsolutePosition.Y)
+                else
+                    local posX = math.clamp(input.Position.X - areaFrame.AbsolutePosition.X, 0, areaFrame.AbsoluteSize.X)
+                    local posY = math.clamp(input.Position.Y - areaFrame.AbsolutePosition.Y, 0, areaFrame.AbsoluteSize.Y)
+                    updatesatval(posX + areaFrame.AbsolutePosition.X, posY + areaFrame.AbsolutePosition.Y)
+                end
+            end
+        end)
+        
+        dragButton.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+        
+        utility.connect(services.InputService.InputChanged, function(input)
+            if dragging then
+                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                    local inBounds = false
+                    
+                    if input.UserInputType == Enum.UserInputType.MouseMovement then
+                        inBounds = 
+                            input.Position.X >= areaFrame.AbsolutePosition.X and 
+                            input.Position.X <= areaFrame.AbsolutePosition.X + areaFrame.AbsoluteSize.X and
+                            input.Position.Y >= areaFrame.AbsolutePosition.Y and 
+                            input.Position.Y <= areaFrame.AbsolutePosition.Y + areaFrame.AbsoluteSize.Y
+                    else
+                        inBounds = true
+                    end
+                    
+                    if inBounds then
+                        if isHue then
+                            local posY = math.clamp(input.Position.Y - areaFrame.AbsolutePosition.Y, 0, areaFrame.AbsoluteSize.Y)
+                            updatehue(posY + areaFrame.AbsolutePosition.Y)
+                        else
+                            local posX = math.clamp(input.Position.X - areaFrame.AbsolutePosition.X, 0, areaFrame.AbsoluteSize.X)
+                            local posY = math.clamp(input.Position.Y - areaFrame.AbsolutePosition.Y, 0, areaFrame.AbsoluteSize.Y)
+                            updatesatval(posX + areaFrame.AbsolutePosition.X, posY + areaFrame.AbsolutePosition.Y)
+                        end
+                    end
+                end
+            end
+        end)
+    end
+    
+    createDragSystem(saturationDrag, saturation, false)
+    createDragSystem(hueDrag, hueframe, true)
+    
+    icon.MouseButton1Click:Connect(function()
+        for _, picker in next, pickers do
+            if picker ~= window then
+                picker.Visible = false
+            end
+        end
+        
+        window.Visible = not window.Visible
+    end)
+    
     icon.TouchTap:Connect(function()
         for _, picker in next, pickers do
             if picker ~= window then
@@ -720,14 +1056,6 @@ function library.createcolorpicker(default, parent, count, flag, callback, offse
         end
         
         window.Visible = not window.Visible
-        
-        if slidinghue then
-            slidinghue = false
-        end
-        
-        if slidingsaturation then
-            slidingsaturation = false
-        end
     end)
     
     local colorpickertypes = {}
@@ -738,7 +1066,6 @@ function library.createcolorpicker(default, parent, count, flag, callback, offse
     
     return colorpickertypes, window
 end
-
 function library.createlistbox(holder, content, flag, callback, default, max, size, islist)
     local listbox = utility.create("Frame", {
         Name = "ListBox",
@@ -1495,7 +1822,7 @@ function library:new_window(cfg)
             Text = page_name,
             FontFace = customFont,
             TextSize = 13,
-            Position = UDim2.new(0.5, 0, 0, 6),
+            Position = UDim2.new(0, 0, 0, 6),
             Size = UDim2.new(1, 0, 1, 0),
             TextColor3 = library.theme["Text"],
             BackgroundTransparency = 1,
