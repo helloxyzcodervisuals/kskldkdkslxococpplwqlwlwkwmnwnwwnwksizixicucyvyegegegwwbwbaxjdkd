@@ -2322,14 +2322,6 @@ function library:new_window(cfg)
                 button_frame.MouseButton1Up:Connect(function()
                     button_frame.BackgroundColor3 = library.theme["Object Background"]
                 end)
-                
-                button_frame.TouchLongPress:Connect(function()
-                    button_frame.BackgroundColor3 = library.theme["Accent"]
-                end)
-                
-                button_frame.TouchEnded:Connect(function()
-                    button_frame.BackgroundColor3 = library.theme["Object Background"]
-                end)
             end
             
             function section_tbl:new_listbox(cfg)
