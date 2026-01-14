@@ -889,15 +889,7 @@ function library.createcolorpicker(default, parent, count, flag, callback, offse
         end
     end)
     
-    copy.TouchTap:Connect(function()
-        library.currentcolor = current_val
-    end)
-    
-    paste.TouchTap:Connect(function()
-        if library.currentcolor ~= nil then
-            set(library.currentcolor, false, true)
-        end
-    end)
+
     
     local function set(color, nopos, setcolor)
         if type(color) == "table" then
@@ -1048,16 +1040,7 @@ function library.createcolorpicker(default, parent, count, flag, callback, offse
         window.Visible = not window.Visible
     end)
     
-    icon.TouchTap:Connect(function()
-        for _, picker in next, pickers do
-            if picker ~= window then
-                picker.Visible = false
-            end
-        end
-        
-        window.Visible = not window.Visible
-    end)
-    
+
     local colorpickertypes = {}
     
     function colorpickertypes:set(color)
@@ -1268,59 +1251,6 @@ function library.createlistbox(holder, content, flag, callback, default, max, si
                     contentframe.Visible = false
                     opened = false
                     icon.Text = "▼"
-                end
-            end
-        end)
-        
-        button.TouchTap:Connect(function()
-            if max then
-                if table.find(chosen, option) then
-                    table.remove(chosen, table.find(chosen, option))
-                    
-                    local textchosen = {}
-                    local cutobject = false
-                    
-                    for _, opt in next, chosen do
-                        table.insert(textchosen, opt)
-                        
-                        if utility.textlength(table.concat(textchosen, ", ") .. ", ...", customFont, 13).X > (listbox.AbsoluteSize.X - 18) then
-                            cutobject = true
-                            table.remove(textchosen, #textchosen)
-                        end
-                    end
-                    
-                    title.Text = #chosen == 0 and "Select..." or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
-                    
-                    utility.changeobjecttheme(text, "Text")
-                    
-                    library.flags[flag] = chosen
-                    callback(chosen)
-                else
-                    if #chosen == max then
-                        utility.changeobjecttheme(optioninstances[chosen[1]].text, "Text")
-                        table.remove(chosen, 1)
-                    end
-                    
-                    table.insert(chosen, option)
-                    
-                    local textchosen = {}
-                    local cutobject = false
-                    
-                    for _, opt in next, chosen do
-                        table.insert(textchosen, opt)
-                        
-                        if utility.textlength(table.concat(textchosen, ", ") .. ", ...", customFont, 13).X > (listbox.AbsoluteSize.X - 18) then
-                            cutobject = true
-                            table.remove(textchosen, #textchosen)
-                        end
-                    end
-                    
-                    title.Text = #chosen == 0 and "Select..." or table.concat(textchosen, ", ") .. (cutobject and ", ..." or "")
-                    
-                    utility.changeobjecttheme(text, "Accent")
-                    
-                    library.flags[flag] = chosen
-                    callback(chosen)
                 end
             else
                 for opt, tbl in next, optioninstances do
@@ -2284,36 +2214,7 @@ function library:new_window(cfg)
                     end)
                 end)
                 
-                button_frame.TouchTap:Connect(function()
-                    task.spawn(function()
-                        if button_confirm then
-                            if clicked then
-                                clicked = false
-                                counting = false
-                                button_frame.TextColor3 = library.theme["Text"]
-                                button_frame.Text = button_name
-                                callback()
-                            else
-                                clicked = true
-                                counting = true
-                                for i = 3, 1, -1 do
-                                    if not counting then
-                                        break
-                                    end
-                                    button_frame.Text = 'confirm '..button_name..'? '..tostring(i)
-                                    button_frame.TextColor3 = library.theme["Accent"]
-                                    wait(1)
-                                end
-                                clicked = false
-                                counting = false
-                                button_frame.TextColor3 = library.theme["Text"]
-                                button_frame.Text = button_name
-                            end
-                        else
-                            callback()
-                        end
-                    end)
-                end)
+            
                 
                 button_frame.MouseButton1Down:Connect(function()
                     button_frame.BackgroundColor3 = library.theme["Accent"]
@@ -2646,17 +2547,7 @@ function library:new_window(cfg)
                     end
                 end)
                 
-                frame.TouchTap:Connect(function()
-                    if not binding then
-                        keytext.Text = "..."
-                        binding = utility.connect(services.InputService.InputBegan, function(input, gpe)
-                            set(input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode or input.UserInputType)
-                            utility.disconnect(binding)
-                            task.wait()
-                            binding = nil
-                        end)
-                    end
-                end)
+            
                 
                 utility.connect(services.InputService.InputEnded, function(inp)
                     if key_mode == "Hold" then
