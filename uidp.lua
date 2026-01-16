@@ -3230,7 +3230,7 @@ local function createESPTab()
         esp.refresh_elements()
     end})
     
-    local ESPBoxSection = ESPTab:Section({Name = "Box Settings", Side = 2})
+    local ESPBoxSection = VisualsTab:Section({Name = "Box Settings", Side = 2})
     ESPBoxSection:Dropdown({Name = "Box Type", Flag = "esp_boxtype", Items = {"Normal", "Corner"}, Default = "Normal", Callback = function(value) 
         flags["Box_Type"] = value
         esp.refresh_elements()
