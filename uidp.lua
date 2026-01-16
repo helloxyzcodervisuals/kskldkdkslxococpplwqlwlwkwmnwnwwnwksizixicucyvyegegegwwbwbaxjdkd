@@ -1,11 +1,11 @@
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/i77lhm/Libraries/refs/heads/main/Thugsense/Library.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/ragedu.lua"))()
 
 local Window = Library:Window({
-    Name = "skcc.lua",
+    Name = "gamesense.cc",
     FadeSpeed = 0.25
 })
 
-local Watermark = Library:Watermark("skcc.lua ~ ".. os.date("%b %d %Y"))
+local Watermark = Library:Watermark("gamesense.cc ~ ".. os.date("%b %d %Y"))
 local KeybindList = Library:KeybindList()
 
 Watermark:SetVisibility(false)
