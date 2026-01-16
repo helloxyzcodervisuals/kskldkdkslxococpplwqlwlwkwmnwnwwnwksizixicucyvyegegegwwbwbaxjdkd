@@ -2538,7 +2538,11 @@ local rgbseq = ColorSequence.new
 local rgbkey = ColorSequenceKeypoint.new
 local numseq = NumberSequence.new
 local numkey = NumberSequenceKeypoint.new
-
+local colors = {
+    normal = rgb(255, 255, 255),
+    whitelist = rgb(0, 255, 0), 
+    targetlist = rgb(255, 0, 0)
+}
 local camera = workspace.CurrentCamera
 
 local bones = {
@@ -2615,7 +2619,10 @@ local flags = {
     ["MaxDistance"] = 1000;
     ["ShowFriendIndicator"] = true
 }
-
+getgenv().Lists = {
+    TargetList = {},
+    Whitelist = {}
+}
 local function isInWhitelist(player)
     if not getgenv().Lists or not getgenv().Lists.Whitelist then return false end
     if not flags["UseWhitelist"] then return false end
@@ -2638,6 +2645,7 @@ local function isInTargetList(player)
     return false
 end
 
+
 local function isFriend(player)
     if flags["FriendCheck"] and localPlayer:IsFriendsWith(player.UserId) then
         return true
@@ -2647,7 +2655,6 @@ local function isFriend(player)
     end
     return false
 end
-
 local function getPlayerColor(player)
     if flags["UseTargetList"] and isInTargetList(player) then
         return rgb(255, 0, 0)
@@ -2655,6 +2662,34 @@ local function getPlayerColor(player)
         return rgb(0, 255, 0)
     else
         return rgb(255, 255, 255)
+    end
+end
+
+local function get_color_for_player(player)
+    if Lists.Whitelist and table.find(Lists.Whitelist, player.Name) then
+        return colors.whitelist
+    elseif Lists.TargetList and table.find(Lists.TargetList, player.Name) then
+        return colors.targetlist
+    end
+    return colors.normal
+end
+
+local function add_to_targetlist(player_name)
+    if not table.find(Lists.TargetList, player_name) then
+        table.insert(Lists.TargetList, player_name)
+    end
+end
+
+local function remove_from_targetlist(player_name)
+    local index = table.find(Lists.TargetList, player_name)
+    if index then
+        table.remove(Lists.TargetList, index)
+    end
+end
+
+local function add_to_whitelist(player_name)
+    if not table.find(Lists.Whitelist, player_name) then
+        table.insert(Lists.Whitelist, player_name)
     end
 end
 
