@@ -1097,7 +1097,7 @@ end
 local function disableInfStamina()
     if getgenv().CONFIG.Misc.InfStaminaHook then getgenv().CONFIG.Misc.InfStaminaHook = nil end
 end
-
+--[[
 local function getHealthColor(health, maxHealth)
     local percent = health / maxHealth
     if percent > 0.5 then
@@ -1242,7 +1242,7 @@ for _, player in pairs(Players:GetPlayers()) do
 end
 
 Players.PlayerAdded:Connect(function(player)
-    makeVisualize(player)
+    makeVisualize(player)y
 end)
 
 Players.PlayerRemoving:Connect(function(player)
@@ -1258,7 +1258,7 @@ Players.PlayerRemoving:Connect(function(player)
         VisualizeObjects[player] = nil
     end
 end)
-
+--]]
 local function applyForcefieldToBodyParts()
     if LocalPlayer and LocalPlayer.Character then
         local char = LocalPlayer.Character
@@ -2009,7 +2009,8 @@ function SafeESP:Enable(value)
         SafeESP.Visuals = {}
     end
 end
-
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game:GetService("CoreGui")
 local QuickUIFrame = Instance.new("Frame")
 QuickUIFrame.Name = "QuickUIFrame"
 QuickUIFrame.Size = UDim2.new(0, 80, 0, 30)
@@ -2017,7 +2018,7 @@ QuickUIFrame.Position = UDim2.new(0, 10, 0, 50)
 QuickUIFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 QuickUIFrame.BackgroundTransparency = 0.5
 QuickUIFrame.BorderSizePixel = 0
-
+QuickUIFrame.Parent = ScreenGui
 local QuickUIText = Instance.new("TextButton")
 QuickUIText.Name = "QuickUIText"
 QuickUIText.Size = UDim2.new(1, 0, 1, 0)
@@ -2414,6 +2415,7 @@ SafeColorLabel:Colorpicker({Name = "Safe Color", Default = Color3.fromRGB(255, 2
 end})
 
 local ESPSettingsSection = VisualsTab:Section({Name = "ESP Settings", Side = 1})
+--[[
 ESPSettingsSection:Toggle({Name = "Enable ESP", Flag = "esp_enabled", Default = false, Callback = function(value) 
     ESP_CONFIG.Enabled = value
 end})
@@ -2511,7 +2513,708 @@ local FriendcheckLabel = OptionsSection:Label({Name = "Friendcheck Color", Align
 FriendcheckLabel:Colorpicker({Name = "Friendcheck Color", Flag = "friendcheck_color", Default = Color3.fromRGB(0, 255, 0), Callback = function(value) ESP_CONFIG.Options.FriendcheckRGB = value end})
 local HighlightLabel = OptionsSection:Label({Name = "Highlight Color", Alignment = "Left"})
 HighlightLabel:Colorpicker({Name = "Highlight Color", Flag = "highlight_color", Default = Color3.fromRGB(255, 0, 0), Callback = function(value) ESP_CONFIG.Options.HighlightRGB = value end})
+--]]
+local workspace = cloneref(game:GetService("Workspace"))
+local run = cloneref(game:GetService("RunService"))
+local http_service = cloneref(game:GetService("HttpService"))
+local players = cloneref(game:GetService("Players"))
 
+local vec2 = Vector2.new
+local vec3 = Vector3.new
+local dim2 = UDim2.new
+local dim = UDim.new 
+local rect = Rect.new
+local cfr = CFrame.new
+local empty_cfr = cfr()
+local point_object_space = empty_cfr.PointToObjectSpace
+local angle = CFrame.Angles
+local dim_offset = UDim2.fromOffset
+
+local color = Color3.new
+local rgb = Color3.fromRGB
+local hex = Color3.fromHex
+local hsv = Color3.fromHSV
+local rgbseq = ColorSequence.new
+local rgbkey = ColorSequenceKeypoint.new
+local numseq = NumberSequence.new
+local numkey = NumberSequenceKeypoint.new
+
+local camera = workspace.CurrentCamera
+
+local bones = {
+    {"Head", "UpperTorso"},
+    {"UpperTorso", "LowerTorso"},
+    {"UpperTorso", "LeftUpperArm"},
+    {"UpperTorso", "RightUpperArm"},
+    {"LeftUpperArm", "LeftLowerArm"},
+    {"RightUpperArm", "RightLowerArm"},
+    {"LowerTorso", "LeftUpperLeg"},
+    {"LowerTorso", "RightUpperLeg"},
+    {"LeftUpperLeg", "LeftLowerLeg"},
+    {"RightUpperLeg", "RightLowerLeg"},
+}
+
+local fonts = {}; do
+    function Register_Font(Name, Weight, Style, Asset)
+        if not isfile(Asset.Id) then
+            writefile(Asset.Id, Asset.Font)
+        end
+
+        if isfile(Name .. ".font") then
+            delfile(Name .. ".font")
+        end
+
+        local Data = {
+            name = Name,
+            faces = {
+                {
+                    name = "Normal",
+                    weight = Weight,
+                    style = Style,
+                    assetId = getcustomasset(Asset.Id),
+                },
+            },
+        }
+        writefile(Name .. ".font", http_service:JSONEncode(Data))
+
+        return getcustomasset(Name .. ".font");
+    end
+    
+    local ProggyTiny = Register_Font("adwdawdwadadwadawdawdawdawd!", 100, "Normal", {
+        Id = "ProggyTinyyyy.ttf",
+        Font = game:HttpGet("https://github.com/i77lhm/storage/raw/refs/heads/main/fonts/ProggyTiny.ttf"),
+    })
+
+    fonts = {
+        main = Font.new(ProggyTiny, Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+    }
+end
+
+local localPlayer = players.LocalPlayer
+
+local flags = {
+    ["Enabled"] = true;
+    ["Names"] = true; 
+    ["Name_Color"] = { Color = rgb(255, 255, 255) };
+    ["Boxes"] = true;
+    ["Box_Type"] = "Normal";
+    ["Box_Color"] = { Color = rgb(255, 255, 255) };
+    ["Healthbar"] = true; 
+    ["Health_High"] = { Color = rgb(0, 255, 0) };
+    ["Health_Low"] = { Color = rgb(255, 0, 0) };
+    ["Distance"] = true;
+    ["Weapon"] = true;
+    ["Skeletons"] = true;
+    ["Skeletons_Color"] = { Color = rgb(255, 255, 255) };
+    ["Distance_Color"] = { Color = rgb(255, 255, 255) };
+    ["Weapon_Color"] = { Color = rgb(255, 255, 255) };
+    ["TeamCheck"] = false;
+    ["FriendCheck"] = true;
+    ["UseWhitelist"] = true;
+    ["UseTargetList"] = true;
+    ["MaxDistance"] = 1000;
+    ["ShowFriendIndicator"] = true
+}
+
+local function isInWhitelist(player)
+    if not getgenv().Lists or not getgenv().Lists.Whitelist then return false end
+    if not flags["UseWhitelist"] then return false end
+    for _, name in ipairs(getgenv().Lists.Whitelist) do
+        if player.Name == name then
+            return true
+        end
+    end
+    return false
+end
+
+local function isInTargetList(player)
+    if not getgenv().Lists or not getgenv().Lists.TargetList then return false end
+    if not flags["UseTargetList"] then return false end
+    for _, name in ipairs(getgenv().Lists.TargetList) do
+        if player.Name == name then
+            return true
+        end
+    end
+    return false
+end
+
+local function isFriend(player)
+    if flags["FriendCheck"] and localPlayer:IsFriendsWith(player.UserId) then
+        return true
+    end
+    if flags["UseWhitelist"] and isInWhitelist(player) then
+        return true
+    end
+    return false
+end
+
+local function getPlayerColor(player)
+    if flags["UseTargetList"] and isInTargetList(player) then
+        return rgb(255, 0, 0)
+    elseif isFriend(player) then
+        return rgb(0, 255, 0)
+    else
+        return rgb(255, 255, 255)
+    end
+end
+
+local function getPlayerDisplayName(player)
+    local name = player.DisplayName or player.Name
+    if flags["ShowFriendIndicator"] and isFriend(player) and not isInTargetList(player) then
+        name = name .. " (F)"
+    end
+    return name
+end
+
+local esp = { players = {}, screengui = Instance.new("ScreenGui", gethui()), cache = Instance.new("ScreenGui", gethui()), connections = {}}; do 
+    esp.screengui.IgnoreGuiInset = true
+    esp.screengui.Name = "\0"
+    esp.cache.Enabled = false
+
+    function esp:get_screen_pos(world_position)
+        local viewport_size = camera.ViewportSize
+        local local_position = camera.CFrame:pointToObjectSpace(world_position) 
+        
+        local aspect_ratio = viewport_size.x / viewport_size.y
+        local half_height = -local_position.z * math.tan(math.rad(camera.FieldOfView / 2))
+        local half_width = aspect_ratio * half_height
+        
+        local far_plane_corner = Vector3.new(-half_width, half_height, local_position.z)
+        local relative_position = local_position - far_plane_corner
+    
+        local screen_x = relative_position.x / (half_width * 2)
+        local screen_y = -relative_position.y / (half_height * 2)
+    
+        local is_on_screen = -local_position.z > 0 and screen_x >= 0 and screen_x <= 1 and screen_y >= 0 and screen_y <= 1
+        
+        return Vector3.new(screen_x * viewport_size.x, screen_y * viewport_size.y, -local_position.z), is_on_screen
+    end
+
+    function esp:box_solve(torso)
+        if not torso then
+            return nil, nil, nil
+        end
+        
+        local ViewportTop = torso.Position + (torso.CFrame.UpVector * 1.8) + camera.CFrame.UpVector
+        local ViewportBottom = torso.Position - (torso.CFrame.UpVector * 2.5) - camera.CFrame.UpVector
+        local Distance = (torso.Position - camera.CFrame.p).Magnitude
+
+        local Top, TopIsRendered = esp:get_screen_pos(ViewportTop)
+        local Bottom, BottomIsRendered = esp:get_screen_pos(ViewportBottom)
+
+        local Width = math.max(math.floor(math.abs(Top.X - Bottom.X)), 3)
+        local Height = math.max(math.floor(math.max(math.abs(Bottom.Y - Top.Y), Width / 2)), 3)
+        local BoxSize = Vector2.new(math.floor(math.max(Height / 1.5, Width)), Height)
+        local BoxPosition = Vector2.new(math.floor(Top.X * 0.5 + Bottom.X * 0.5 - BoxSize.X * 0.5), math.floor(math.min(Top.Y, Bottom.Y)))
+        
+        return BoxSize, BoxPosition, TopIsRendered, Distance
+    end
+
+    function esp:create(instance, options)
+        local ins = Instance.new(instance) 
+        
+        for prop, value in options do 
+            ins[prop] = value
+        end
+        
+        return ins 
+    end
+
+    function esp:create_object(player)
+        if player == localPlayer then return end
+        
+        if flags["TeamCheck"] and player.Team and localPlayer.Team and player.Team == localPlayer.Team then
+            return
+        end
+        
+        local character = player.Character
+        if not character then return end
+        
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not humanoid then return end
+        
+        esp[player.Name] = { 
+            objects = { }, 
+            info = {
+                character = character; 
+                humanoid = humanoid;
+                rootpart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso")
+            }; 
+            drawings = { }
+        } 
+        
+        local data = esp[player.Name] 
+        local playerColor = getPlayerColor(player)
+
+        local objects = data.objects
+        objects[ "holder" ] = esp:create( "Frame" , {
+            Parent = esp.screengui;
+            Name = "\0";
+            BackgroundTransparency = 1;
+            Position = dim2(0, 0, 0, 0);
+            BorderColor3 = rgb(0, 0, 0);
+            Size = dim2(0, 0, 0, 0);
+            BorderSizePixel = 0;
+            BackgroundColor3 = rgb(255, 255, 255)
+        });
+        
+        objects[ "name" ] = esp:create( "TextLabel" , {
+            FontFace = fonts.main;
+            Parent = objects[ "holder" ];
+            TextColor3 = playerColor;
+            BorderColor3 = rgb(0, 0, 0);
+            Text = getPlayerDisplayName(player);
+            Name = "\0";
+            TextStrokeTransparency = 0;
+            AnchorPoint = vec2(0, 1);
+            Size = dim2(1, 0, 0, 0);
+            BackgroundTransparency = 1;
+            Position = dim2(0, 0, 0, -5);
+            BorderSizePixel = 0;
+            AutomaticSize = Enum.AutomaticSize.Y;
+            TextSize = 9;
+        });
+        
+        objects[ "box_outline" ] = esp:create( "UIStroke" , {
+            Parent = objects["holder"];
+            LineJoinMode = Enum.LineJoinMode.Miter
+        });
+        
+        objects[ "box_handler" ] = esp:create( "Frame" , {
+            Parent = objects["holder"];
+            Name = "\0";
+            BackgroundTransparency = 1;
+            Position = dim2(0, 1, 0, 1);
+            BorderColor3 = rgb(0, 0, 0);
+            Size = dim2(1, -2, 1, -2);
+            BorderSizePixel = 0;
+            BackgroundColor3 = rgb(255, 255, 255)
+        });
+        
+        objects[ "box_color" ] = esp:create( "UIStroke" , {
+            Color = playerColor;
+            LineJoinMode = Enum.LineJoinMode.Miter;
+            Name = "\0";
+            Parent = objects[ "box_handler" ]
+        });
+        
+        objects[ "outline" ] = esp:create( "Frame" , {
+            Parent = objects[ "box_handler" ];
+            Name = "\0";
+            BackgroundTransparency = 1;
+            Position = dim2(0, 1, 0, 1);
+            BorderColor3 = rgb(0, 0, 0);
+            Size = dim2(1, -2, 1, -2);
+            BorderSizePixel = 0;
+            BackgroundColor3 = rgb(255, 255, 255)
+        });
+        
+        esp:create( "UIStroke" , {
+            Parent = objects[ "outline" ];
+            LineJoinMode = Enum.LineJoinMode.Miter
+        });  
+        
+        objects[ "healthbar_holder" ] = esp:create( "Frame" , {
+            AnchorPoint = vec2(1, 0);
+            Parent = objects[ "holder" ];
+            Name = "\0";
+            Position = dim2(0, -5, 0, -1);
+            BorderColor3 = rgb(0, 0, 0);
+            Size = dim2(0, 4, 1, 2);
+            BorderSizePixel = 0;
+            BackgroundColor3 = rgb(0, 0, 0)
+        });
+        
+        objects[ "healthbar" ] = esp:create( "Frame" , {
+            Parent = objects[ "healthbar_holder" ];
+            Name = "\0";
+            Position = dim2(0, 1, 0, 1);
+            BorderColor3 = rgb(0, 0, 0);
+            Size = dim2(1, -2, 1, -2);
+            BorderSizePixel = 0;
+            BackgroundColor3 = playerColor
+        });
+        
+        objects[ "distance" ] = esp:create( "TextLabel" , {
+            FontFace = fonts.main;
+            TextColor3 = playerColor;
+            BorderColor3 = rgb(0, 0, 0);
+            Text = "0st";
+            Parent = objects[ "holder" ];
+            TextStrokeTransparency = 0;
+            Name = "\0";
+            Size = dim2(1, 0, 0, 0);
+            BackgroundTransparency = 1;
+            Position = dim2(0, 0, 1, 5);
+            BorderSizePixel = 0;
+            AutomaticSize = Enum.AutomaticSize.Y;
+            TextSize = 9;
+        });                
+        
+        objects[ "weapon" ] = esp:create( "TextLabel" , {
+            FontFace = fonts.main;
+            TextColor3 = playerColor;
+            BorderColor3 = rgb(0, 0, 0);
+            Text = "";
+            Parent = objects[ "holder" ];
+            TextStrokeTransparency = 0;
+            Name = "\0";
+            Size = dim2(1, 0, 0, 0);
+            BackgroundTransparency = 1;
+            Position = dim2(0, 0, 1, 19);
+            BorderSizePixel = 0;
+            AutomaticSize = Enum.AutomaticSize.Y;
+            TextSize = 9;
+        });
+        
+        for _, bone in bones do
+            local line = Drawing.new("Line")
+            line.Color = playerColor;
+            line.Thickness = 1;
+            line.Visible = false;
+
+            data.drawings[#data.drawings + 1] = line;
+        end
+        
+        data.health_changed = function( value )
+            if not flags[ "Healthbar" ] then 
+                return 
+            end
+
+            local humanoid = data.info.humanoid
+            
+            local multiplier = value / humanoid.MaxHealth
+            local color = flags[ "Health_Low" ].Color:Lerp( flags["Health_High"].Color, multiplier )
+            
+            objects[ "healthbar" ].Size = UDim2.new(1, -2, multiplier, -2)
+            objects[ "healthbar" ].Position = UDim2.new(0, 1, 1 - multiplier, 1)
+            objects[ "healthbar" ].BackgroundColor3 = color
+        end
+
+        data.tool_added = function( item )
+            if not item:IsA("Tool") then 
+                return 
+            end 
+
+            objects[ "weapon" ].Text = "[" .. item.Name .. "]"
+        end
+
+        data.refresh_offsets = function()
+            local offset = 5; 
+
+            if objects["distance"].Parent == objects[ "holder" ] then 
+                offset += 5
+                objects[ "weapon" ].Position = dim2(0, 0, 1, offset)
+            end 
+        end 
+
+        data.refresh_descendants = function() 
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:WaitForChild( "Humanoid" )
+            
+            data.info.character = character
+            data.info.humanoid = humanoid
+            data.info.rootpart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso")
+
+            humanoid.HealthChanged:Connect( data.health_changed )
+
+            character.ChildAdded:Connect( data.tool_added )
+            character.ChildRemoved:Connect( function(child)
+                if child:IsA("Tool") then
+                    objects[ "weapon" ].Text = ""
+                end
+            end )
+
+            data.health_changed( data.info.humanoid.Health )
+        end
+        
+        data.refresh_descendants()
+
+        player.CharacterAdded:Connect( data.refresh_descendants )
+
+        local tool = player.Character:FindFirstChildOfClass("Tool")
+        if tool then
+            data.tool_added( tool )
+        end 
+    end
+
+    function esp:remove_object(player)
+        local holder = esp[player.Name]
+
+        if not holder then return end 
+
+        local objects = holder.objects
+ 
+        for _, line in holder.drawings do 
+            line:Remove()
+        end
+        
+        objects[ "holder" ]:Destroy() 
+        esp[player.Name] = nil
+    end
+    
+    function esp.refresh_elements()
+        for _,v in players:GetPlayers() do 
+            if v == players.LocalPlayer then 
+                continue
+            end
+            
+            if not v.Character then 
+                continue 
+            end 
+
+            local path = esp[v.Name]
+            local objects = path and path.objects
+            
+            if not objects then 
+                continue 
+            end
+            
+            local playerColor = getPlayerColor(v)
+            
+            objects.holder.Parent = flags["Enabled"] and esp.screengui or esp.cache
+
+            objects[ "name" ].Parent = flags["Names"] and objects["holder"] or esp.cache
+            objects[ "name" ].TextColor3 = playerColor
+            objects[ "name" ].Text = getPlayerDisplayName(v)
+            
+            objects[ "box_color" ].Color = playerColor 
+
+            for _, line in path.drawings do
+                line.Color = playerColor
+                line.Visible = flags["Skeletons"]
+            end
+
+            objects[ "healthbar_holder" ].Parent = flags[ "Healthbar" ] and objects[ "holder" ] or esp.cache
+            objects[ "weapon" ].Parent = flags["Weapon"] and objects[ "holder" ] or esp.cache
+
+            objects[ "distance" ].Parent = flags["Distance"] and objects[ "holder" ] or esp.cache
+        end
+    end
+
+    esp.connection = run.RenderStepped:Connect(function()
+        if not flags["Enabled"] then 
+            return
+        end
+
+        for _, player in players:GetPlayers() do 
+            local data = esp[player.Name]
+
+            if not data then 
+                continue 
+            end 
+
+            local character = data.info.character
+            local humanoid = data.info.humanoid 
+            
+            if not (character or humanoid) then 
+                continue 
+            end 
+
+            local objects = data and data.objects 
+
+            if not objects then 
+                continue 
+            end 
+
+            local rootPart = data.info.rootpart
+            if not rootPart then continue end
+
+            local box_size, box_pos, on_screen, distance = esp:box_solve(rootPart)
+            local holder = objects[ "holder" ]
+
+            if not on_screen or distance > flags["MaxDistance"] then
+                holder.Visible = false
+                continue
+            end
+
+            if holder.Visible ~= true then 
+                holder.Visible = true
+            end 
+
+            if flags["Skeletons"] and character:FindFirstChild("UpperTorso") then 
+                for i = 1, #bones do
+                    local origin, destination = bones[i][1], bones[i][2]
+
+                    if not data.drawings[i] then 
+                        continue  
+                    end 
+
+                    local path = data.drawings[i]
+
+                    local origin_3d = character:FindFirstChild(origin) 
+                    local destination_3d = character:FindFirstChild(destination) 
+
+                    if origin_3d and destination_3d then 
+                        local origin_2d, on_screen_start = esp:get_screen_pos(origin_3d.Position)
+                        local destination_2d, on_screen_end = esp:get_screen_pos(destination_3d.Position)
+                        
+                        if on_screen_start and on_screen_end then 
+                            path.Visible = true
+                            path.From = Vector2.new(origin_2d.X, origin_2d.Y)
+                            path.To = Vector2.new(destination_2d.X, destination_2d.Y)
+                        else
+                            path.Visible = false
+                        end 
+                    end
+                end 
+            end 
+            
+            local pos = dim_offset(box_pos.X, box_pos.Y)
+            if pos ~= holder.Position then 
+                holder.Position = pos
+            end 
+
+            local size = dim_offset(box_size.X, box_size.Y)
+            if size ~= holder.Size then 
+                holder.Size = size
+            end 
+
+            local distance_label = objects[ "distance" ]
+            if distance_label.Text ~= tostring( math.round(distance) )  .. "st" then 
+                distance_label.Text = tostring( math.round(distance) ) .. "st"
+            end 
+        end
+    end)
+end
+
+for _,v in players:GetPlayers() do 
+    if v ~= players.LocalPlayer then 
+        esp:create_object(v)
+    end 
+end 
+
+esp.player_added = players.PlayerAdded:Connect(function(v)
+    esp:create_object(v)
+end)
+
+esp.player_removed = players.PlayerRemoving:Connect(function(v)
+    esp:remove_object(v)
+end)
+
+task.wait()
+esp.refresh_elements()
+
+local function createESPTab()
+    ESPSettingsSection:Toggle({Name = "Enabled", Flag = "esp_enabled", Default = flags["Enabled"], Callback = function(value) 
+        flags["Enabled"] = value
+        esp.refresh_elements()
+    end}):Keybind({Name = "Hotkey", Flag = "esp_hotkey", Default = Enum.KeyCode.Insert, Mode = "Toggle", Callback = function(value)
+        flags["Enabled"] = not flags["Enabled"]
+        esp.refresh_elements()
+    end})
+    
+    ESPSettingsSection:Toggle({Name = "Names", Flag = "esp_names", Default = flags["Names"], Callback = function(value) 
+        flags["Names"] = value
+        esp.refresh_elements()
+    end})
+    
+    ESPSettingsSection:Toggle({Name = "Boxes", Flag = "esp_boxes", Default = flags["Boxes"], Callback = function(value) 
+        flags["Boxes"] = value
+        esp.refresh_elements()
+    end})
+    
+    ESPSettingsSection:Toggle({Name = "Healthbar", Flag = "esp_healthbar", Default = flags["Healthbar"], Callback = function(value) 
+        flags["Healthbar"] = value
+        esp.refresh_elements()
+    end})
+    
+    ESPSettingsSection:Toggle({Name = "Distance", Flag = "esp_distance", Default = flags["Distance"], Callback = function(value) 
+        flags["Distance"] = value
+        esp.refresh_elements()
+    end})
+    
+    ESPSettingsSection:Toggle({Name = "Weapon", Flag = "esp_weapon", Default = flags["Weapon"], Callback = function(value) 
+        flags["Weapon"] = value
+        esp.refresh_elements()
+    end})
+    
+    ESPSettingsSection:Toggle({Name = "Skeletons", Flag = "esp_skeletons", Default = flags["Skeletons"], Callback = function(value) 
+        flags["Skeletons"] = value
+        esp.refresh_elements()
+    end})
+    --local ESPSettingsSection = VisualsTab:Section({Name = "ESP Settings", Side = 1})
+    local ESPFilterSection = VisualsTab:Section({Name = "Filters", Side = 2})
+    ESPFilterSection:Toggle({Name = "Team Check", Flag = "esp_teamcheck", Default = flags["TeamCheck"], Callback = function(value) 
+        flags["TeamCheck"] = value
+        esp.refresh_elements()
+    end})
+    
+    ESPFilterSection:Toggle({Name = "Friend Check", Flag = "esp_friendcheck", Default = flags["FriendCheck"], Callback = function(value) 
+        flags["FriendCheck"] = value
+        esp.refresh_elements()
+    end})
+    
+    ESPFilterSection:Toggle({Name = "Use Whitelist", Flag = "esp_usewhitelist", Default = flags["UseWhitelist"], Callback = function(value) 
+        flags["UseWhitelist"] = value
+        esp.refresh_elements()
+    end})
+    
+    ESPFilterSection:Toggle({Name = "Use TargetList", Flag = "esp_usetargetlist", Default = flags["UseTargetList"], Callback = function(value) 
+        flags["UseTargetList"] = value
+        esp.refresh_elements()
+    end})
+    
+    ESPFilterSection:Toggle({Name = "Show (F) Indicator", Flag = "esp_friendindicator", Default = flags["ShowFriendIndicator"], Callback = function(value) 
+        flags["ShowFriendIndicator"] = value
+        esp.refresh_elements()
+    end})
+    
+    ESPFilterSection:Slider({Name = "Max Distance", Flag = "esp_maxdistance", Min = 100, Max = 5000, Default = flags["MaxDistance"], Suffix = " studs", Callback = function(value) 
+        flags["MaxDistance"] = value
+    end})
+    
+    local ESPColorsSection = VisualsTab:Section({Name = "Colors", Side = 1})
+    local NormalColorLabel = ESPColorsSection:Label({Name = "Normal Color", Alignment = "Left"})
+    NormalColorLabel:Colorpicker({Name = "Normal Color", Flag = "esp_normalcolor", Default = rgb(255, 255, 255), Callback = function(value) 
+        colors.normal = value
+        esp.refresh_elements()
+    end})
+    
+    local WhitelistColorLabel = ESPColorsSection:Label({Name = "Whitelist Color", Alignment = "Left"})
+    WhitelistColorLabel:Colorpicker({Name = "Whitelist Color", Flag = "esp_whitelistcolor", Default = rgb(0, 255, 0), Callback = function(value) 
+        colors.whitelist = value
+        esp.refresh_elements()
+    end})
+    
+    local TargetlistColorLabel = ESPColorsSection:Label({Name = "TargetList Color", Alignment = "Left"})
+    TargetlistColorLabel:Colorpicker({Name = "TargetList Color", Flag = "esp_targetlistcolor", Default = rgb(255, 0, 0), Callback = function(value) 
+        colors.targetlist = value
+        esp.refresh_elements()
+    end})
+    
+    local HealthHighLabel = ESPColorsSection:Label({Name = "Health High", Alignment = "Left"})
+    HealthHighLabel:Colorpicker({Name = "Health High", Flag = "esp_healthhigh", Default = rgb(0, 255, 0), Callback = function(value) 
+        flags["Health_High"].Color = value
+        esp.refresh_elements()
+    end})
+    
+    local HealthLowLabel = ESPColorsSection:Label({Name = "Health Low", Alignment = "Left"})
+    HealthLowLabel:Colorpicker({Name = "Health Low", Flag = "esp_healthlow", Default = rgb(255, 0, 0), Callback = function(value) 
+        flags["Health_Low"].Color = value
+        esp.refresh_elements()
+    end})
+    
+    local ESPBoxSection = ESPTab:Section({Name = "Box Settings", Side = 2})
+    ESPBoxSection:Dropdown({Name = "Box Type", Flag = "esp_boxtype", Items = {"Normal", "Corner"}, Default = "Normal", Callback = function(value) 
+        flags["Box_Type"] = value
+        esp.refresh_elements()
+    end})
+    
+    local BoxColorLabel = ESPBoxSection:Label({Name = "Box Color", Alignment = "Left"})
+    BoxColorLabel:Colorpicker({Name = "Box Color", Flag = "esp_boxcolor", Default = rgb(255, 255, 255), Callback = function(value) 
+        flags["Box_Color"].Color = value
+        esp.refresh_elements()
+    end})
+    
+    local SkeletonColorLabel = ESPBoxSection:Label({Name = "Skeleton Color", Alignment = "Left"})
+    SkeletonColorLabel:Colorpicker({Name = "Skeleton Color", Flag = "esp_skeletoncolor", Default = rgb(255, 255, 255), Callback = function(value) 
+        flags["Skeletons_Color"].Color = value
+        esp.refresh_elements()
+    end})
+end
+
+createESPTab()
 local ForcefieldSection = VisualsTab:Section({Name = "Forcefield Material", Side = 1})
 ForcefieldSection:Toggle({Name = "Enable Forcefield", Flag = "visualize_forcefield_enabled", Default = false, Callback = function(value)
     getgenv().CONFIG.Visualize.LocalForcefieldEnabled = value
