@@ -767,6 +767,16 @@ local function wallbang()
         local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
         local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
         
+        local pathToGround1 = checkClearPath(startPos, fallbackShootPos)
+        local pathToGround2 = checkClearPath(fallbackShootPos, fallbackHitPos)
+        
+        if not pathToGround1 or not pathToGround2 then
+            cachedBestPositions.shootPos = nil
+            cachedBestPositions.hitPos = nil
+            cachedBestPositions.target = nil
+            return nil, nil
+        end
+        
         cachedBestPositions.shootPos = fallbackShootPos
         cachedBestPositions.hitPos = fallbackHitPos
         cachedBestPositions.target = target
