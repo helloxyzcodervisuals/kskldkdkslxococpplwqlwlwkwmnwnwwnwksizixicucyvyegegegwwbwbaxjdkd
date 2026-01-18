@@ -816,9 +816,6 @@ local cachedBestPositions = {
     target = nil
 }
 
-local cachedPoints = {}
-local maxCachedPoints = math.random(5, 10)
-
 local function wallbang()
     local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
     if not localHead then return nil end
@@ -828,7 +825,6 @@ local function wallbang()
         cachedBestPositions.shootPos = nil
         cachedBestPositions.hitPos = nil
         cachedBestPositions.target = nil
-        cachedPoints = {}
         return nil, nil
     end
     
@@ -857,7 +853,7 @@ local function wallbang()
         return startPos, targetPos
     end
     
-    if cachedBestPositions.target == target then
+    if cachedBestPositions.shootPos and cachedBestPositions.target == target then
         local cachedShootDistance = (cachedBestPositions.shootPos - startPos).Magnitude
         local cachedHitDistance = (cachedBestPositions.hitPos - targetPos).Magnitude
         
@@ -876,29 +872,6 @@ local function wallbang()
         end
         cachedBestPositions.shootPos = nil
         cachedBestPositions.hitPos = nil
-    end
-    
-    for i = 1, #cachedPoints do
-        local point = cachedPoints[i]
-        local shootDistance = (point.shootPos - startPos).Magnitude
-        local hitDistance = (point.hitPos - targetPos).Magnitude
-        
-        if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange and 
-           hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
-            
-            local pathToShoot = checkClearPath(startPos, point.shootPos)
-            local pathToTarget = checkClearPath(point.shootPos, point.hitPos)
-            
-            if pathToShoot and pathToTarget then
-                local shootToHitRay = Workspace:Raycast(point.shootPos, (point.hitPos - point.shootPos).Unit * (point.hitPos - point.shootPos).Magnitude, raycastParams)
-                if not shootToHitRay then
-                    cachedBestPositions.shootPos = point.shootPos
-                    cachedBestPositions.hitPos = point.hitPos
-                    cachedBestPositions.target = target
-                    return point.shootPos, point.hitPos
-                end
-            end
-        end
     end
     
     local bestShootPos = nil
@@ -936,13 +909,6 @@ local function wallbang()
                         bestScore = totalScore
                         bestShootPos = shootPos
                         bestHitPos = hitPos
-                        
-                        if #cachedPoints < maxCachedPoints then
-                            table.insert(cachedPoints, {
-                                shootPos = shootPos,
-                                hitPos = hitPos
-                            })
-                        end
                     end
                 end
             end
@@ -967,6 +933,7 @@ local function wallbang()
     
     return bestShootPos, bestHitPos
 end
+
 local function createTracer(startPos, endPos)
     if not getgenv().CONFIG.Ragebot.Tracers then return end
     
@@ -1206,54 +1173,83 @@ local function getCurrentTool()
     return nil
 end
 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local char = nil
+local head = nil
+local torso = nil
+local animTrack = nil
+local originalNamecall = nil
+local runserviceConnection = nil
+
 local function hideHeadFE()
     if not game.Players.LocalPlayer.Character then return end
     
-    local char = game.Players.LocalPlayer.Character
-    local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    char = game.Players.LocalPlayer.Character
+    local humanoid = char:WaitForChild("Humanoid")
+    torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    head = char:FindFirstChild("Head")
     
-    if not torso then return end
+    if not torso or not head then return end
     
-    local tool = getCurrentTool()
-    if not tool then return end
+    local animator = humanoid:WaitForChild("Animator")
     
-    local values = tool:FindFirstChild("Values")
-    if not values then return end
+    local animationId = 68339848
+    local animation = Instance.new("Animation")
+    animation.AnimationId = "rbxassetid://" .. animationId
     
-    local ammo = values:FindFirstChild("SERVER_Ammo")
-    local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo")
-    if not ammo or not storedAmmo then return end
+    animTrack = animator:LoadAnimation(animation)
+    animTrack:Play()
+    animTrack:AdjustSpeed(0)
+    animTrack.TimePosition = 0
     
-    originalMotors = {}
-    for _, motor in pairs(torso:GetChildren()) do
-        if motor:IsA("Motor6D") then
-            originalMotors[motor] = {
-                C0 = motor.C0,
-                C1 = motor.C1
-            }
-        end
-    end
+    local neck = Instance.new("Motor6D")
+    neck.Name = "Neck"
+    neck.Part0 = torso
+    neck.Part1 = head
+    neck.C0 = CFrame.new(0, 0, 0)
+    neck.C1 = CFrame.new(0, 0, 0)
+    neck.Parent = head
     
-    toolTransparencies = {}
-    for _, part in pairs(tool:GetDescendants()) do
-        if part:IsA("BasePart") then
-            toolTransparencies[part] = part.Transparency
-            part.Transparency = 1
-        end
+    neck.C0 = neck.C0 * CFrame.new(0, -1.5, 2.5)
+    
+    if hookmetamethod then
+        local originalHook
+        originalHook = hookmetamethod(game, "__namecall", function(self, ...)
+            local methodName = getnamecallmethod()
+            
+            if tostring(methodName) == "FireServer" then
+                if self.Name == "MOVZREP" then
+                    local fixedArguments = {
+                        {
+                            {
+                                Vector3.new(-5721.2001953125, 9834.1708984375, 971.5162353515625),
+                                Vector3.new(-4181.38818359375, 0.3198874592781067, 11.123311996459961),
+                                Vector3.new(0.006237113382667303, 0.9833956360816956, -0.18136750161647797),
+                                true,
+                                true,
+                                true,
+                                false
+                            },
+                            false,
+                            false,
+                            15.8
+                        }
+                    }
+                    
+                    return originalHook(self, table.unpack(fixedArguments))
+                end
+            end
+            
+            return originalHook(self, ...)
+        end)
+        originalNamecall = originalHook
     end
     
     if runserviceConnection then
         runserviceConnection:Disconnect()
     end
-    
-    runserviceConnection = game:GetService("RunService").RenderStepped:Connect(function()
-        for motor, original in pairs(originalMotors) do
-            if motor and motor.Parent then
-                motor.C0 = original.C0
-                motor.C1 = original.C1
-            end
-        end
-    end)
 end
 
 local function showHeadFE()
@@ -1262,14 +1258,33 @@ local function showHeadFE()
         runserviceConnection = nil
     end
     
-    for part, transparency in pairs(toolTransparencies) do
-        if part and part.Parent then
-            part.Transparency = transparency
+    if char and head and torso then
+        local neck = head:FindFirstChild("Neck")
+        if neck then
+            neck:Destroy()
+            local newNeck = Instance.new("Motor6D")
+            newNeck.Name = "Neck"
+            newNeck.Part0 = torso
+            newNeck.Part1 = head
+            newNeck.C0 = CFrame.new(0, 1, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
+            newNeck.C1 = CFrame.new(0, -0.5, 0, -1, 0, 0, 0, 0, 1, 0, 1, -0)
+            newNeck.Parent = head
         end
     end
-    toolTransparencies = {}
     
-    originalMotors = {}
+    if animTrack then
+        animTrack:Stop()
+        animTrack = nil
+    end
+    
+    if hookmetamethod and originalNamecall then
+        hookmetamethod(game, "__namecall", originalNamecall)
+        originalNamecall = nil
+    end
+    
+    char = nil
+    head = nil
+    torso = nil
 end
 
 local function enableNoFallDmg()
