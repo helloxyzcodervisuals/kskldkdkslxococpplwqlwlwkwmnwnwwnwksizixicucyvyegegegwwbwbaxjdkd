@@ -813,14 +813,11 @@ end
 local cachedBestPositions = {
     shootPos = nil,
     hitPos = nil,
-    target = nil,
-    shootOffset = nil,
-    hitOffset = nil
+    target = nil
 }
 
-local cachedShootPoints = {}
-local cachedHitPoints = {}
-local cacheCount = 0
+local cachedPoints = {}
+local maxCachedPoints = math.random(5, 10)
 
 local function wallbang()
     local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
@@ -831,11 +828,7 @@ local function wallbang()
         cachedBestPositions.shootPos = nil
         cachedBestPositions.hitPos = nil
         cachedBestPositions.target = nil
-        cachedBestPositions.shootOffset = nil
-        cachedBestPositions.hitOffset = nil
-        cachedShootPoints = {}
-        cachedHitPoints = {}
-        cacheCount = 0
+        cachedPoints = {}
         return nil, nil
     end
     
@@ -864,55 +857,45 @@ local function wallbang()
         return startPos, targetPos
     end
     
-    if cachedBestPositions.target == target and cachedBestPositions.shootOffset and cachedBestPositions.hitOffset then
-        local cachedShootPos = startPos + cachedBestPositions.shootOffset
-        local cachedHitPos = targetPos + cachedBestPositions.hitOffset
+    if cachedBestPositions.target == target then
+        local cachedShootDistance = (cachedBestPositions.shootPos - startPos).Magnitude
+        local cachedHitDistance = (cachedBestPositions.hitPos - targetPos).Magnitude
         
-        local shootDistance = (cachedShootPos - startPos).Magnitude
-        local hitDistance = (cachedHitPos - targetPos).Magnitude
-        
-        if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange and 
-           hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+        if cachedShootDistance <= getgenv().CONFIG.Ragebot.ShootRange and 
+           cachedHitDistance <= getgenv().CONFIG.Ragebot.HitRange then
             
-            local pathToShoot = checkClearPath(startPos, cachedShootPos)
-            local pathToTarget = checkClearPath(cachedShootPos, cachedHitPos)
+            local pathToShoot = checkClearPath(startPos, cachedBestPositions.shootPos)
+            local pathToTarget = checkClearPath(cachedBestPositions.shootPos, cachedBestPositions.hitPos)
             
             if pathToShoot and pathToTarget then
-                local shootToHitRay = Workspace:Raycast(cachedShootPos, (cachedHitPos - cachedShootPos).Unit * (cachedHitPos - cachedShootPos).Magnitude, raycastParams)
+                local shootToHitRay = Workspace:Raycast(cachedBestPositions.shootPos, (cachedBestPositions.hitPos - cachedBestPositions.shootPos).Unit * (cachedBestPositions.hitPos - cachedBestPositions.shootPos).Magnitude, raycastParams)
                 if not shootToHitRay then
-                    cachedBestPositions.shootPos = cachedShootPos
-                    cachedBestPositions.hitPos = cachedHitPos
-                    return cachedShootPos, cachedHitPos
+                    return cachedBestPositions.shootPos, cachedBestPositions.hitPos
                 end
             end
         end
-        cachedBestPositions.shootOffset = nil
-        cachedBestPositions.hitOffset = nil
+        cachedBestPositions.shootPos = nil
+        cachedBestPositions.hitPos = nil
     end
     
-    if cacheCount > 0 then
-        local randomCacheIndex = math.random(1, cacheCount)
-        local cachedShootPos = cachedShootPoints[randomCacheIndex]
-        local cachedHitPos = cachedHitPoints[randomCacheIndex]
-        
-        local shootDistance = (cachedShootPos - startPos).Magnitude
-        local hitDistance = (cachedHitPos - targetPos).Magnitude
+    for i = 1, #cachedPoints do
+        local point = cachedPoints[i]
+        local shootDistance = (point.shootPos - startPos).Magnitude
+        local hitDistance = (point.hitPos - targetPos).Magnitude
         
         if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange and 
            hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
             
-            local pathToShoot = checkClearPath(startPos, cachedShootPos)
-            local pathToTarget = checkClearPath(cachedShootPos, cachedHitPos)
+            local pathToShoot = checkClearPath(startPos, point.shootPos)
+            local pathToTarget = checkClearPath(point.shootPos, point.hitPos)
             
             if pathToShoot and pathToTarget then
-                local shootToHitRay = Workspace:Raycast(cachedShootPos, (cachedHitPos - cachedShootPos).Unit * (cachedHitPos - cachedShootPos).Magnitude, raycastParams)
+                local shootToHitRay = Workspace:Raycast(point.shootPos, (point.hitPos - point.shootPos).Unit * (point.hitPos - point.shootPos).Magnitude, raycastParams)
                 if not shootToHitRay then
-                    cachedBestPositions.shootPos = cachedShootPos
-                    cachedBestPositions.hitPos = cachedHitPos
+                    cachedBestPositions.shootPos = point.shootPos
+                    cachedBestPositions.hitPos = point.hitPos
                     cachedBestPositions.target = target
-                    cachedBestPositions.shootOffset = cachedShootPos - startPos
-                    cachedBestPositions.hitOffset = cachedHitPos - targetPos
-                    return cachedShootPos, cachedHitPos
+                    return point.shootPos, point.hitPos
                 end
             end
         end
@@ -954,10 +937,11 @@ local function wallbang()
                         bestShootPos = shootPos
                         bestHitPos = hitPos
                         
-                        if cacheCount < math.random(5, 10) then
-                            table.insert(cachedShootPoints, shootPos)
-                            table.insert(cachedHitPoints, hitPos)
-                            cacheCount = cacheCount + 1
+                        if #cachedPoints < maxCachedPoints then
+                            table.insert(cachedPoints, {
+                                shootPos = shootPos,
+                                hitPos = hitPos
+                            })
                         end
                     end
                 end
@@ -980,12 +964,9 @@ local function wallbang()
     cachedBestPositions.shootPos = bestShootPos
     cachedBestPositions.hitPos = bestHitPos
     cachedBestPositions.target = target
-    cachedBestPositions.shootOffset = bestShootPos - startPos
-    cachedBestPositions.hitOffset = bestHitPos - targetPos
     
     return bestShootPos, bestHitPos
 end
-
 local function createTracer(startPos, endPos)
     if not getgenv().CONFIG.Ragebot.Tracers then return end
     
