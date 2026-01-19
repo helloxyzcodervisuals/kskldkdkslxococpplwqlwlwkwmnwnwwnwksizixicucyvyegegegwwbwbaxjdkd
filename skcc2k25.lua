@@ -1172,7 +1172,169 @@ local function getCurrentTool()
     
     return nil
 end
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
+local char = nil
+local torso = nil
+local originalMotorData = {}
+local renderConnection = nil
+local tool = nil
+local originalCameraCFrame = nil
+local originalNamecall = nil
+
+local function hideHeadFE()
+    if not game.Players.LocalPlayer.Character then return end
+    
+    char = game.Players.LocalPlayer.Character
+    local humanoid = char:WaitForChild("Humanoid")
+    torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
+    
+    if not torso then return end
+    
+    originalCameraCFrame = workspace.CurrentCamera.CFrame
+    
+    local camera = workspace.CurrentCamera
+    local cameraPosition = camera.CFrame.Position
+    local lookUpCFrame = CFrame.new(cameraPosition, cameraPosition + Vector3.new(0, 1, 0))
+    camera.CFrame = lookUpCFrame
+    
+    local backpack = game.Players.LocalPlayer:FindFirstChild("Backpack")
+    tool = char:FindFirstChildWhichIsA("Tool")
+    
+    local validTools = {}
+    
+    if not tool and backpack then
+        for _, child in pairs(backpack:GetChildren()) do
+            if child:IsA("Tool") then
+                local values = child:FindFirstChild("Values")
+                if values then
+                    local ammo = values:FindFirstChild("SERVER_Ammo")
+                    local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo")
+                    
+                    if ammo and storedAmmo then
+                        table.insert(validTools, child)
+                    end
+                end
+            end
+        end
+        
+        if #validTools > 0 then
+            local randomIndex = math.random(1, #validTools)
+            tool = validTools[randomIndex]
+            tool.Parent = char
+        end
+    elseif tool then
+        local values = tool:FindFirstChild("Values")
+        if values then
+            local ammo = values:FindFirstChild("SERVER_Ammo")
+            local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo")
+            
+            if not (ammo and storedAmmo) then
+                tool = nil
+            end
+        end
+    end
+    
+    originalMotorData = {}
+    
+    for _, descendant in pairs(torso:GetDescendants()) do
+        if descendant:IsA("Motor6D") then
+            originalMotorData[descendant] = {
+                C0 = descendant.C0,
+                C1 = descendant.C1
+            }
+        end
+    end
+    camera.CFrame = originalCameraCFrame
+    if hookmetamethod then
+        local originalHook
+        originalHook = hookmetamethod(game, "__namecall", function(self, ...)
+            local methodName = getnamecallmethod()
+            
+            if tostring(methodName) == "FireServer" then
+                if self.Name == "MOVZREP" then
+                    local fixedArguments = {
+                        {
+                            {
+                                Vector3.new(-5721.2001953125, 9834.1708984375, 971.5162353515625),
+                                Vector3.new(-4181.38818359375, 0.3198874592781067, 11.123311996459961),
+                                Vector3.new(0.006237113382667303, 0.9833956360816956, -0.18136750161647797),
+                                true,
+                                true,
+                                true,
+                                false
+                            },
+                            false,
+                            false,
+                            15.8
+                        }
+                    }
+                    
+                    return originalHook(self, table.unpack(fixedArguments))
+                end
+            end
+            
+            return originalHook(self, ...)
+        end)
+        originalNamecall = originalHook
+    end
+    
+    if renderConnection then
+        renderConnection:Disconnect()
+    end
+    
+    renderConnection = RunService.RenderStepped:Connect(function()
+        if torso and torso.Parent then
+            for motor, data in pairs(originalMotorData) do
+                if motor and motor.Parent then
+                    motor.C0 = data.C0
+                    motor.C1 = data.C1
+                end
+            end
+        else
+            if renderConnection then
+                renderConnection:Disconnect()
+                renderConnection = nil
+            end
+        end
+    end)
+end
+
+local function showHeadFE()
+    if renderConnection then
+        renderConnection:Disconnect()
+        renderConnection = nil
+    end
+    
+    if hookmetamethod and originalNamecall then
+        hookmetamethod(game, "__namecall", originalNamecall)
+        originalNamecall = nil
+    end
+    
+    local camera = workspace.CurrentCamera
+    if originalCameraCFrame then
+        camera.CFrame = originalCameraCFrame
+        originalCameraCFrame = nil
+    end
+    
+    if char and tool and tool.Parent == char then
+        tool.Parent = game.Players.LocalPlayer.Backpack
+    end
+    
+    for motor, data in pairs(originalMotorData) do
+        if motor and motor.Parent then
+            motor.C0 = data.C0
+            motor.C1 = data.C1
+        end
+    end
+    
+    originalMotorData = {}
+    char = nil
+    torso = nil
+    tool = nil
+end
+--[[
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
@@ -1286,7 +1448,7 @@ local function showHeadFE()
     head = nil
     torso = nil
 end
-
+--]]
 local function enableNoFallDmg()
     if getgenv().CONFIG.Misc.NoFallHook then getgenv().CONFIG.Misc.NoFallHook = nil end
     getgenv().CONFIG.Misc.NoFallHook = hookmetamethod(game, "__namecall", function(self, ...)
