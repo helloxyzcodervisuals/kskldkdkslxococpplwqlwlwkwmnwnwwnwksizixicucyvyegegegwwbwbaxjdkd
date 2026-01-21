@@ -1419,6 +1419,121 @@ local function showHeadFE()
     torso = nil
 end
 --]]
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local char = nil
+local torso = nil
+local originalNeckData = nil
+local renderConnection = nil
+local tool = nil
+local originalCameraCFrame = nil
+local originalNamecall = nil
+local hookEnabled = false
+
+local function hideHeadFE()
+    if not game.Players.LocalPlayer.Character then return end
+    
+    local player = Players.LocalPlayer
+    char = player.Character
+    local head = char:WaitForChild("Head")
+    torso = char:FindFirstChild("Torso")
+    
+    if not torso then return end
+    
+    local neck = torso:FindFirstChild("Neck")
+    if neck then
+        originalNeckData = {
+            Part0 = neck.Part0,
+            Part1 = neck.Part1,
+            C0 = neck.C0,
+            C1 = neck.C1
+        }
+        
+        neck.Part0 = torso
+        neck.Part1 = head
+        neck.C0 = CFrame.new(0, -0.25, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+        neck.C1 = CFrame.new(0, 0.5, 0)
+    end
+    
+    if hookmetamethod and not hookEnabled then
+        local originalHook
+        originalHook = hookmetamethod(game, "__namecall", function(self, ...)
+            local methodName = getnamecallmethod()
+            
+            if tostring(methodName) == "FireServer" then
+                if self.Name == "MOVZREP" then
+                    local fixedArguments = {
+                        {
+                            {
+                                Vector3.new(-5721.2001953125, -5, 971.5162353515625),
+                                Vector3.new(-4181.38818359375, -6, 11.123311996459961),
+                                Vector3.new(0.006237113382667303, -6, -0.18136750161647797),
+                                true,
+                                true,
+                                true,
+                                false
+                            },
+                            false,
+                            false,
+                            15.8
+                        }
+                    }
+                    
+                    return originalHook(self, table.unpack(fixedArguments))
+                end
+            end
+            
+            return originalHook(self, ...)
+        end)
+        originalNamecall = originalHook
+        hookEnabled = true
+    end
+    
+    if renderConnection then
+        renderConnection:Disconnect()
+    end
+    
+    renderConnection = RunService.RenderStepped:Connect(function()
+        if torso and torso.Parent then
+            if neck and neck.Parent then
+                neck.C0 = CFrame.new(0, -0.25, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+            end
+        else
+            if renderConnection then
+                renderConnection:Disconnect()
+                renderConnection = nil
+            end
+        end
+    end)
+end
+
+local function showHeadFE()
+    if renderConnection then
+        renderConnection:Disconnect()
+        renderConnection = nil
+    end
+    
+    if hookmetamethod and originalNamecall then
+        hookmetamethod(game, "__namecall", originalNamecall)
+        originalNamecall = nil
+        hookEnabled = false
+    end
+    
+    if char and torso then
+        local neck = torso:FindFirstChild("Neck")
+        if neck and originalNeckData then
+            neck.Part0 = originalNeckData.Part0
+            neck.Part1 = originalNeckData.Part1
+            neck.C0 = originalNeckData.C0
+            neck.C1 = originalNeckData.C1
+        end
+    end
+    
+    originalNeckData = nil
+    char = nil
+    torso = nil
+end
 local function enableNoFallDmg()
     if getgenv().CONFIG.Misc.NoFallHook then getgenv().CONFIG.Misc.NoFallHook = nil end
     getgenv().CONFIG.Misc.NoFallHook = hookmetamethod(game, "__namecall", function(self, ...)
