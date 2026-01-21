@@ -1172,6 +1172,7 @@ local function getCurrentTool()
     
     return nil
 end
+--[[
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
@@ -1247,38 +1248,7 @@ local function hideHeadFE()
         end
     end
     camera.CFrame = originalCameraCFrame
-    if hookmetamethod then
-        local originalHook
-        originalHook = hookmetamethod(game, "__namecall", function(self, ...)
-            local methodName = getnamecallmethod()
-            
-            if tostring(methodName) == "FireServer" then
-                if self.Name == "MOVZREP" then
-                    local fixedArguments = {
-                        {
-                            {
-                                Vector3.new(-5721.2001953125, 9834.1708984375, 971.5162353515625),
-                                Vector3.new(-4181.38818359375, 0.3198874592781067, 11.123311996459961),
-                                Vector3.new(0.006237113382667303, 0.9833956360816956, -0.18136750161647797),
-                                true,
-                                true,
-                                true,
-                                false
-                            },
-                            false,
-                            false,
-                            15.8
-                        }
-                    }
-                    
-                    return originalHook(self, table.unpack(fixedArguments))
-                end
-            end
-            
-            return originalHook(self, ...)
-        end)
-        originalNamecall = originalHook
-    end
+    
     
     if renderConnection then
         renderConnection:Disconnect()
@@ -1300,7 +1270,7 @@ local function hideHeadFE()
         end
     end)
 end
-
+--]]
 local function showHeadFE()
     if renderConnection then
         renderConnection:Disconnect()
