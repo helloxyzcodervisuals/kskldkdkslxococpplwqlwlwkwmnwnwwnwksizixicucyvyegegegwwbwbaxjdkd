@@ -857,8 +857,8 @@ local function wallbang()
         local cachedShootDistance = (cachedBestPositions.shootPos - startPos).Magnitude
         local cachedHitDistance = (cachedBestPositions.hitPos - targetPos).Magnitude
         
-        if cachedShootDistance <= getgenv().CONFIG.Ragebot.ShootRange and 
-           cachedHitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+        if math.abs(cachedShootDistance - getgenv().CONFIG.Ragebot.ShootRange) < 0.01 and 
+           math.abs(cachedHitDistance - getgenv().CONFIG.Ragebot.HitRange) < 0.01 then
             
             local pathToShoot = checkClearPath(startPos, cachedBestPositions.shootPos)
             local pathToTarget = checkClearPath(cachedBestPositions.shootPos, cachedBestPositions.hitPos)
@@ -879,37 +879,37 @@ local function wallbang()
     local bestScore = math.huge
     
     for i = 1, 100 do
-        local shootOffset = Vector3.new(
-            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange),
-            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange),
-            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange)
+        local shootAngleX = math.random() * math.pi * 2
+        local shootAngleY = math.random() * math.pi
+        local shootDir = Vector3.new(
+            math.sin(shootAngleY) * math.cos(shootAngleX),
+            math.cos(shootAngleY),
+            math.sin(shootAngleY) * math.sin(shootAngleX)
         )
-        local shootPos = startPos + shootOffset
         
-        local hitOffset = Vector3.new(
-            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange),
-            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange),
-            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange)
+        local shootPos = startPos + (shootDir * getgenv().CONFIG.Ragebot.ShootRange)
+        
+        local hitAngleX = math.random() * math.pi * 2
+        local hitAngleY = math.random() * math.pi
+        local hitDir = Vector3.new(
+            math.sin(hitAngleY) * math.cos(hitAngleX),
+            math.cos(hitAngleY),
+            math.sin(hitAngleY) * math.sin(hitAngleX)
         )
-        local hitPos = targetPos + hitOffset
         
-        local shootDistance = (shootPos - startPos).Magnitude
-        local hitDistance = (hitPos - targetPos).Magnitude
+        local hitPos = targetPos + (hitDir * getgenv().CONFIG.Ragebot.HitRange)
         
-        if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange and hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
-            local pathToShoot = checkClearPath(startPos, shootPos)
-            local pathToTarget = checkClearPath(shootPos, hitPos)
-            
-            if pathToShoot and pathToTarget then
-                local shootToHitRay = Workspace:Raycast(shootPos, (hitPos - shootPos).Unit * (hitPos - shootPos).Magnitude, raycastParams)
-                if not shootToHitRay then
-                    local totalScore = shootDistance + hitDistance
-                    
-                    if totalScore < bestScore then
-                        bestScore = totalScore
-                        bestShootPos = shootPos
-                        bestHitPos = hitPos
-                    end
+        local pathToShoot = checkClearPath(startPos, shootPos)
+        local pathToTarget = checkClearPath(shootPos, hitPos)
+        
+        if pathToShoot and pathToTarget then
+            local shootToHitRay = Workspace:Raycast(shootPos, (hitPos - shootPos).Unit * (hitPos - shootPos).Magnitude, raycastParams)
+            if not shootToHitRay then
+                local totalScore = (shootPos - startPos).Magnitude + (hitPos - targetPos).Magnitude
+                if totalScore < bestScore then
+                    bestScore = totalScore
+                    bestShootPos = shootPos
+                    bestHitPos = hitPos
                 end
             end
         end
@@ -933,6 +933,7 @@ local function wallbang()
     
     return bestShootPos, bestHitPos
 end
+                    
 
 local function createTracer(startPos, endPos)
     if not getgenv().CONFIG.Ragebot.Tracers then return end
@@ -1043,7 +1044,6 @@ local function shootAtTarget(targetHead)
     return true
 end
 local lastShotTime = 0
-
 RunService.Heartbeat:Connect(function()
     if not getgenv().CONFIG.Ragebot.Enabled then return end
     if not LocalPlayer.Character then return end
@@ -1055,11 +1055,15 @@ RunService.Heartbeat:Connect(function()
     local currentTime = tick()
     local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 0.05)
     local WaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
+    
     if getgenv().CONFIG.Ragebot.RapidFire then
         local rapidWaitTime = baseWaitTime * 0.01
         
         if currentTime - lastShotTime >= rapidWaitTime then
-            shootAtTarget(target)
+            for i = 1, 3 do
+                task.wait(0.1)
+                shootAtTarget(target)
+            end
             lastShotTime = currentTime
         end
     else
@@ -1069,6 +1073,7 @@ RunService.Heartbeat:Connect(function()
         end
     end
 end)
+
 local fovCircle = Drawing.new("Circle")
 fovCircle.Visible = getgenv().CONFIG.Ragebot.ShowFOV
 fovCircle.Radius = getgenv().CONFIG.Ragebot.FOV
