@@ -1053,16 +1053,19 @@ RunService.Heartbeat:Connect(function()
     if not target then return end
     
     local currentTime = tick()
-    local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 0.05)
+    local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 0.8)
     local WaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
     
     if getgenv().CONFIG.Ragebot.RapidFire then
         local rapidWaitTime = baseWaitTime * 0.01
         
         if currentTime - lastShotTime >= rapidWaitTime then
-            for i = 1, 3 do
-                task.wait(0.1)
+            for i = 1, 2 do
+                task.wait(0.25)
+                    
                 shootAtTarget(target)
+                task.wait(0.25)
+                task.wait(0.5)
             end
             lastShotTime = currentTime
         end
