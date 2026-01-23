@@ -3578,7 +3578,7 @@ function library:slider(properties)
 	end
 
 	library:connection(uis.InputChanged, function(input)
-		if cfg.dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		if cfg.dragging and input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
 			local size_x = (input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
 			local value = ((cfg.max - cfg.min) * size_x) + cfg.min
 			cfg.set(value)
@@ -3586,7 +3586,7 @@ function library:slider(properties)
 	end)
 
 	library:connection(uis.InputEnded, function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
 			cfg.dragging = false
 		end
 	end)
@@ -4626,7 +4626,7 @@ function library:colorpicker(properties)
 	end)
 
 	uis.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
 			dragging_sat = false
 			dragging_hue = false
 			dragging_alpha = false
@@ -4636,7 +4636,7 @@ function library:colorpicker(properties)
 	uis.InputChanged:Connect(function(input)
 		if
 			(dragging_sat or dragging_hue or dragging_alpha)
-			and input.UserInputType == Enum.UserInputType.MouseMovement
+			and input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch
 		then
 			cfg.update_color()
 		end
