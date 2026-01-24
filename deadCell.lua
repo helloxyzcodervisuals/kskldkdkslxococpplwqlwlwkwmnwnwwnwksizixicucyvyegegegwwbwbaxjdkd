@@ -570,11 +570,7 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         ZIndex = 9e9
     })
     
-    local outline1=utility.outline(icon,library.theme["Section Inner Border"])
-    outline1.ZIndex = 9e9
     
-    local outline1_outer = utility.outline(outline1,library.theme["Section Outer Border"])
-    outline1_outer.ZIndex = 9e9
     
     local window=utility.createFrame({
         Name="ColorPickerWindow",
@@ -596,7 +592,8 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         Size=UDim2.new(0,154,0,150),
         Position=UDim2.new(0,6,0,6),
         BorderSizePixel=0,
-        ZIndex = 9e9
+        ZIndex = 9e9,
+        BackgroundTransparency=0   
     })
     
     
@@ -635,8 +632,7 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         ZIndex = 9e9
     })
     
-    local hueframe_outline = utility.outline(hueframe,library.theme["Section Inner Border"])
-    hueframe_outline.ZIndex = 9e9
+    
     
     local hueGradient=Instance.new("UIGradient")
     local hueColors = {}
