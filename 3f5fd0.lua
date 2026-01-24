@@ -858,7 +858,7 @@ local refreshPresetsButton = listSection:new_button({
         end
     end
 })
-
+--[[
 local keybindsPage = window:new_page({
     name = "Keybinds"
 })
@@ -1236,8 +1236,7 @@ local panicKey = keybindsSection:new_listbox({
     callback = function(key)
     end
 })
-
--- 加载Ragebot功能
+--]]
 local function loadRagebot()
     if makefolder then
         makefolder("a")
