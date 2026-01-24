@@ -268,7 +268,7 @@ function utility.createGradient(color1,color2,rotation)
     gradient.Rotation=rotation or 0
     return gradient
 end
-
+--[[
 function library.createcolorpicker(default,parent,count,flag,callback,offset)
     local icon=utility.createFrame({
         Name="ColorPickerIcon",
@@ -554,7 +554,460 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
     
     return colorpickertypes,window
 end
-
+--]]
+function library.createcolorpicker(default,parent,count,flag,callback,offset)
+    if type(default) == "string" then
+        default = Color3.fromHex(default)
+    end
+    
+    local icon=utility.createFrame({
+        Name="ColorPickerIcon",
+        Parent=parent,
+        BackgroundColor3=default,
+        Size=UDim2.new(0,17,0,9),
+        Position=UDim2.new(1,-17-(count*17)-(count*6),0,4+offset),
+        BorderSizePixel=0,
+        ZIndex = 9e9
+    })
+    
+    local outline1=utility.outline(icon,library.theme["Section Inner Border"])
+    outline1.ZIndex = 9e9
+    
+    local outline1_outer = utility.outline(outline1,library.theme["Section Outer Border"])
+    outline1_outer.ZIndex = 9e9
+    
+    local window=utility.createFrame({
+        Name="ColorPickerWindow",
+        Parent=icon,
+        BackgroundColor3=library.theme["Object Background"],
+        Size=UDim2.new(0,185,0,200),
+        Visible=false,
+        Position=UDim2.new(1,-185+(count*20)+(count*6),1,6),
+        BorderSizePixel=0,
+        ZIndex = 9e9
+    })
+    
+    local outline2=utility.outline(window,library.theme["Section Inner Border"])
+    outline2.ZIndex = 9e9
+    
+    local outline2_outer = utility.outline(outline2,library.theme["Section Outer Border"])
+    outline2_outer.ZIndex = 9e9
+    
+    local saturation=utility.createFrame({
+        Name="Saturation",
+        Parent=window,
+        BackgroundColor3=Color3.new(1,0,0),
+        Size=UDim2.new(0,154,0,150),
+        Position=UDim2.new(0,6,0,6),
+        BorderSizePixel=0,
+        ZIndex = 9e9
+    })
+    
+    local saturation_outline = utility.outline(saturation,library.theme["Section Inner Border"])
+    saturation_outline.ZIndex = 9e9
+    
+    local whiteGradient = Instance.new("UIGradient")
+    whiteGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.new(1,1,1)),
+        ColorSequenceKeypoint.new(1, Color3.new(1,1,1))
+    }
+    whiteGradient.Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(1, 1)
+    }
+    whiteGradient.Rotation = 0
+    whiteGradient.Parent = saturation
+    
+    local blackGradient = Instance.new("UIGradient")
+    blackGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.new(0,0,0)),
+        ColorSequenceKeypoint.new(1, Color3.new(0,0,0))
+    }
+    blackGradient.Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0, 1),
+        NumberSequenceKeypoint.new(1, 0)
+    }
+    blackGradient.Rotation = 90
+    blackGradient.Parent = saturation
+    
+    local hueframe=utility.createFrame({
+        Name="HueFrame",
+        Parent=window,
+        BackgroundColor3=Color3.new(1,0,0),
+        Size=UDim2.new(0,15,0,150),
+        Position=UDim2.new(0,165,0,6),
+        BorderSizePixel=0,
+        ZIndex = 9e9
+    })
+    
+    local hueframe_outline = utility.outline(hueframe,library.theme["Section Inner Border"])
+    hueframe_outline.ZIndex = 9e9
+    
+    local hueGradient=Instance.new("UIGradient")
+    local hueColors = {}
+    for i = 0, 6 do
+        local hue = i / 6
+        table.insert(hueColors, ColorSequenceKeypoint.new(i/6, Color3.fromHSV(hue, 1, 1)))
+    end
+    hueGradient.Color=ColorSequence.new(hueColors)
+    hueGradient.Rotation=90
+    hueGradient.Parent=hueframe
+    
+    local saturationpicker=utility.createFrame({
+        Name="SaturationPicker",
+        Parent=saturation,
+        BackgroundColor3=Color3.new(1,1,1),
+        Size=UDim2.new(0,4,0,4),
+        Position=UDim2.new(0,0,0,0),
+        BorderColor3=Color3.new(0,0,0),
+        BorderSizePixel=1,
+        ZIndex = 9e9
+    })
+    
+    local huepicker=utility.createFrame({
+        Name="HuePicker",
+        Parent=hueframe,
+        BackgroundColor3=Color3.new(1,1,1),
+        Size=UDim2.new(1,0,0,2),
+        Position=UDim2.new(0,0,0,0),
+        BorderColor3=Color3.new(0,0,0),
+        BorderSizePixel=1,
+        ZIndex = 9e9
+    })
+    
+    local rgbinput=utility.create("TextBox",{
+        Name="RGBInput",
+        Parent=window,
+        BackgroundColor3=library.theme["Object Background"],
+        Size=UDim2.new(1,-12,0,14),
+        Position=UDim2.new(0,6,0,160),
+        Text=string.format("%s, %s, %s",math.floor(default.R*255),math.floor(default.G*255),math.floor(default.B*255)),
+        TextColor3=library.theme["Text"],
+        TextSize=13,
+        FontFace=UI_FONT,
+        TextXAlignment=Enum.TextXAlignment.Center,
+        BorderSizePixel=1,
+        BorderColor3=library.theme["Section Inner Border"],
+        ZIndex = 9e9
+    })
+    
+    local copyButton=utility.createTextButton({
+        Name="CopyButton",
+        Parent=window,
+        BackgroundColor3=library.theme["Object Background"],
+        Size=UDim2.new(0.5,-20,0,12),
+        Position=UDim2.new(0,6,0,180),
+        Text="copy",
+        TextColor3=library.theme["Text"],
+        TextSize=13,
+        FontFace=UI_FONT,
+        BorderSizePixel=1,
+        BorderColor3=library.theme["Section Inner Border"],
+        AutoButtonColor=false,
+        ZIndex = 9e9
+    })
+    
+    local pasteButton=utility.createTextButton({
+        Name="PasteButton",
+        Parent=window,
+        BackgroundColor3=library.theme["Object Background"],
+        Size=UDim2.new(0.5,-20,0,12),
+        Position=UDim2.new(0.5,15,0,180),
+        Text="paste",
+        TextColor3=library.theme["Text"],
+        TextSize=13,
+        FontFace=UI_FONT,
+        BorderSizePixel=1,
+        BorderColor3=library.theme["Section Inner Border"],
+        AutoButtonColor=false,
+        ZIndex = 9e9
+    })
+    
+    local hue,sat,val = default:ToHSV()
+    local current_val=default
+    
+    copyButton.MouseButton1Click:Connect(function()
+        local r = math.round(current_val.R * 255)
+        local g = math.round(current_val.G * 255)
+        local b = math.round(current_val.B * 255)
+        local hex = string.format("%02X%02X%02X", r, g, b)
+        
+        if setclipboard then
+            setclipboard(hex)
+        else
+            pcall(function()
+                local Clipboard = game:GetService("ClipboardService")
+                Clipboard:Set(hex)
+            end)
+        end
+    end)
+    
+    pasteButton.MouseButton1Click:Connect(function()
+        local text = ""
+        
+        if getclipboard then
+            text = getclipboard()
+        else
+            pcall(function()
+                local Clipboard = game:GetService("ClipboardService")
+                text = Clipboard:Get()
+            end)
+        end
+        
+        if text then
+            local function parseColorFromString(str)
+                str = tostring(str):gsub("%s+", "")
+                
+                if str:match("^#%x%x%x%x%x%x$") then
+                    return Color3.fromHex(str)
+                end
+                
+                if str:match("^%d+,%d+,%d+$") then
+                    local r, g, b = str:match("(%d+),(%d+),(%d+)")
+                    r = math.clamp(tonumber(r) or 0, 0, 255)
+                    g = math.clamp(tonumber(g) or 0, 0, 255)
+                    b = math.clamp(tonumber(b) or 0, 0, 255)
+                    return Color3.fromRGB(r, g, b)
+                end
+                
+                if str:match("^%d+%s+%d+%s+%d+$") then
+                    local parts = {}
+                    for num in str:gmatch("%d+") do
+                        table.insert(parts, math.clamp(tonumber(num) or 0, 0, 255))
+                    end
+                    if #parts == 3 then
+                        return Color3.fromRGB(parts[1], parts[2], parts[3])
+                    end
+                end
+                
+                return nil
+            end
+            
+            local color = parseColorFromString(text)
+            if color then
+                hue, sat, val = color:ToHSV()
+                saturation.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+                
+                local satX = math.clamp(sat * 154, 0, 154 - 4)
+                local satY = math.clamp((1 - val) * 150, 0, 150 - 4)
+                local hueY = math.clamp((1 - hue) * 150, 0, 150 - 2)
+                
+                saturationpicker.Position = UDim2.new(0, satX, 0, satY)
+                huepicker.Position = UDim2.new(0, 0, 0, hueY)
+                
+                icon.BackgroundColor3 = color
+                current_val = color
+                
+                rgbinput.Text = string.format("%s, %s, %s", 
+                    math.round(color.R * 255), 
+                    math.round(color.G * 255), 
+                    math.round(color.B * 255))
+                
+                if flag then
+                    library.flags[flag] = utility.rgba(color.R * 255, color.G * 255, color.B * 255)
+                end
+                
+                callback(color)
+            end
+        end
+    end)
+    
+    local function parseColorFromString(str)
+        str = tostring(str):gsub("%s+", "")
+        
+        if str:match("^#%x%x%x%x%x%x$") then
+            return Color3.fromHex(str)
+        end
+        
+        if str:match("^%d+,%d+,%d+$") then
+            local r, g, b = str:match("(%d+),(%d+),(%d+)")
+            r = math.clamp(tonumber(r) or 0, 0, 255)
+            g = math.clamp(tonumber(g) or 0, 0, 255)
+            b = math.clamp(tonumber(b) or 0, 0, 255)
+            return Color3.fromRGB(r, g, b)
+        end
+        
+        if str:match("^%d+%s+%d+%s+%d+$") then
+            local parts = {}
+            for num in str:gmatch("%d+") do
+                table.insert(parts, math.clamp(tonumber(num) or 0, 0, 255))
+            end
+            if #parts == 3 then
+                return Color3.fromRGB(parts[1], parts[2], parts[3])
+            end
+        end
+        
+        return nil
+    end
+    
+    local function set(color,nopos,setcolor)
+        if type(color) == "string" then
+            color = parseColorFromString(color)
+            if not color then return end
+        end
+        
+        local oldHue, oldSat, oldVal = hue, sat, val
+        hue, sat, val = color:ToHSV()
+        
+        icon.BackgroundColor3 = color
+        
+        if not nopos then
+            local satX = math.clamp(sat * 154, 0, 154 - 4)
+            local satY = math.clamp((1 - val) * 150, 0, 150 - 4)
+            local hueY = math.clamp((1 - hue) * 150, 0, 150 - 2)
+            
+            saturationpicker.Position = UDim2.new(0, satX, 0, satY)
+            huepicker.Position = UDim2.new(0, 0, 0, hueY)
+            
+            if setcolor then
+                saturation.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+            end
+        end
+        
+        rgbinput.Text = string.format("%s, %s, %s", 
+            math.round(color.R * 255), 
+            math.round(color.G * 255), 
+            math.round(color.B * 255))
+        
+        if flag then
+            library.flags[flag] = utility.rgba(color.R * 255, color.G * 255, color.B * 255)
+        end
+        
+        callback(color)
+        current_val = color
+    end
+    
+    rgbinput.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            local color = parseColorFromString(rgbinput.Text)
+            if color then
+                set(color)
+            else
+                rgbinput.Text = string.format("%s, %s, %s", 
+                    math.round(current_val.R * 255), 
+                    math.round(current_val.G * 255), 
+                    math.round(current_val.B * 255))
+            end
+        end
+    end)
+    
+    local slidingsaturation=false
+    local slidinghue=false
+    
+    saturation.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            slidingsaturation=true
+            
+            local x = math.clamp((input.Position.X - saturation.AbsolutePosition.X) / saturation.AbsoluteSize.X, 0, 1)
+            local y = 1 - math.clamp((input.Position.Y - saturation.AbsolutePosition.Y) / saturation.AbsoluteSize.Y, 0, 1)
+            
+            local posX = x * 154 - 2
+            local posY = (1 - y) * 150 - 2
+            
+            saturationpicker.Position = UDim2.new(0, posX, 0, posY)
+            set(Color3.fromHSV(hue, x, y), true, false)
+        end
+    end)
+    
+    saturation.InputEnded:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            slidingsaturation=false
+        end
+    end)
+    
+    hueframe.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            slidinghue=true
+            
+            local y = 1 - math.clamp((input.Position.Y - hueframe.AbsolutePosition.Y) / hueframe.AbsoluteSize.Y, 0, 1)
+            local posY = y * 150 - 1
+            
+            huepicker.Position = UDim2.new(0, 0, 0, posY)
+            saturation.BackgroundColor3 = Color3.fromHSV(y, 1, 1)
+            hue = y
+            
+            set(Color3.fromHSV(hue, sat, val), true, true)
+        end
+    end)
+    
+    hueframe.InputEnded:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            slidinghue=false
+        end
+    end)
+    
+    services.UserInputService.InputChanged:Connect(function(input)
+        if slidingsaturation and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local x = math.clamp((input.Position.X - saturation.AbsolutePosition.X) / saturation.AbsoluteSize.X, 0, 1)
+            local y = 1 - math.clamp((input.Position.Y - saturation.AbsolutePosition.Y) / saturation.AbsoluteSize.Y, 0, 1)
+            
+            local posX = x * 154 - 2
+            local posY = (1 - y) * 150 - 2
+            
+            saturationpicker.Position = UDim2.new(0, posX, 0, posY)
+            set(Color3.fromHSV(hue, x, y), true, false)
+        end
+        
+        if slidinghue and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local y = 1 - math.clamp((input.Position.Y - hueframe.AbsolutePosition.Y) / hueframe.AbsoluteSize.Y, 0, 1)
+            local posY = y * 150 - 1
+            
+            huepicker.Position = UDim2.new(0, 0, 0, posY)
+            saturation.BackgroundColor3 = Color3.fromHSV(y, 1, 1)
+            hue = y
+            
+            set(Color3.fromHSV(hue, sat, val), true, true)
+        end
+    end)
+    
+    icon.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            window.Visible = not window.Visible
+            slidinghue=false
+            slidingsaturation=false
+            
+            for _, v in pairs(parent.Parent:GetChildren()) do
+                if v.Name == "ColorPickerWindow" and v ~= window then
+                    v.Visible = false
+                end
+            end
+        end
+    end)
+    
+    services.UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if window.Visible then
+                local mousePos = input.Position
+                local iconPos = icon.AbsolutePosition
+                local iconSize = icon.AbsoluteSize
+                local windowPos = window.AbsolutePosition
+                local windowSize = window.AbsoluteSize
+                
+                local isMouseOverIcon = 
+                    mousePos.X >= iconPos.X and mousePos.X <= iconPos.X + iconSize.X and
+                    mousePos.Y >= iconPos.Y and mousePos.Y <= iconPos.Y + iconSize.Y
+                    
+                local isMouseOverWindow = 
+                    mousePos.X >= windowPos.X and mousePos.X <= windowPos.X + windowSize.X and
+                    mousePos.Y >= windowPos.Y and mousePos.Y <= windowPos.Y + windowSize.Y
+                
+                if not isMouseOverIcon and not isMouseOverWindow then
+                    window.Visible = false
+                end
+            end
+        end
+    end)
+    
+    set(default)
+    
+    local colorpickertypes={}
+    
+    function colorpickertypes:set(color)
+        set(color)
+    end
+    
+    return colorpickertypes,window
+end
 function library.createdropdown(holder,content,flag,callback,default,max,scrollable,scrollingmax,islist,size,section,sectioncontent)
     local dropdown=utility.createFrame({
         Name="Dropdown",
