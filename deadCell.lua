@@ -2129,7 +2129,50 @@ function library:new_window(cfg)
                     set=set
                 }
             end
-            
+            function section_tbl:new_button(cfg)
+                local name=cfg.name or cfg.Name or "new button"
+                local flag=cfg.flag or cfg.Flag or utility.nextflag()
+                local callback=cfg.callback or function()end
+                
+                local holder=utility.createFrame({
+                    Name="ButtonHolder",
+                    Parent=section_content,
+                    BackgroundTransparency=1,
+                    Size=UDim2.new(1,0,0,19),
+                    BorderSizePixel=0
+                })
+                
+                local button=utility.create("TextButton",{
+                    Name="Button",
+                    Parent=holder,
+                    BackgroundColor3=library.theme["Object Background"],
+                    Size=UDim2.new(1,0,0,15),
+                    Position=UDim2.new(0,0,1,-15),
+                    Text=name,
+                    TextColor3=library.theme["Text"],
+                    TextSize=13,
+                    FontFace=UI_FONT,
+                    BorderSizePixel=1,
+                    BorderColor3=library.theme["Section Inner Border"],
+                    AutoButtonColor=false
+                })
+                
+                utility.outline(button,library.theme["Section Outer Border"])
+                
+                button.MouseButton1Click:Connect(function()
+                    callback()
+                end)
+                
+                local function set(text)
+                    button.Text=text
+                end
+                
+                library.flags[flag]=set
+                
+                return{
+                    set=set
+                }
+            end
             return section_tbl
         end
         
