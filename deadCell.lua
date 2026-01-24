@@ -890,13 +890,13 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
             slidingsaturation=true
             
             local x = math.clamp((input.Position.X - saturation.AbsolutePosition.X) / saturation.AbsoluteSize.X, 0, 1)
-            local y = 1 - math.clamp((input.Position.Y - saturation.AbsolutePosition.Y) / saturation.AbsoluteSize.Y, 0, 1)
+            local y = math.clamp((input.Position.Y - saturation.AbsolutePosition.Y) / saturation.AbsoluteSize.Y, 0, 1)
             
             local posX = x * 154 - 2
-            local posY = (1 - y) * 150 - 2
+            local posY = y * 150 - 2
             
             saturationpicker.Position = UDim2.new(0, posX, 0, posY)
-            set(Color3.fromHSV(hue, x, y), true, false)
+            set(Color3.fromHSV(hue, x, 1 - y), true, false)
         end
     end)
     
@@ -910,7 +910,7 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
             slidinghue=true
             
-            local y = 1 - math.clamp((input.Position.Y - hueframe.AbsolutePosition.Y) / hueframe.AbsoluteSize.Y, 0, 1)
+            local y = math.clamp((input.Position.Y - hueframe.AbsolutePosition.Y) / hueframe.AbsoluteSize.Y, 0, 1)
             local posY = y * 150 - 1
             
             huepicker.Position = UDim2.new(0, 0, 0, posY)
@@ -928,19 +928,19 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
     end)
     
     services.UserInputService.InputChanged:Connect(function(input)
-        if slidingsaturation and input.UserInputType == Enum.UserInputType.MouseMovement then
+        if slidingsaturation and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local x = math.clamp((input.Position.X - saturation.AbsolutePosition.X) / saturation.AbsoluteSize.X, 0, 1)
-            local y = 1 - math.clamp((input.Position.Y - saturation.AbsolutePosition.Y) / saturation.AbsoluteSize.Y, 0, 1)
+            local y = math.clamp((input.Position.Y - saturation.AbsolutePosition.Y) / saturation.AbsoluteSize.Y, 0, 1)
             
             local posX = x * 154 - 2
-            local posY = (1 - y) * 150 - 2
+            local posY = y * 150 - 2
             
             saturationpicker.Position = UDim2.new(0, posX, 0, posY)
-            set(Color3.fromHSV(hue, x, y), true, false)
+            set(Color3.fromHSV(hue, x, 1 - y), true, false)
         end
         
-        if slidinghue and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local y = 1 - math.clamp((input.Position.Y - hueframe.AbsolutePosition.Y) / hueframe.AbsoluteSize.Y, 0, 1)
+        if slidinghue and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local y = math.clamp((input.Position.Y - hueframe.AbsolutePosition.Y) / hueframe.AbsoluteSize.Y, 0, 1)
             local posY = y * 150 - 1
             
             huepicker.Position = UDim2.new(0, 0, 0, posY)
@@ -1643,7 +1643,7 @@ function library:new_window(cfg)
                     callback(toggled)
                 end
                 
-                holder.InputBegan:Connect(function(input)
+                toggle_frame.InputBegan:Connect(function(input)
                     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
                         setstate()
                     end
