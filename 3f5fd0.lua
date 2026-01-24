@@ -2220,6 +2220,12 @@ local function loadMisc()
                         motor.C1 = originalData.C1
                     end
                 end
+
+                local neck = torso:FindFirstChild("Neck")
+                if neck and neck:IsA("Motor6D") then
+                    neck.C0 = CFrame.new(0, -0.25, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+                    neck.C1 = CFrame.new(0, 0.5, 0)
+                end
             else
                 if renderConnection then
                     renderConnection:Disconnect()
@@ -2227,35 +2233,6 @@ local function loadMisc()
                 end
             end
         end)
-    end
-
-    local function showHead()
-        if renderConnection then
-            renderConnection:Disconnect()
-            renderConnection = nil
-        end
-        
-        hideHeadEnabled = false
-        
-        if originalHook then
-            hookmetamethod(game, "__namecall", originalHook)
-            originalHook = nil
-        end
-        
-        if char then
-            for motor, originalData in pairs(originalMotor6Ds) do
-                if motor and motor.Parent then
-                    motor.Part0 = originalData.Part0
-                    motor.Part1 = originalData.Part1
-                    motor.C0 = originalData.C0
-                    motor.C1 = originalData.C1
-                end
-            end
-        end
-        
-        originalMotor6Ds = {}
-        char = nil
-        torso = nil
     end
 
     local noFallHook = nil
