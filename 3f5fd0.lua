@@ -112,7 +112,7 @@ local ragebotMainSection = ragebotPage:new_section({
     side = "left",
     size = 250
 })
-
+--[[
 local ragebotToggle = ragebotMainSection:new_toggle({
     name = "Enable Ragebot",
     state = false,
@@ -858,7 +858,7 @@ local refreshPresetsButton = listSection:new_button({
         end
     end
 })
---[[
+
 local keybindsPage = window:new_page({
     name = "Keybinds"
 })
@@ -2038,3 +2038,747 @@ end
 
 loadRagebot()
 loadMisc()
+local ragebotToggle = ragebotMainSection:new_toggle({
+    name = "Enable Ragebot",
+    state = false,
+    flag = "ragebot_enabled",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.Enabled = state
+    end
+})
+
+local rapidFireToggle = ragebotMainSection:new_toggle({
+    name = "Rapid Fire",
+    state = false,
+    flag = "ragebot_rapidfire",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.RapidFire = state
+    end
+})
+
+local hitSoundToggle = ragebotMainSection:new_toggle({
+    name = "Hit Sound",
+    state = true,
+    flag = "ragebot_hitsound",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.HitSound = state
+    end
+})
+
+local autoReloadToggle = ragebotMainSection:new_toggle({
+    name = "Auto Reload",
+    state = true,
+    flag = "ragebot_autoreload",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.AutoReload = state
+    end
+})
+
+local fireRateSlider = ragebotMainSection:new_slider({
+    name = "Fire Rate",
+    min = 1,
+    max = 1000,
+    default = 30,
+    text = "[value] RPS",
+    flag = "ragebot_firerate",
+    callback = function(value)
+        getgenv().CONFIG.Ragebot.FireRate = value
+    end
+})
+
+local shootRangeSlider = ragebotMainSection:new_slider({
+    name = "Shoot Range",
+    min = 1,
+    max = 30,
+    default = 15,
+    text = "[value]",
+    flag = "ragebot_shootrange",
+    callback = function(value)
+        getgenv().CONFIG.Ragebot.ShootRange = value
+    end
+})
+
+local hitRangeSlider = ragebotMainSection:new_slider({
+    name = "Hit Range",
+    min = 1,
+    max = 30,
+    default = 15,
+    text = "[value]",
+    flag = "ragebot_hitrange",
+    callback = function(value)
+        getgenv().CONFIG.Ragebot.HitRange = value
+    end
+})
+
+local hitSoundList = ragebotMainSection:new_listbox({
+    name = "Hit Sound",
+    options = {"skeet", "xp level", "bell"},
+    default = "skeet",
+    multiple = false,
+    flag = "ragebot_hitsoundlist",
+    callback = function(value)
+        getgenv().CONFIG.Ragebot.SelectedHitSound = value
+    end
+})
+
+local targetingSection = ragebotPage:new_section({
+    name = "Targeting",
+    side = "right",
+    size = 250
+})
+
+local teamCheckToggle = targetingSection:new_toggle({
+    name = "Team Check",
+    state = false,
+    flag = "ragebot_teamcheck",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.TeamCheck = state
+    end
+})
+
+local visibilityCheckToggle = targetingSection:new_toggle({
+    name = "Visibility Check",
+    state = true,
+    flag = "ragebot_visibilitycheck",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.VisibilityCheck = state
+    end
+})
+
+local wallbangToggle = targetingSection:new_toggle({
+    name = "Wallbang",
+    state = true,
+    flag = "ragebot_wallbang",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.Wallbang = state
+    end
+})
+
+local fovSlider = targetingSection:new_slider({
+    name = "FOV",
+    min = 10,
+    max = 360,
+    default = 120,
+    text = "[value]",
+    flag = "ragebot_fov",
+    callback = function(value)
+        getgenv().CONFIG.Ragebot.FOV = value
+    end
+})
+
+local showFovToggle = targetingSection:new_toggle({
+    name = "Show FOV",
+    state = true,
+    flag = "ragebot_showfov",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.ShowFOV = state
+    end
+})
+
+local downedCheckToggle = targetingSection:new_toggle({
+    name = "Downed Check",
+    state = false,
+    flag = "ragebot_downcheck",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.LowHealthCheck = state
+    end
+})
+
+local friendCheckToggle = targetingSection:new_toggle({
+    name = "Friend Check",
+    state = false,
+    flag = "ragebot_friendcheck",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.FriendCheck = state
+    end
+})
+
+local maxTargetSlider = targetingSection:new_slider({
+    name = "Max Target",
+    min = 0,
+    max = 20,
+    default = 1,
+    text = "[value] players",
+    flag = "ragebot_maxtarget",
+    callback = function(value)
+        getgenv().CONFIG.Ragebot.MaxTarget = value
+    end
+})
+
+local aimSection = ragebotPage:new_section({
+    name = "Aim Settings",
+    side = "left",
+    size = 200
+})
+
+local predictionToggle = aimSection:new_toggle({
+    name = "Prediction",
+    state = true,
+    flag = "ragebot_prediction",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.Prediction = state
+    end
+})
+
+local predictionAmountSlider = aimSection:new_slider({
+    name = "Prediction Amount",
+    min = 0.05,
+    max = 0.3,
+    default = 0.12,
+    text = "[value]",
+    flag = "ragebot_predictionamount",
+    callback = function(value)
+        getgenv().CONFIG.Ragebot.PredictionAmount = value
+    end
+})
+
+local visualsSection = ragebotPage:new_section({
+    name = "Tracers",
+    side = "right",
+    size = 200
+})
+
+local tracersToggle = visualsSection:new_toggle({
+    name = "Tracers",
+    state = true,
+    flag = "ragebot_tracers",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.Tracers = state
+    end
+})
+
+local tracerColor = tracersToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 0, 0),
+    flag = "ragebot_tracercolor",
+    callback = function(color)
+        getgenv().CONFIG.Ragebot.TracerColor = color
+    end
+})
+
+local tracerWidthSlider = visualsSection:new_slider({
+    name = "Tracer Width",
+    min = 0.1,
+    max = 5,
+    default = 1,
+    text = "[value] width",
+    flag = "ragebot_tracerwidth",
+    callback = function(value)
+        getgenv().CONFIG.Ragebot.TracerWidth = value
+    end
+})
+
+local tracerLifeSlider = visualsSection:new_slider({
+    name = "Tracer Lifetime",
+    min = 0.5,
+    max = 100,
+    default = 3,
+    text = "[value] time",
+    flag = "ragebot_tracerlife",
+    callback = function(value)
+        getgenv().CONFIG.Ragebot.TracerLifetime = value
+    end
+})
+
+local colorsSection = ragebotPage:new_section({
+    name = "Notifications",
+    side = "left",
+    size = 200
+})
+
+local hitNotifyToggle = colorsSection:new_toggle({
+    name = "Hit Notify",
+    state = true,
+    flag = "ragebot_hitnotify",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.HitNotify = state
+    end
+})
+
+local hitColor = hitNotifyToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 182, 193),
+    flag = "ragebot_hitcolor",
+    callback = function(color)
+        getgenv().CONFIG.Ragebot.HitColor = color
+    end
+})
+
+local hitDurationSlider = colorsSection:new_slider({
+    name = "Hit Notify Duration",
+    min = 1,
+    max = 10,
+    default = 5,
+    text = "[value]s",
+    flag = "ragebot_hitduration",
+    callback = function(value)
+        getgenv().CONFIG.Ragebot.HitNotifyDuration = value
+    end
+})
+
+local miscPage = window:new_page({
+    name = "Miscellaneous"
+})
+
+local movementSection = miscPage:new_section({
+    name = "Movement",
+    side = "left",
+    size = 250
+})
+
+local speedToggle = movementSection:new_toggle({
+    name = "Speed",
+    state = false,
+    flag = "misc_speed",
+    callback = function(state)
+        getgenv().CONFIG.Misc.SpeedEnabled = state
+        if state then
+            if getgenv().CONFIG.Misc.SpeedConnection then
+                getgenv().CONFIG.Misc.SpeedConnection:Disconnect()
+                getgenv().CONFIG.Misc.SpeedConnection = nil
+            end
+            getgenv().CONFIG.Misc.SpeedConnection = RunService.RenderStepped:Connect(function()
+                local character = LocalPlayer.Character
+                if not character then return end
+                local humanoid = character:FindFirstChild("Humanoid")
+                if not humanoid then return end
+                humanoid.WalkSpeed = getgenv().CONFIG.Misc.SpeedValue
+            end)
+        else
+            if getgenv().CONFIG.Misc.SpeedConnection then
+                getgenv().CONFIG.Misc.SpeedConnection:Disconnect()
+                getgenv().CONFIG.Misc.SpeedConnection = nil
+            end
+            local character = LocalPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChild("Humanoid")
+                if humanoid then humanoid.WalkSpeed = 16 end
+            end
+        end
+    end
+})
+
+local speedValueSlider = movementSection:new_slider({
+    name = "Speed Value",
+    min = 10,
+    max = 200,
+    default = 50,
+    text = "[value]",
+    flag = "misc_speedvalue",
+    callback = function(value)
+        getgenv().CONFIG.Misc.SpeedValue = value
+    end
+})
+
+local jumpPowerToggle = movementSection:new_toggle({
+    name = "Jump Power",
+    state = false,
+    flag = "misc_jumppower",
+    callback = function(state)
+        getgenv().CONFIG.Misc.JumpPowerEnabled = state
+        if state then
+            if getgenv().CONFIG.Misc.JumpPowerConnection then
+                getgenv().CONFIG.Misc.JumpPowerConnection:Disconnect()
+                getgenv().CONFIG.Misc.JumpPowerConnection = nil
+            end
+            getgenv().CONFIG.Misc.JumpPowerConnection = RunService.Heartbeat:Connect(function()
+                if not getgenv().CONFIG.Misc.JumpPowerEnabled then return end
+                if not LocalPlayer.Character then return end
+                local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                if not humanoid then return end
+                local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+                if humanoid:GetState() == Enum.HumanoidStateType.Jumping then
+                    hrp.Velocity = Vector3.new(hrp.Velocity.X, getgenv().CONFIG.Misc.JumpPowerValue, hrp.Velocity.Z)
+                end
+            end)
+        else
+            if getgenv().CONFIG.Misc.JumpPowerConnection then
+                getgenv().CONFIG.Misc.JumpPowerConnection:Disconnect()
+                getgenv().CONFIG.Misc.JumpPowerConnection = nil
+            end
+        end
+    end
+})
+
+local jumpPowerSlider = movementSection:new_slider({
+    name = "Jump Power Value",
+    min = 50,
+    max = 300,
+    default = 100,
+    text = "[value]",
+    flag = "misc_jumpvalue",
+    callback = function(value)
+        getgenv().CONFIG.Misc.JumpPowerValue = value
+    end
+})
+
+local visualSection = miscPage:new_section({
+    name = "Visual",
+    side = "right",
+    size = 250
+})
+
+local loopFovToggle = visualSection:new_toggle({
+    name = "Loop FOV",
+    state = false,
+    flag = "misc_loopfov",
+    callback = function(state)
+        getgenv().CONFIG.Misc.LoopFOVEnabled = state
+        if state then
+            if getgenv().CONFIG.Misc.FOVConnection then
+                getgenv().CONFIG.Misc.FOVConnection:Disconnect()
+                getgenv().CONFIG.Misc.FOVConnection = nil
+            end
+            getgenv().CONFIG.Misc.FOVConnection = RunService.RenderStepped:Connect(function()
+                workspace.CurrentCamera.FieldOfView = 120
+            end)
+        else
+            if getgenv().CONFIG.Misc.FOVConnection then
+                getgenv().CONFIG.Misc.FOVConnection:Disconnect()
+                getgenv().CONFIG.Misc.FOVConnection = nil
+            end
+        end
+    end
+})
+
+local hideHeadToggle = visualSection:new_toggle({
+    name = "Hide Head",
+    state = false,
+    flag = "misc_hidehead",
+    callback = function(state)
+        getgenv().CONFIG.Misc.HideHeadEnabled = state
+        if state then
+            hideHead()
+        else
+            showHead()
+        end
+    end
+})
+
+local otherSection = miscPage:new_section({
+    name = "Other",
+    side = "left",
+    size = 200
+})
+
+local infStaminaToggle = otherSection:new_toggle({
+    name = "Inf Stamina",
+    state = false,
+    flag = "misc_infstamina",
+    callback = function(state)
+        getgenv().CONFIG.Misc.InfStaminaEnabled = state
+        if state then
+            enableInfStamina()
+        else
+            disableInfStamina()
+        end
+    end
+})
+
+local noFallToggle = otherSection:new_toggle({
+    name = "No Fall Damage",
+    state = false,
+    flag = "misc_nofall",
+    callback = function(state)
+        getgenv().CONFIG.Misc.NoFallDmgEnabled = state
+        if state then
+            enableNoFallDmg()
+        else
+            disableNoFallDmg()
+        end
+    end
+})
+
+local listsPage = window:new_page({
+    name = "Lists"
+})
+
+local targetListSection = listsPage:new_section({
+    name = "Target List",
+    side = "left",
+    size = 250
+})
+
+local targetListTextbox = targetListSection:new_textbox({
+    name = "Add to Target List",
+    placeholder = "player name",
+    default = "",
+    flag = "targetlist_add",
+    callback = function(text)
+        if text and text ~= "" then 
+            table.insert(getgenv().Lists.TargetList, text)
+        end
+    end
+})
+
+local clearTargetListButton = targetListSection:new_button({
+    name = "Clear Target List",
+    callback = function()
+        getgenv().Lists.TargetList = {}
+    end
+})
+
+local whitelistSection = listsPage:new_section({
+    name = "Whitelist",
+    side = "right",
+    size = 250
+})
+
+local whitelistTextbox = whitelistSection:new_textbox({
+    name = "Add to Whitelist",
+    placeholder = "player name",
+    default = "",
+    flag = "whitelist_add",
+    callback = function(text)
+        if text and text ~= "" then 
+            table.insert(getgenv().Lists.Whitelist, text)
+        end
+    end
+})
+
+local clearWhitelistButton = whitelistSection:new_button({
+    name = "Clear Whitelist",
+    callback = function()
+        getgenv().Lists.Whitelist = {}
+    end
+})
+
+local controlsSection = listsPage:new_section({
+    name = "Controls",
+    side = "left",
+    size = 200
+})
+
+local useTargetListToggle = controlsSection:new_toggle({
+    name = "Use Target List",
+    state = false,
+    flag = "lists_usetargetlist",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.UseTargetList = state
+    end
+})
+
+local useWhitelistToggle = controlsSection:new_toggle({
+    name = "Use Whitelist",
+    state = false,
+    flag = "lists_usewhitelist",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.UseWhitelist = state
+    end
+})
+
+local configPage = window:new_page({
+    name = "Configuration"
+})
+
+local saveSection = configPage:new_section({
+    name = "Save/Load",
+    side = "left",
+    size = 250
+})
+
+local saveConfigButton = saveSection:new_button({
+    name = "Save Config",
+    callback = function()
+        if writefile then
+            local allConfigs = {}
+            
+            local genv = getgenv()
+            for key, value in pairs(genv) do
+                if type(value) == "table" then
+                    allConfigs[key] = value
+                elseif type(value) == "Color3" then
+                    allConfigs[key] = {R = value.R, G = value.G, B = value.B, __type = "Color3"}
+                else
+                    allConfigs[key] = value
+                end
+            end
+            
+            writefile("aui_config.json", game:GetService("HttpService"):JSONEncode(allConfigs))
+            warn("Configuration saved!")
+        else
+            warn("Writefile not supported")
+        end
+    end
+})
+
+local loadConfigButton = saveSection:new_button({
+    name = "Load Config",
+    callback = function()
+        if readfile and isfile and isfile("aui_config.json") then
+            local success, data = pcall(function()
+                return game:GetService("HttpService"):JSONDecode(readfile("aui_config.json"))
+            end)
+            
+            if success and data then
+                for key, value in pairs(data) do
+                    if type(value) == "table" and value.__type == "Color3" then
+                        getgenv()[key] = Color3.fromRGB(value.R, value.G, value.B)
+                    else
+                        getgenv()[key] = value
+                    end
+                end
+                warn("Configuration loaded!")
+            else
+                warn("Failed to load config")
+            end
+        else
+            warn("Config file not found")
+        end
+    end
+})
+
+local resetConfigButton = saveSection:new_button({
+    name = "Reset to Default",
+    callback = function()
+        getgenv().CONFIG = {
+            Ragebot = {
+                Enabled = false,
+                RapidFire = false,
+                FireRate = 30,
+                Prediction = true,
+                PredictionAmount = 0.12,
+                TeamCheck = false,
+                VisibilityCheck = true,
+                FOV = 120,
+                ShowFOV = true,
+                Wallbang = true,
+                Tracers = true,
+                TracerColor = Color3.fromRGB(255, 0, 0),
+                TracerWidth = 1,
+                TracerLifetime = 3,
+                ShootRange = 15,
+                HitRange = 15,
+                HitNotify = true,
+                AutoReload = true,
+                HitSound = true,
+                HitColor = Color3.fromRGB(255, 182, 193),
+                UseTargetList = false,
+                UseWhitelist = false,
+                HitNotifyDuration = 5,
+                LowHealthCheck = false,
+                SelectedHitSound = "skeet",
+                FriendCheck = false,
+                MaxTarget = 0
+            },
+            Misc = {
+                SpeedEnabled = false,
+                SpeedValue = 50,
+                JumpPowerEnabled = false,
+                JumpPowerValue = 100,
+                LoopFOVEnabled = false,
+                HideHeadEnabled = false,
+                InfStaminaEnabled = false,
+                NoFallDmgEnabled = false,
+                SpeedConnection = nil,
+                FOVConnection = nil,
+                JumpPowerConnection = nil,
+                NoFallHook = nil,
+                InfStaminaHook = nil
+            }
+        }
+        
+        getgenv().Lists = {
+            TargetList = {},
+            Whitelist = {}
+        }
+        
+        warn("Configuration reset to default!")
+    end
+})
+local manageSection = configPage:new_section({
+    name = "Manage",
+    side = "right",
+    size = 250
+})
+
+local configNameTextbox = manageSection:new_textbox({
+    name = "Config Name",
+    placeholder = "enter config name",
+    default = "",
+    flag = "config_name",
+    callback = function(text)
+        getgenv().currentConfigName = text
+    end
+})
+
+local savePresetButton = manageSection:new_button({
+    name = "Save as Preset",
+    callback = function()
+        if writefile and getgenv().currentConfigName then
+            local name = getgenv().currentConfigName
+            if name ~= "" then
+                local allConfigs = {}
+                
+                local genv = getgenv()
+                for key, value in pairs(genv) do
+                    if type(value) == "table" then
+                        allConfigs[key] = value
+                    elseif type(value) == "Color3" then
+                        allConfigs[key] = {R = value.R, G = value.G, B = value.B, __type = "Color3"}
+                    else
+                        allConfigs[key] = value
+                    end
+                end
+                
+                writefile("aui_preset_" .. name .. ".json", game:GetService("HttpService"):JSONEncode(allConfigs))
+                warn("Preset saved as: " .. name)
+            end
+        end
+    end
+})
+
+local deletePresetButton = manageSection:new_button({
+    name = "Delete Preset",
+    callback = function()
+        if delfile and getgenv().currentConfigName then
+            local name = getgenv().currentConfigName
+            if name ~= "" then
+                local filename = "aui_preset_" .. name .. ".json"
+                if isfile(filename) then
+                    delfile(filename)
+                    warn("Preset deleted: " .. name)
+                end
+            end
+        end
+    end
+})
+
+local listSection = configPage:new_section({
+    name = "Presets List",
+    side = "left",
+    size = 200
+})
+
+local refreshPresetsButton = listSection:new_button({
+    name = "Refresh Presets",
+    callback = function()
+        if isfile then
+            for _, file in pairs(listfiles("")) do
+                if file:find("aui_preset_") and file:find("%.json$") then
+                    local name = file:match("aui_preset_(.+)%.json")
+                    local loadPresetButton = listSection:new_button({
+                        name = name,
+                        callback = function()
+                            if readfile then
+                                local success, data = pcall(function()
+                                    return game:GetService("HttpService"):JSONDecode(readfile(file))
+                                end)
+                                
+                                if success and data then
+                                    for key, value in pairs(data) do
+                                        if type(value) == "table" and value.__type == "Color3" then
+                                            getgenv()[key] = Color3.fromRGB(value.R, value.G, value.B)
+                                        else
+                                            getgenv()[key] = value
+                                        end
+                                    end
+                                    warn("Preset loaded: " .. name)
+                                end
+                            end
+                        end
+                    })
+                end
+            end
+        end
+    end
+})
