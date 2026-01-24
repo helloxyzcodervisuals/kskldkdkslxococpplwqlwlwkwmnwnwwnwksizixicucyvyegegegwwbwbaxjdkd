@@ -1852,7 +1852,7 @@ local function loadRagebot()
         fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     end)
 end
-
+--[[
 local function loadMisc()
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
@@ -2035,9 +2035,739 @@ local function loadMisc()
         if getgenv().CONFIG.Misc.InfStaminaHook then getgenv().CONFIG.Misc.InfStaminaHook = nil end
     end
 end
+--]]
+local function loadMisc()
+    local Players = game:GetService("Players")
+    local RunService = game:GetService("RunService")
+    local LocalPlayer = Players.LocalPlayer
+    local Workspace = game:GetService("Workspace")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local CoreGui = game:GetService("CoreGui")
 
+    local QuickUIFrame = Instance.new("Frame")
+    QuickUIFrame.Name = "QuickUIFrame"
+    QuickUIFrame.Size = UDim2.new(0, 80, 0, 30)
+    QuickUIFrame.Position = UDim2.new(0, 10, 0, 50)
+    QuickUIFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    QuickUIFrame.BackgroundTransparency = 0.5
+    QuickUIFrame.BorderSizePixel = 0
+
+    local QuickUIText = Instance.new("TextButton")
+    QuickUIText.Name = "QuickUIText"
+    QuickUIText.Size = UDim2.new(1, 0, 1, 0)
+    QuickUIText.BackgroundTransparency = 1
+    QuickUIText.Text = "FLY OFF"
+    QuickUIText.TextColor3 = Color3.fromRGB(255, 50, 50)
+    QuickUIText.Font = Enum.Font.GothamBold
+    QuickUIText.TextSize = 12
+    QuickUIText.Parent = QuickUIFrame
+
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "QuickUIScreen"
+    ScreenGui.Parent = CoreGui
+    QuickUIFrame.Parent = ScreenGui
+
+    local speedEnabled = false
+    local speedConnection = nil
+
+    local function enableSpeed()
+        if speedConnection then
+            speedConnection:Disconnect()
+            speedConnection = nil
+        end
+
+        speedConnection = RunService.RenderStepped:Connect(function()
+            local character = LocalPlayer.Character
+            if not character then return end
+            local humanoid = character:FindFirstChild("Humanoid")
+            if not humanoid then return end
+            humanoid.WalkSpeed = getgenv().CONFIG.Misc.SpeedValue
+        end)
+    end
+
+    local function disableSpeed()
+        if speedConnection then
+            speedConnection:Disconnect()
+            speedConnection = nil
+        end
+
+        local character = LocalPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChild("Humanoid")
+            if humanoid then humanoid.WalkSpeed = 16 end
+        end
+    end
+
+    local jumpPowerEnabled = false
+    local jumpPowerConnection = nil
+
+    local function enableJumpPower()
+        if jumpPowerConnection then
+            jumpPowerConnection:Disconnect()
+            jumpPowerConnection = nil
+        end
+        
+        jumpPowerConnection = RunService.Heartbeat:Connect(function()
+            if not jumpPowerEnabled then return end
+            if not LocalPlayer.Character then return end
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if not humanoid then return end
+            local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            if humanoid:GetState() == Enum.HumanoidStateType.Jumping then
+                hrp.Velocity = Vector3.new(hrp.Velocity.X, getgenv().CONFIG.Misc.JumpPowerValue, hrp.Velocity.Z)
+            end
+        end)
+    end
+
+    local function disableJumpPower()
+        if jumpPowerConnection then
+            jumpPowerConnection:Disconnect()
+            jumpPowerConnection = nil
+        end
+    end
+
+    local loopFOVEnabled = false
+    local fovConnection = nil
+
+    local function enableLoopFOV()
+        if fovConnection then
+            fovConnection:Disconnect()
+            fovConnection = nil
+        end
+        
+        fovConnection = RunService.RenderStepped:Connect(function()
+            workspace.CurrentCamera.FieldOfView = 120
+        end)
+    end
+
+    local function disableLoopFOV()
+        if fovConnection then
+            fovConnection:Disconnect()
+            fovConnection = nil
+        end
+    end
+
+    local hideHeadEnabled = false
+    local char = nil
+    local torso = nil
+    local originalMotor6Ds = {}
+    local renderConnection = nil
+    local originalHook = nil
+
+    local function hideHead()
+        if not LocalPlayer.Character then return end
+        
+        char = LocalPlayer.Character
+        torso = char:FindFirstChild("Torso")
+        
+        if not torso then return end
+        
+        originalMotor6Ds = {}
+        for _, motor in pairs(char:GetDescendants()) do
+            if motor:IsA("Motor6D") then
+                originalMotor6Ds[motor] = {
+                    Part0 = motor.Part0,
+                    Part1 = motor.Part1,
+                    C0 = motor.C0,
+                    C1 = motor.C1
+                }
+            end
+        end
+        
+        hideHeadEnabled = true
+        
+        if not originalHook then
+            originalHook = hookmetamethod(game, "__namecall", function(self, ...)
+                local methodName = getnamecallmethod()
+                
+                if tostring(methodName) == "FireServer" then
+                    if self.Name == "MOVZREP" then
+                        local fixedArguments = {
+                            {
+                                {
+                                    Vector3.new(-5721.2001953125, -5, 971.5162353515625),
+                                    Vector3.new(-4181.38818359375, -6, 11.123311996459961),
+                                    Vector3.new(0.006237113382667303, -6, -0.18136750161647797),
+                                    true,
+                                    true,
+                                    true,
+                                    false
+                                },
+                                false,
+                                false,
+                                15.8
+                            }
+                        }
+                        
+                        return originalHook(self, table.unpack(fixedArguments))
+                    end
+                end
+                
+                return originalHook(self, ...)
+            end)
+        end
+        
+        if renderConnection then
+            renderConnection:Disconnect()
+        end
+        
+        renderConnection = RunService.RenderStepped:Connect(function()
+            if torso and torso.Parent then
+                for motor, originalData in pairs(originalMotor6Ds) do
+                    if motor and motor.Parent then
+                        motor.C0 = originalData.C0
+                        motor.C1 = originalData.C1
+                    end
+                end
+            else
+                if renderConnection then
+                    renderConnection:Disconnect()
+                    renderConnection = nil
+                end
+            end
+        end)
+    end
+
+    local function showHead()
+        if renderConnection then
+            renderConnection:Disconnect()
+            renderConnection = nil
+        end
+        
+        hideHeadEnabled = false
+        
+        if originalHook then
+            hookmetamethod(game, "__namecall", originalHook)
+            originalHook = nil
+        end
+        
+        if char then
+            for motor, originalData in pairs(originalMotor6Ds) do
+                if motor and motor.Parent then
+                    motor.Part0 = originalData.Part0
+                    motor.Part1 = originalData.Part1
+                    motor.C0 = originalData.C0
+                    motor.C1 = originalData.C1
+                end
+            end
+        end
+        
+        originalMotor6Ds = {}
+        char = nil
+        torso = nil
+    end
+
+    local noFallHook = nil
+
+    local function enableNoFallDmg()
+        if noFallHook then return end
+        noFallHook = hookmetamethod(game, "__namecall", function(self, ...)
+            local args = { ... }
+            if getnamecallmethod() == "FireServer" and not checkcaller() and args[1] == "FlllD" and args[4] == false then
+                args[2] = 0
+                args[3] = 0
+            end
+            return noFallHook(self, unpack(args))
+        end)
+    end
+
+    local function disableNoFallDmg()
+        if noFallHook then
+            hookmetamethod(game, "__namecall", noFallHook)
+            noFallHook = nil
+        end
+    end
+
+    local infStaminaHook = nil
+
+    local function enableInfStamina()
+        if infStaminaHook then return end
+        
+        local module
+        for i, v in pairs(game:GetService("StarterPlayer").StarterPlayerScripts:GetDescendants()) do
+            if v:IsA("ModuleScript") and v.Name == "XIIX" then module = v break end
+        end
+        if module then
+            module = require(module)
+            local ac = module["XIIX"]
+            local glob = getfenv(ac)["_G"]
+            local stamina = getupvalues((getupvalues(glob["S_Check"]))[2])[1]
+            if stamina ~= nil then
+                infStaminaHook = hookfunction(stamina, function() return 100, 100 end)
+            end
+        end
+    end
+
+    local function disableInfStamina()
+        if infStaminaHook then
+            hookfunction(stamina, infStaminaHook)
+            infStaminaHook = nil
+        end
+    end
+
+    local lockpickEnabled = false
+    local lockpickAddedConnection = nil
+
+    local function enableLockpick()
+        lockpickEnabled = true
+        
+        local PlayerGui = LocalPlayer:FindFirstChild("PlayerGui")
+        if not PlayerGui then return end
+        
+        local function lockpick(gui)
+            for _, a in pairs(gui:GetDescendants()) do
+                if a:IsA("ImageLabel") and a.Name == "Bar" and a.Parent.Name ~= "Attempts" then
+                    local oldsize = a.Size
+                    RunService.RenderStepped:Connect(function()
+                        if lockpickEnabled then
+                            a.Size = UDim2.new(0, 280, 0, 280)
+                        else
+                            a.Size = oldsize
+                        end
+                    end)
+                end
+            end
+        end
+        
+        if lockpickAddedConnection then
+            lockpickAddedConnection:Disconnect()
+        end
+        
+        lockpickAddedConnection = PlayerGui.ChildAdded:Connect(function(child)
+            if child:IsA("ScreenGui") and child.Name == "LockpickGUI" then
+                lockpick(child)
+            end
+        end)
+        
+        for _, child in pairs(PlayerGui:GetChildren()) do
+            if child:IsA("ScreenGui") and child.Name == "LockpickGUI" then
+                lockpick(child)
+            end
+        end
+    end
+
+    local function disableLockpick()
+        lockpickEnabled = false
+        if lockpickAddedConnection then
+            lockpickAddedConnection:Disconnect()
+            lockpickAddedConnection = nil
+        end
+    end
+
+    local SafeESP = {
+        Enabled = false,
+        Safes = {},
+        Visuals = {}
+    }
+
+    local function addSafeESP(model)
+        if not model or not model.Parent then return end
+        
+        local highlight = Instance.new("Highlight")
+        highlight.FillColor = Color3.fromRGB(255, 215, 0)
+        highlight.FillTransparency = 0.7
+        highlight.OutlineColor = Color3.fromRGB(255, 140, 0)
+        highlight.OutlineTransparency = 0
+        highlight.Adornee = model
+        highlight.Parent = model
+        
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "SafeESP"
+        billboard.Adornee = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+        billboard.Size = UDim2.new(0, 200, 0, 50)
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.AlwaysOnTop = true
+        billboard.MaxDistance = 100
+        
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+        textLabel.TextSize = 14
+        textLabel.FontFace = Font.new("rbxassetid://12187371840")
+        textLabel.TextStrokeTransparency = 0.5
+        textLabel.Text = model.Name
+        
+        local distanceLabel = Instance.new("TextLabel")
+        distanceLabel.Size = UDim2.new(1, 0, 0, 20)
+        distanceLabel.Position = UDim2.new(0, 0, 0, 20)
+        distanceLabel.BackgroundTransparency = 1
+        distanceLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        distanceLabel.TextSize = 12
+        distanceLabel.FontFace = Font.new("rbxassetid://12187371840")
+        distanceLabel.TextStrokeTransparency = 0.5
+        
+        textLabel.Parent = billboard
+        distanceLabel.Parent = billboard
+        billboard.Parent = model
+        
+        SafeESP.Safes[model] = true
+        SafeESP.Visuals[model] = {highlight = highlight, billboard = billboard, textLabel = textLabel, distanceLabel = distanceLabel}
+        
+        RunService.Heartbeat:Connect(function()
+            if not SafeESP.Enabled or not model.Parent then
+                highlight:Destroy()
+                billboard:Destroy()
+                SafeESP.Safes[model] = nil
+                SafeESP.Visuals[model] = nil
+                return
+            end
+            
+            if LocalPlayer and LocalPlayer.Character then
+                local humanoidRootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if humanoidRootPart and billboard.Adornee then
+                    local distance = (humanoidRootPart.Position - billboard.Adornee.Position).Magnitude
+                    distanceLabel.Text = string.format("%d studs", math.floor(distance))
+                    billboard.Enabled = distance <= 100
+                end
+            end
+        end)
+    end
+
+    local function scanWorkspace()
+        for _, item in pairs(Workspace:GetDescendants()) do
+            if item:IsA("Model") then
+                local itemName = item.Name:lower()
+                if itemName:find("mediumsafe") or itemName:find("smallsafe") then
+                    if not SafeESP.Safes[item] then
+                        addSafeESP(item)
+                    end
+                end
+            end
+        end
+    end
+
+    local safeColor = Color3.fromRGB(255, 215, 0)
+
+    local function enableSafeESP(value)
+        SafeESP.Enabled = value
+        
+        if value then
+            scanWorkspace()
+            
+            Workspace.DescendantAdded:Connect(function(item)
+                if item:IsA("Model") then
+                    local itemName = item.Name:lower()
+                    if itemName:find("mediumsafe") or itemName:find("smallsafe") then
+                        task.wait(0.1)
+                        addSafeESP(item)
+                    end
+                end
+            end)
+        else
+            for model, visuals in pairs(SafeESP.Visuals) do
+                if visuals.highlight then visuals.highlight:Destroy() end
+                if visuals.billboard then visuals.billboard:Destroy() end
+            end
+            SafeESP.Safes = {}
+            SafeESP.Visuals = {}
+        end
+    end
+
+    local function updateSafeColor(color)
+        safeColor = color
+        for model, visuals in pairs(SafeESP.Visuals) do
+            if visuals.highlight then
+                visuals.highlight.FillColor = color
+            end
+            if visuals.textLabel then
+                visuals.textLabel.TextColor3 = color
+            end
+        end
+    end
+
+    local instantPromptEnabled = false
+    local instantPromptConnection = nil
+
+    local function enableInstantPrompt()
+        instantPromptEnabled = true
+        
+        for _, obj in pairs(game:GetDescendants()) do
+            if obj:IsA("ProximityPrompt") then
+                obj.HoldDuration = 0
+            end
+        end
+        
+        if instantPromptConnection then
+            instantPromptConnection:Disconnect()
+        end
+        
+        instantPromptConnection = game.DescendantAdded:Connect(function(obj)
+            if obj:IsA("ProximityPrompt") then
+                task.wait()
+                obj.HoldDuration = 0
+            end
+        end)
+    end
+
+    local function disableInstantPrompt()
+        instantPromptEnabled = false
+        
+        if instantPromptConnection then
+            instantPromptConnection:Disconnect()
+            instantPromptConnection = nil
+        end
+        
+        for _, obj in pairs(game:GetDescendants()) do
+            if obj:IsA("ProximityPrompt") then
+                obj.HoldDuration = 1
+            end
+        end
+    end
+
+    local autoDoorEnabled = false
+    local doorConnection = nil
+
+    local function enableAutoDoor()
+        autoDoorEnabled = true
+        
+        if doorConnection then
+            doorConnection:Disconnect()
+        end
+        
+        doorConnection = RunService.Heartbeat:Connect(function()
+            if not LocalPlayer.Character then return end
+            local charRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not charRoot then return end
+            
+            local Map = Workspace:FindFirstChild("Map")
+            if not Map then return end
+            local Doors = Map:FindFirstChild("Doors")
+            if not Doors then return end
+            
+            local closestDoor = nil
+            local closestDistance = 15
+            
+            for _, door in pairs(Doors:GetChildren()) do
+                local knob = door:FindFirstChild("Knob1") or door:FindFirstChild("Knob2")
+                if knob then
+                    local distance = (knob.Position - charRoot.Position).Magnitude
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestDoor = door
+                    end
+                end
+            end
+            
+            if closestDoor then
+                local knob = closestDoor:FindFirstChild("Knob1") or closestDoor:FindFirstChild("Knob2")
+                local events = closestDoor:FindFirstChild("Events")
+                local toggleEvent = events and events:FindFirstChild("Toggle")
+                
+                if knob and toggleEvent then
+                    local args = {"Open", knob}
+                    toggleEvent:FireServer(unpack(args))
+                end
+            end
+        end)
+    end
+
+    local function disableAutoDoor()
+        autoDoorEnabled = false
+        if doorConnection then
+            doorConnection:Disconnect()
+            doorConnection = nil
+        end
+    end
+
+    local flyEnabled = false
+    local flySpeed = 50
+    local flyConnection = nil
+
+    local function startFlying()
+        local Char = LocalPlayer.Character
+        if not Char then return end
+        
+        local Hum = Char:FindFirstChildOfClass("Humanoid")
+        local Root = Char:FindFirstChild("HumanoidRootPart")
+        if not Hum or not Root then return end
+        
+        local RagdollEvent = ReplicatedStorage:WaitForChild("Events"):WaitForChild("__RZDONL")
+        RagdollEvent:FireServer("__---r", Vector3.zero, CFrame.new(-4574, 3, -443, 0, 0, 1, 0, 1, 0, -1, 0, 0), false)
+        
+        for _, child in ipairs(Char:GetDescendants()) do
+            if child:IsA("Motor6D") then
+                child.Enabled = false
+            end
+        end
+        
+        Hum.PlatformStand = true
+        Hum:ChangeState(Enum.HumanoidStateType.Freefall)
+        
+        local flyMotors = {}
+        for _, part in ipairs(Char:GetDescendants()) do
+            if part:IsA("BasePart") and part ~= Root then
+                local motor = Instance.new("Motor6D")
+                motor.Name = "FlyMotor"
+                motor.Part0 = Root
+                motor.Part1 = part
+                motor.C1 = CFrame.new()
+                motor.C0 = Root.CFrame:ToObjectSpace(part.CFrame)
+                motor.Parent = part
+                table.insert(flyMotors, motor)
+            end
+        end
+        
+        flyConnection = RunService.Heartbeat:Connect(function()
+            if not flyEnabled then
+                if flyConnection then
+                    flyConnection:Disconnect()
+                    flyConnection = nil
+                end
+                Hum.PlatformStand = false
+                Root.Velocity = Vector3.new(0, 0, 0)
+                Hum:ChangeState(Enum.HumanoidStateType.Running)
+                RagdollEvent:FireServer("__---r", Vector3.zero, CFrame.new(-4574, 3, -443, 0, 0, 1, 0, 1, 0, -1, 0, 0), true)
+                
+                for _, motor in ipairs(flyMotors) do
+                    motor:Destroy()
+                end
+                
+                for _, child in ipairs(Char:GetDescendants()) do
+                    if child:IsA("Motor6D") and child.Name ~= "FlyMotor" then
+                        child.Enabled = true
+                    end
+                end
+                
+                return
+            end
+            
+            local Cam = Workspace.CurrentCamera
+            if not Cam then return end
+            
+            local cameraLook = Cam.CFrame.LookVector
+            local IsMoving = Hum.MoveDirection.Magnitude > 0
+            
+            local targetLook = Vector3.new(cameraLook.X, cameraLook.Y, cameraLook.Z)
+            if targetLook.Magnitude > 0 then
+                targetLook = targetLook.Unit
+                Root.CFrame = CFrame.new(Root.Position, Root.Position + targetLook)
+            end
+            
+            if IsMoving then
+                local moveVector = Vector3.new(cameraLook.X, cameraLook.Y, cameraLook.Z).Unit
+                Root.Velocity = moveVector * flySpeed
+                RagdollEvent:FireServer("__---r", Vector3.zero, CFrame.new(-4574, 3, -443, 0, 0, 1, 0, 1, 0, -1, 0, 0), false)
+            else
+                Root.Velocity = Vector3.new(0, 0, 0)
+            end
+        end)
+    end
+
+    local function disableFlying()
+        flyEnabled = false
+    end
+
+    QuickUIText.MouseButton1Click:Connect(function()
+        flyEnabled = not flyEnabled
+        if flyEnabled then
+            QuickUIText.Text = "FLY ON"
+            QuickUIText.TextColor3 = Color3.fromRGB(50, 255, 50)
+            startFlying()
+        else
+            QuickUIText.Text = "FLY OFF"
+            QuickUIText.TextColor3 = Color3.fromRGB(255, 50, 50)
+            disableFlying()
+        end
+    end)
+
+    return {
+        toggleSpeed = function(state)
+            speedEnabled = state
+            if state then
+                enableSpeed()
+            else
+                disableSpeed()
+            end
+        end,
+        toggleJumpPower = function(state)
+            jumpPowerEnabled = state
+            if state then
+                enableJumpPower()
+            else
+                disableJumpPower()
+            end
+        end,
+        toggleLoopFOV = function(state)
+            loopFOVEnabled = state
+            if state then
+                enableLoopFOV()
+            else
+                disableLoopFOV()
+            end
+        end,
+        toggleHideHead = function(state)
+            getgenv().CONFIG.Misc.HideHeadEnabled = state
+            if state then
+                hideHead()
+            else
+                showHead()
+            end
+        end,
+        toggleInfStamina = function(state)
+            getgenv().CONFIG.Misc.InfStaminaEnabled = state
+            if state then
+                enableInfStamina()
+            else
+                disableInfStamina()
+            end
+        end,
+        toggleNoFall = function(state)
+            getgenv().CONFIG.Misc.NoFallDmgEnabled = state
+            if state then
+                enableNoFallDmg()
+            else
+                disableNoFallDmg()
+            end
+        end,
+        toggleLockpick = function(state)
+            if state then
+                enableLockpick()
+            else
+                disableLockpick()
+            end
+        end,
+        toggleSafeESP = function(state)
+            enableSafeESP(state)
+        end,
+        updateSafeColor = updateSafeColor,
+        toggleInstantPrompt = function(state)
+            if state then
+                enableInstantPrompt()
+            else
+                disableInstantPrompt()
+            end
+        end,
+        toggleAutoDoor = function(state)
+            if state then
+                enableAutoDoor()
+            else
+                disableAutoDoor()
+            end
+        end,
+        toggleFly = function(state)
+            flyEnabled = state
+            if state then
+                QuickUIText.Text = "FLY ON"
+                QuickUIText.TextColor3 = Color3.fromRGB(50, 255, 50)
+                startFlying()
+            else
+                QuickUIText.Text = "FLY OFF"
+                QuickUIText.TextColor3 = Color3.fromRGB(255, 50, 50)
+                disableFlying()
+            end
+        end,
+        setFlySpeed = function(value) flySpeed = value end,
+        setSpeedValue = function(value) getgenv().CONFIG.Misc.SpeedValue = value end,
+        setJumpValue = function(value) getgenv().CONFIG.Misc.JumpPowerValue = value end
+    }
+end
+
+local misc = loadMisc()
 loadRagebot()
-loadMisc()
+
+
 local ragebotToggle = ragebotMainSection:new_toggle({
     name = "Enable Ragebot",
     state = false,
@@ -2313,7 +3043,7 @@ local hitDurationSlider = colorsSection:new_slider({
         getgenv().CONFIG.Ragebot.HitNotifyDuration = value
     end
 })
-
+--[[
 local miscPage = window:new_page({
     name = "Miscellaneous"
 })
@@ -2487,7 +3217,177 @@ local noFallToggle = otherSection:new_toggle({
         end
     end
 })
+--]]
+local miscPage = window:new_page({
+    name = "Miscellaneous"
+})
 
+local movementSection = miscPage:new_section({
+    name = "Movement",
+    side = "left",
+    size = 250
+})
+
+local speedToggle = movementSection:new_toggle({
+    name = "Speed",
+    state = false,
+    flag = "misc_speed",
+    callback = function(state)
+        misc.toggleSpeed(state)
+    end
+})
+
+local speedValueSlider = movementSection:new_slider({
+    name = "Speed Value",
+    min = 10,
+    max = 200,
+    default = 50,
+    text = "[value]",
+    flag = "misc_speedvalue",
+    callback = function(value)
+        misc.setSpeedValue(value)
+    end
+})
+
+local jumpPowerToggle = movementSection:new_toggle({
+    name = "Jump Power",
+    state = false,
+    flag = "misc_jumppower",
+    callback = function(state)
+        misc.toggleJumpPower(state)
+    end
+})
+
+local jumpPowerSlider = movementSection:new_slider({
+    name = "Jump Power Value",
+    min = 50,
+    max = 300,
+    default = 100,
+    text = "[value]",
+    flag = "misc_jumpvalue",
+    callback = function(value)
+        misc.setJumpValue(value)
+    end
+})
+
+local visualSection = miscPage:new_section({
+    name = "Visual",
+    side = "right",
+    size = 250
+})
+
+local loopFovToggle = visualSection:new_toggle({
+    name = "Loop FOV",
+    state = false,
+    flag = "misc_loopfov",
+    callback = function(state)
+        misc.toggleLoopFOV(state)
+    end
+})
+
+local hideHeadToggle = visualSection:new_toggle({
+    name = "Hide Head",
+    state = false,
+    flag = "misc_hidehead",
+    callback = function(state)
+        misc.toggleHideHead(state)
+    end
+})
+
+local otherSection = miscPage:new_section({
+    name = "Other",
+    side = "left",
+    size = 200
+})
+
+local infStaminaToggle = otherSection:new_toggle({
+    name = "Inf Stamina",
+    state = false,
+    flag = "misc_infstamina",
+    callback = function(state)
+        misc.toggleInfStamina(state)
+    end
+})
+
+local noFallToggle = otherSection:new_toggle({
+    name = "No Fall Damage",
+    state = false,
+    flag = "misc_nofall",
+    callback = function(state)
+        misc.toggleNoFall(state)
+    end
+})
+
+local lockpickToggle = otherSection:new_toggle({
+    name = "No Fail Lockpick",
+    state = false,
+    flag = "misc_lockpick",
+    callback = function(state)
+        misc.toggleLockpick(state)
+    end
+})
+
+local instantPromptToggle = otherSection:new_toggle({
+    name = "Instant Prompt",
+    state = false,
+    flag = "misc_instantprompt",
+    callback = function(state)
+        misc.toggleInstantPrompt(state)
+    end
+})
+
+local autoDoorToggle = otherSection:new_toggle({
+    name = "Auto Door",
+    state = false,
+    flag = "misc_autodoor",
+    callback = function(state)
+        misc.toggleAutoDoor(state)
+    end
+})
+
+local flyToggle = movementSection:new_toggle({
+    name = "Fly",
+    state = false,
+    flag = "misc_fly",
+    callback = function(state)
+        misc.toggleFly(state)
+    end
+})
+
+local flySpeedSlider = movementSection:new_slider({
+    name = "Fly Speed",
+    min = 10,
+    max = 200,
+    default = 50,
+    text = "[value]",
+    flag = "misc_flyspeed",
+    callback = function(value)
+        misc.setFlySpeed(value)
+    end
+})
+
+local safeESPSection = miscPage:new_section({
+    name = "Safe ESP",
+    side = "right",
+    size = 200
+})
+
+local safeESPToggle = safeESPSection:new_toggle({
+    name = "Enable Safe ESP",
+    state = false,
+    flag = "misc_safeesp",
+    callback = function(state)
+        misc.toggleSafeESP(state)
+    end
+})
+
+local safeColorPicker = safeESPToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 215, 0),
+    flag = "misc_safecolor",
+    callback = function(color)
+        misc.updateSafeColor(color)
+    end
+})
 local listsPage = window:new_page({
     name = "Lists"
 })
