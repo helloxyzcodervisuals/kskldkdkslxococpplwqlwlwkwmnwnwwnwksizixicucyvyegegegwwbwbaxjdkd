@@ -1679,27 +1679,6 @@ function library:new_window(cfg)
     return window_tbl
 end
 
-local window=library:new_window({
-    size=Vector2.new(600,500)
-})
 
-local mainPage=window:new_page({
-    name="Main"
-})
-
-local combatSection=mainPage:new_section({
-    name="Combat",
-    side="left",
-    size=180
-})
-
-local aimbotToggle=combatSection:new_toggle({
-    name="Aimbot",
-    state=true,
-    flag="aimbot_enabled",
-    callback=function(state)
-        print("Aimbot:",state)
-    end
-})
 
 return library
