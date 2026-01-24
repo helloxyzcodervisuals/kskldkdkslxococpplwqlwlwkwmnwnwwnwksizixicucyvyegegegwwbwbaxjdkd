@@ -1481,33 +1481,47 @@ function library:new_window(cfg)
         
         table.insert(self.pages,page)
         
-        local left=utility.createFrame({
-            Name="Left",
-            Parent=page,
-            BackgroundTransparency=1,
-            Size=UDim2.new(0.5,-14,1,-10),
-            Position=UDim2.new(0,0,0,0),
-            BorderSizePixel=0
+        local left = utility.create("ScrollingFrame", {
+            Name = "Left",
+            Parent = page,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0.5, -14, 1, -10),
+            Position = UDim2.new(0, 0, 0, 0),
+            BorderSizePixel = 0,
+            ScrollBarThickness = 5,
+            ScrollBarImageTransparency = 0.3,
+            CanvasSize = UDim2.new(0, 0, 0, 0)
         })
+
+        local leftLayout = Instance.new("UIListLayout")
+        leftLayout.Parent = left
+        leftLayout.Padding = UDim.new(0, 15)
+        leftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+        leftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            left.CanvasSize = UDim2.new(0, 0, 0, leftLayout.AbsoluteContentSize.Y + 10)
+        end)
         
-        local leftLayout=Instance.new("UIListLayout")
-        leftLayout.Parent=left
-        leftLayout.Padding=UDim.new(0,15)
-        leftLayout.SortOrder=Enum.SortOrder.LayoutOrder
-        
-        local right=utility.createFrame({
-            Name="Right",
-            Parent=page,
-            BackgroundTransparency=1,
-            Size=UDim2.new(0.5,-14,1,-10),
-            Position=UDim2.new(0.5,14,0,0),
-            BorderSizePixel=0
+        local right = utility.create("ScrollingFrame", {
+            Name = "Right",
+            Parent = page,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0.5, -14, 1, -10),
+            Position = UDim2.new(0.5, 14, 0, 0),
+            BorderSizePixel = 0,
+            ScrollBarThickness = 5,
+            ScrollBarImageTransparency = 0.3,
+            CanvasSize = UDim2.new(0, 0, 0, 0)
         })
-        
-        local rightLayout=Instance.new("UIListLayout")
-        rightLayout.Parent=right
-        rightLayout.Padding=UDim.new(0,15)
-        rightLayout.SortOrder=Enum.SortOrder.LayoutOrder
+
+        local rightLayout = Instance.new("UIListLayout")
+        rightLayout.Parent = right
+        rightLayout.Padding = UDim.new(0, 15)
+        rightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+        rightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            right.CanvasSize = UDim2.new(0, 0, 0, rightLayout.AbsoluteContentSize.Y + 10)
+        end)
         
         page_button.MouseButton1Click:Connect(function()
             for i,v in next,self.page_buttons do
