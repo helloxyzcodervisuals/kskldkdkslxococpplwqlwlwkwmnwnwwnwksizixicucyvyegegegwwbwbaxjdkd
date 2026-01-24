@@ -587,11 +587,7 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         ZIndex = 9e9
     })
     
-    local outline2=utility.outline(window,library.theme["Section Inner Border"])
-    outline2.ZIndex = 9e9
     
-    local outline2_outer = utility.outline(outline2,library.theme["Section Outer Border"])
-    outline2_outer.ZIndex = 9e9
     
     local saturation=utility.createFrame({
         Name="Saturation",
@@ -603,8 +599,7 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         ZIndex = 9e9
     })
     
-    local saturation_outline = utility.outline(saturation,library.theme["Section Inner Border"])
-    saturation_outline.ZIndex = 9e9
+    
     
     local whiteGradient = Instance.new("UIGradient")
     whiteGradient.Color = ColorSequence.new{
