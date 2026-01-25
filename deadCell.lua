@@ -1410,7 +1410,7 @@ function library:new_window(cfg)
         Name="WindowDrag",
         Parent=window_outline,
         BackgroundTransparency=1,
-        Size=UDim2.new(1,0,1,0),
+        Size=UDim2.new(1,0,0,100),
         Position=UDim2.new(0,0,0,0),
         BorderSizePixel=0
     })
