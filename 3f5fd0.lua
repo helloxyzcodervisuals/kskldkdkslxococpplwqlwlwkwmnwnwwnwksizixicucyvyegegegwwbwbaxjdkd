@@ -27,7 +27,7 @@ do
         end
     end
 end
---2020.nilcvv
+
 for _, v in pairs(getgc(true)) do
 if type(v) == "table" then
 local func = rawget(v, "DTXC1")
@@ -4485,7 +4485,7 @@ local bulletTracerToggle = rightSection:new_toggle({
     end
 })
 
-local tracerColorPicker = rightSection:new_colorpicker({
+local tracerColorPicker = bulletTracerToggle:new_colorpicker({
     default = Color3.fromRGB(255, 50, 50),
     flag = "tracer_color",
     callback = function(color)
