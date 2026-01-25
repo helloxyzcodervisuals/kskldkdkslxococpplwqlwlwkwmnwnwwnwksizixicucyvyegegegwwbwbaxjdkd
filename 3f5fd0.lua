@@ -3273,6 +3273,275 @@ local bulletTrackToggle = legitPage:new_section({
     end
 })
 --]]
+getgenv().Legit = {
+    Enabled = false,
+    HeadChance = 30,
+    HitPart = "Torso",
+    NoRecoil = true,
+    AimAssist = false,
+    AimAssistStrength = 0.3,
+    Smoothing = 0.2
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+
+local silent_aim_active = false
+local aim_target = nil
+local aim_position = Vector3.new()
+
+local function get_closest_target()
+    local closest = nil
+    local closest_dist = math.huge
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        
+        local character = player.Character
+        if not character then continue end
+        
+        local humanoid = character:FindFirstChild("Humanoid")
+        local head = character:FindFirstChild("Head")
+        
+        if humanoid and humanoid.Health > 0 and head then
+            local dist = (head.Position - LocalPlayer.Character.Head.Position).Magnitude
+            
+            if dist < closest_dist then
+                closest_dist = dist
+                closest = player
+            end
+        end
+    end
+    
+    return closest
+end
+
+local function get_target_part(character)
+    local should_head = math.random(1, 100) <= getgenv().Legit.HeadChance
+    local part_name = should_head and "Head" or getgenv().Legit.HitPart
+    
+    local target_part = character:FindFirstChild(part_name)
+    if not target_part and part_name == "Head" then
+        target_part = character:FindFirstChild("Torso")
+    end
+    if not target_part then
+        target_part = character:FindFirstChild("HumanoidRootPart")
+    end
+    
+    return target_part
+end
+
+RunService.RenderStepped:Connect(function()
+    if not getgenv().Legit.Enabled then
+        silent_aim_active = false
+        aim_target = nil
+        return
+    end
+    
+    local target = get_closest_target()
+    
+    silent_aim_active = target and true or false
+    aim_target = target or nil
+    
+    if aim_target and aim_target.Character then
+        local character = aim_target.Character
+        local target_part = get_target_part(character)
+        
+        if target_part then
+            aim_position = target_part.Position
+        end
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    if not getgenv().Legit.AimAssist or not getgenv().Legit.Enabled or not aim_target or not aim_target.Character then
+        return
+    end
+    
+    local character = aim_target.Character
+    local target_part = get_target_part(character)
+    if not target_part then return end
+    
+    local screen_pos, on_screen = Camera:WorldToViewportPoint(target_part.Position)
+    
+    if on_screen then
+        local screen_center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        local target_screen_pos = Vector2.new(screen_pos.X, screen_pos.Y)
+        
+        local distance_to_center = (target_screen_pos - screen_center).Magnitude
+        
+        local max_screen_distance = 100
+        
+        if distance_to_center < max_screen_distance then
+            local strength = getgenv().Legit.AimAssistStrength * (1 - (distance_to_center / max_screen_distance))
+            local smoothing = getgenv().Legit.Smoothing
+            
+            local cam_pos = Camera.CFrame.Position
+            local target_look = CFrame.lookAt(cam_pos, aim_position)
+            
+            local current_look = Camera.CFrame
+            
+            local lerped = current_look:Lerp(target_look, strength * (1 - smoothing))
+            
+            Camera.CFrame = CFrame.new(lerped.Position, aim_position)
+        end
+    end
+end)
+
+local __namecall
+__namecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+    
+    if not checkcaller() and silent_aim_active and aim_target and self == Workspace and tostring(method) == "Raycast" then
+        local origin = args[1]
+        local direction = (aim_position - origin).Unit * 1000
+        args[2] = direction
+        return __namecall(self, unpack(args))
+    end
+    
+    return __namecall(self, ...)
+end)
+
+local function apply_no_recoil()
+    if not getgenv().Legit.NoRecoil then return end
+    
+    for _, config in pairs(getgc(true)) do
+        if type(config) == "table" and rawget(config, "Recoil") then
+            rawset(config, "Recoil", 0)
+            rawset(config, "RecoilSpeed", 0)
+            rawset(config, "AngleX_Min", 0)
+            rawset(config, "AngleX_Max", 0)
+            rawset(config, "AngleY_Min", 0)
+            rawset(config, "AngleY_Max", 0)
+        end
+    end
+    
+    for _, container in ipairs({LocalPlayer.Backpack, LocalPlayer.Character}) do
+        for _, tool in ipairs(container:GetChildren()) do
+            if tool:IsA("Tool") then
+                local config = tool:FindFirstChild("Config")
+                if config and config:IsA("ModuleScript") then
+                    local success, data = pcall(require, config)
+                    if success and type(data) == "table" then
+                        rawset(data, "Recoil", 0)
+                        rawset(data, "RecoilSpeed", 0)
+                        rawset(data, "AngleX_Min", 0)
+                        rawset(data, "AngleX_Max", 0)
+                        rawset(data, "AngleY_Min", 0)
+                        rawset(data, "AngleY_Max", 0)
+                    end
+                end
+            end
+        end
+    end
+end
+
+local legitPage = window:new_page({
+    name = "Legit"
+})
+
+local legitSection = legitPage:new_section({
+    name = "Legit Settings",
+    side = "left",
+    size = 250
+})
+
+local enableToggle = legitSection:new_toggle({
+    name = "Enable",
+    state = false,
+    flag = "legit_enable",
+    callback = function(state)
+        getgenv().Legit.Enabled = state
+    end
+})
+
+local headChanceSlider = legitSection:new_slider({
+    name = "Head Chance",
+    min = 0,
+    max = 100,
+    default = 30,
+    text = "[value]%",
+    flag = "legit_headchance",
+    callback = function(value)
+        getgenv().Legit.HeadChance = value
+    end
+})
+
+local hitPartList = legitSection:new_listbox({
+    name = "Hit Part",
+    options = {"Head", "Torso", "Neck", "Random"},
+    default = "Torso",
+    multiple = false,
+    flag = "legit_hitpart",
+    callback = function(selection)
+        getgenv().Legit.HitPart = selection
+    end
+})
+
+local noRecoilToggle = legitSection:new_toggle({
+    name = "No Recoil",
+    state = true,
+    flag = "legit_norecoil",
+    callback = function(state)
+        getgenv().Legit.NoRecoil = state
+        apply_no_recoil()
+    end
+})
+
+local aimAssistToggle = legitSection:new_toggle({
+    name = "Aim Assist",
+    state = false,
+    flag = "legit_aimassist",
+    callback = function(state)
+        getgenv().Legit.AimAssist = state
+    end
+})
+
+local assistStrengthSlider = legitSection:new_slider({
+    name = "Assist Strength",
+    min = 0.1,
+    max = 1.0,
+    default = 0.3,
+    float = 0.1,
+    text = "[value]",
+    flag = "legit_assiststrength",
+    callback = function(value)
+        getgenv().Legit.AimAssistStrength = value
+    end
+})
+
+local smoothingSlider = legitSection:new_slider({
+    name = "Smoothing",
+    min = 0.1,
+    max = 0.8,
+    default = 0.2,
+    float = 0.05,
+    text = "[value]",
+    flag = "legit_smoothing",
+    callback = function(value)
+        getgenv().Legit.Smoothing = value
+    end
+})
+
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    if getgenv().Legit.NoRecoil then
+        apply_no_recoil()
+    end
+end)
+
+LocalPlayer.Backpack.ChildAdded:Connect(function(tool)
+    task.wait(0.1)
+    if getgenv().Legit.NoRecoil then
+        apply_no_recoil()
+    end
+end)
+
+
 local ragebotToggle = ragebotMainSection:new_toggle({
     name = "Enable Ragebot",
     state = false,
