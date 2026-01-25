@@ -45,13 +45,11 @@ local function vc()
     writefile(v5,v19)
     return Font.fromEnum(Enum.Font.Code)
 end
---He
 local UI_FONT=vc()
 local HttpService=game:GetService("HttpService")
 
 local settings={
     folder_name="zephyrus",
-    --default_accent=Color3.fromRGB(61,100,227)
     default_accent=Color3.fromRGB(255, 182, 193)  -- Light Pink
 }
 
