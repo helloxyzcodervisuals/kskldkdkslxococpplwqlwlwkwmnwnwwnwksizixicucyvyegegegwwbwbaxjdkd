@@ -112,7 +112,7 @@ local ragebotPage = window:new_page({
 local ragebotMainSection = ragebotPage:new_section({
     name = "Ragebot Main",
     side = "left",
-    size = 250
+    size = 450
 })
 --[[
 local ragebotToggle = ragebotMainSection:new_toggle({
@@ -1284,18 +1284,43 @@ local function loadRagebot()
         scrollFrame.Name = "NotificationScroll"
         scrollFrame.Parent = ScreenGui
         scrollFrame.BackgroundTransparency = 1
-        scrollFrame.Size = UDim2.new(0, 400, 0, 200)
+        scrollFrame.Size = UDim2.new(0, 600, 0, 400)
         scrollFrame.Position = UDim2.new(0, 30, 0, 10)  
         scrollFrame.ScrollingEnabled = false
         scrollFrame.CanvasSize = UDim2.new(0, 400, 0, 0)
         scrollFrame.ScrollBarThickness = 0
+        scrollFrame.ClipsDescendants = false
         
+        local THEME_COLOR = Color3.fromRGB(40, 40, 40)
+        local THEME_TRANSPARENCY = 0.5
+
         local box = Instance.new("Frame")
         box.Parent = scrollFrame
-        box.BackgroundColor3 = Color3.new(0, 0, 0)
-        box.BackgroundTransparency = 1
+        box.BackgroundColor3 = THEME_COLOR
+        box.BackgroundTransparency = THEME_TRANSPARENCY
         box.BorderSizePixel = 0
         box.AnchorPoint = Vector2.new(0, 0)
+        box.ClipsDescendants = false
+        
+        local function createGlow(side)
+            local glow = Instance.new("Frame")
+            glow.Size = UDim2.new(0, 80, 1, 0)
+            glow.Position = (side == "Left") and UDim2.new(0, -80, 0, 0) or UDim2.new(1, 0, 0, 0)
+            glow.BackgroundColor3 = THEME_COLOR
+            glow.BackgroundTransparency = THEME_TRANSPARENCY
+            glow.BorderSizePixel = 0
+            glow.Parent = box
+            
+            local grad = Instance.new("UIGradient")
+            grad.Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, (side == "Left" and 1 or 0)),
+                NumberSequenceKeypoint.new(1, (side == "Left" and 0 or 1))
+            })
+            grad.Parent = glow
+        end
+        
+        createGlow("Left")
+        createGlow("Right")
         
         local parts = {
             {"Using ", Color3.fromRGB(255, 255, 255)},
@@ -1321,7 +1346,7 @@ local function loadRagebot()
             label.TextColor3 = col
             label.FontFace = AFont
             label.TextSize = 10
-            label.TextYAlignment = Enum.TextYAlignment.Center
+            
             label.Text = txt
             label.AutomaticSize = Enum.AutomaticSize.XY
             label.Position = UDim2.new(0, offsetX, 0, 0)
@@ -1334,15 +1359,6 @@ local function loadRagebot()
         
         table.insert(hitNotifications, {box = box, createTime = tick()})
         
-        local totalHeight = 0
-        for i, notif in ipairs(hitNotifications) do
-            local yPos = (i - 1) * (notif.box.AbsoluteSize.Y + 5)
-            notif.box.Position = UDim2.new(0, 0, 0, yPos)  
-            totalHeight = totalHeight + notif.box.AbsoluteSize.Y + 5
-        end
-        
-        scrollFrame.CanvasSize = UDim2.new(0, 400, 0, totalHeight)
-        
         local function updateScrollFrame()
             local allFrames = {}
             for _, notif in ipairs(hitNotifications) do
@@ -1353,19 +1369,18 @@ local function loadRagebot()
             
             hitNotifications = allFrames
             
-            local visibleCount = math.min(#hitNotifications, MAX_VISIBLE_NOTIFICATIONS)
-            scrollFrame.CanvasSize = UDim2.new(0, 400, 0, visibleCount * (box.AbsoluteSize.Y + 5))
-            
+            local currentY = 0
             for i, notif in ipairs(hitNotifications) do
-                local yPos = (i - 1) * (notif.box.AbsoluteSize.Y + 5)
-                notif.box.Position = UDim2.new(0, 0, 0, yPos)
+                notif.box.Position = UDim2.new(0, 80, 0, currentY)
                 
                 if i <= MAX_VISIBLE_NOTIFICATIONS then
                     notif.box.Visible = true
+                    currentY = currentY + notif.box.AbsoluteSize.Y + notificationYOffset
                 else
                     notif.box.Visible = false
                 end
             end
+            scrollFrame.CanvasSize = UDim2.new(0, 600, 0, currentY)
         end
         
         updateScrollFrame()
@@ -1383,16 +1398,29 @@ local function loadRagebot()
         end)
     end
 
-    local function playHitSound()
+     local function playHitSound()
         if not getgenv().CONFIG.Ragebot.HitSound then return end
         
         local soundIds = {
-            ["skeet"] = "rbxassetid://4817809188",
-            ["xp level"] = "rbxassetid://17148249625",
-            ["bell"] = "rbxassetid://6534948092"
+            ["Bameware"] = "rbxassetid://3124331820",
+            ["Bell"] = "rbxassetid://6534947240",
+            ["Bubble"] = "rbxassetid://6534947588",
+            ["Pick"] = "rbxassetid://1347140027",
+            ["Pop"] = "rbxassetid://198598793",
+            ["Rust"] = "rbxassetid://1255040462",
+            ["Sans"] = "rbxassetid://3188795283",
+            ["Fart"] = "rbxassetid://130833677",
+            ["Big"] = "rbxassetid://5332005053",
+            ["Vine"] = "rbxassetid://5332680810",
+            ["Bruh"] = "rbxassetid://4578740568",
+            ["Skeet"] = "rbxassetid://5633695679",
+            ["Neverlose"] = "rbxassetid://6534948092",
+            ["Fatality"] = "rbxassetid://6534947869",
+            ["Bonk"] = "rbxassetid://5766898159",
+            ["Minecraft"] = "rbxassetid://4018616850"
         }
         
-        local soundId = soundIds[getgenv().CONFIG.Ragebot.SelectedHitSound] or soundIds["skeet"]
+        local soundId = soundIds[getgenv().CONFIG.Ragebot.SelectedHitSound] or soundIds["Skeet"]
         
         local sound = Instance.new("Sound")
         sound.SoundId = soundId
@@ -3439,7 +3467,7 @@ local legitPage = window:new_page({
 local legitSection = legitPage:new_section({
     name = "Legit Settings",
     side = "left",
-    size = 250
+    size = 350
 })
 
 local enableToggle = legitSection:new_toggle({
@@ -3608,8 +3636,12 @@ local hitRangeSlider = ragebotMainSection:new_slider({
 
 local hitSoundList = ragebotMainSection:new_listbox({
     name = "Hit Sound",
-    options = {"skeet", "xp level", "bell"},
-    default = "skeet",
+    options = {
+        "Bameware", "Bell", "Bubble", "Pick", "Pop", "Rust", 
+        "Sans", "Fart", "Big", "Vine", "Bruh", "Skeet", 
+        "Neverlose", "Fatality", "Bonk", "Minecraft"
+    },
+    default = "Skeet",
     multiple = false,
     flag = "ragebot_hitsoundlist",
     callback = function(value)
