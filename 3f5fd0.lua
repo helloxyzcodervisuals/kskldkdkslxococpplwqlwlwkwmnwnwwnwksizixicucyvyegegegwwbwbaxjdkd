@@ -4838,7 +4838,6 @@ local saturationSlider = richSection:new_slider({
         end
     end
 })
-
 local richPlayerSection = visualPage:new_section({
     name = "Rich Player",
     side = "right",
@@ -4849,6 +4848,7 @@ local richPlayerEnabled = false
 local richPlayerColor = Color3.fromRGB(255, 255, 255)
 local richPlayerTransparency = 0
 local originalPlayerProperties = {}
+local originalPlayerMaterials = {}
 
 local function applyRichPlayer()
     local char = LocalPlayer.Character
@@ -4862,6 +4862,7 @@ local function applyRichPlayer()
                     Color = part.Color,
                     Transparency = part.Transparency
                 }
+                originalPlayerMaterials[partName] = part.Material
             end
         end
     end
@@ -4871,6 +4872,7 @@ local function applyRichPlayer()
         if part and part:IsA("BasePart") then
             part.Color = richPlayerColor
             part.Transparency = richPlayerTransparency / 100
+            part.Material = Enum.Material.ForceField
         end
     end
 end
@@ -4887,7 +4889,15 @@ local function resetRichPlayer()
         end
     end
     
+    for partName, material in pairs(originalPlayerMaterials) do
+        local part = char:FindFirstChild(partName)
+        if part and part:IsA("BasePart") then
+            part.Material = material
+        end
+    end
+    
     originalPlayerProperties = {}
+    originalPlayerMaterials = {}
 end
 
 local richPlayerToggle = richPlayerSection:new_toggle({
@@ -4939,3 +4949,64 @@ LocalPlayer.CharacterAdded:Connect(function()
         applyRichPlayer()
     end
 end)
+
+local runService = game:GetService("RunService")
+local noclipEnabled = false
+local noclipConnection
+
+local function stopNoclip()
+    if noclipConnection then
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+    end
+    
+    local character = LocalPlayer.Character
+    if not character then return end
+    
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = true
+        end
+    end
+end
+
+local function startNoclip()
+    if noclipConnection then
+        noclipConnection:Disconnect()
+    end
+    
+    local character = LocalPlayer.Character
+    if not character then return end
+    
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+    
+    noclipConnection = runService.Stepped:Connect(function()
+        if not noclipEnabled or not character or not character.Parent then
+            stopNoclip()
+            return
+        end
+        
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end)
+end
+local noclipToggle = movementSection:new_toggle({
+    name = "Noclip",
+    state = false,
+    flag = "noclip_enabled",
+    callback = function(state)
+        noclipEnabled = state
+        if state then
+            startNoclip()
+        else
+            stopNoclip()
+        end
+    end
+})
