@@ -2745,6 +2745,7 @@ end
 
 local misc = loadMisc()
 loadRagebot()
+--[[
 local Workspace = game:GetService("Workspace")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -2776,92 +2777,8 @@ getgenv().silent_aim_is_targetting = false
 getgenv().silent_aim_target = nil
 getgenv().aim_position = Vector3.new()
 
-local function createLegitTracer(startPos, endPos)
-    if not getgenv().Legitbot.Tracers.Enabled then return end
-    
-    local beamPart = Instance.new("Part")
-    beamPart.Anchored = true
-    beamPart.CanCollide = false
-    beamPart.Transparency = 1
-    beamPart.Size = Vector3.new(0.1, 0.1, 0.1)
-    beamPart.Parent = Workspace
-    
-    local attachment0 = Instance.new("Attachment")
-    attachment0.Parent = beamPart
-    
-    local attachment1 = Instance.new("Attachment")
-    attachment1.Parent = beamPart
-    
-    local beam = Instance.new("Beam")
-    beam.Attachment0 = attachment0
-    beam.Attachment1 = attachment1
-    beam.Texture = "rbxassetid://7136858729"
-    beam.Color = ColorSequence.new(getgenv().Legitbot.Tracers.Color)
-    beam.Width0 = getgenv().Legitbot.Tracers.Width
-    beam.Width1 = getgenv().Legitbot.Tracers.Width
-    beam.Brightness = getgenv().Legitbot.Tracers.Brightness
-    beam.LightEmission = getgenv().Legitbot.Tracers.LightEmission
-    beam.Parent = beamPart
-    
-    local midPoint = (startPos + endPos) / 2
-    local lookVector = (endPos - startPos).Unit
-    local distance = (startPos - endPos).Magnitude
-    
-    beamPart.CFrame = CFrame.new(midPoint, midPoint + lookVector) * CFrame.new(0, 0, -distance/2)
-    
-    attachment0.WorldPosition = startPos
-    attachment1.WorldPosition = endPos
-    
-    task.delay(getgenv().Legitbot.Tracers.Lifetime, function()
-        if beamPart and beamPart.Parent then
-            beamPart:Destroy()
-        end
-    end)
-end
 
-local function trackGlobalBullets()
-    local bfr = workspace.Camera:FindFirstChild("Bullets")
-    if not bfr then return end
-    
-    local function tblt(blt)
-        if not blt:IsA("BasePart") then return end
-        
-        local stp = blt.Position
-        local lsp = stp
-        local stc = 0
-        
-        local con
-        con = RunService.Heartbeat:Connect(function()
-            if not blt or not blt.Parent then
-                con:Disconnect()
-                if (lsp - stp).Magnitude > 1 then
-                    createTracer(stp, lsp)
-                end
-                return
-            end
-            
-            local cp = blt.Position
-            if (cp - lsp).Magnitude < 0.01 then
-                stc = stc + 1
-                if stc > 3 then
-                    con:Disconnect()
-                    if (cp - stp).Magnitude > 1 then
-                        createTracer(stp, cp)
-                    end
-                end
-            else
-                stc = 0
-                lsp = cp
-            end
-        end)
-    end
-    
-    bfr.ChildAdded:Connect(tblt)
-    
-    for _, v in ipairs(bfr:GetChildren()) do
-        tblt(v)
-    end
-end
+
 
 local function get_direction(origin, destination)
     return ((destination - origin).Unit * 1000)
@@ -3355,7 +3272,7 @@ local bulletTrackToggle = legitPage:new_section({
         end
     end
 })
-
+--]]
 local ragebotToggle = ragebotMainSection:new_toggle({
     name = "Enable Ragebot",
     state = false,
@@ -4367,9 +4284,9 @@ local useWhitelistToggle = controlSection:new_toggle({
     end
 })
 local rightSection = playersPage:new_section({
-    name = "Info",
+    name = "Misc",
     side = "right",
-    size = 200
+    size = 325
 })
 
 local selectedName = rightSection:new_label({
@@ -4450,222 +4367,156 @@ RunService.RenderStepped:Connect(function()
         playerStatus:set("Status: Dead")
     end
 end)
-local configPage = window:new_page({
-    name = "Configuration"
-})
 
-local saveSection = configPage:new_section({
-    name = "Save/Load",
-    side = "left",
-    size = 250
-})
 
-local saveConfigButton = saveSection:new_button({
-    name = "Save Config",
-    callback = function()
-        if writefile then
-            local allConfigs = {}
-            
-            local genv = getgenv()
-            for key, value in pairs(genv) do
-                if type(value) == "table" then
-                    allConfigs[key] = value
-                elseif type(value) == "Color3" then
-                    allConfigs[key] = {R = value.R, G = value.G, B = value.B, __type = "Color3"}
-                else
-                    allConfigs[key] = value
+local bulletTracersEnabled = false
+local tracerColor = Color3.fromRGB(255, 50, 50)
+local tracerWidth = 0.2
+local tracerLifetime = 1
+
+local function create(startPos, endPos)
+    if not bulletTracersEnabled then return end
+    
+    local tracerModel = Instance.new("Model")
+    tracerModel.Name = "TracerBeam"
+    
+    local beam = Instance.new("Beam")
+    beam.Color = ColorSequence.new(tracerColor)
+    beam.Width0 = tracerWidth
+    beam.Width1 = tracerWidth
+    beam.Texture = "rbxassetid://7136858729"
+    beam.TextureSpeed = 1
+    beam.Brightness = 2
+    beam.LightEmission = 2
+    beam.FaceCamera = true
+    
+    local a0 = Instance.new("Attachment")
+    local a1 = Instance.new("Attachment")
+    a0.WorldPosition = startPos
+    a1.WorldPosition = endPos
+    beam.Attachment0 = a0
+    beam.Attachment1 = a1
+    
+    beam.Parent = tracerModel
+    a0.Parent = tracerModel
+    a1.Parent = tracerModel
+    tracerModel.Parent = Workspace
+    
+    local tweenInfo = TweenInfo.new(
+        tracerLifetime,
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.Out
+    )
+    
+    local tween = tweenService:Create(beam, tweenInfo, {
+        Brightness = 0
+    })
+    
+    tween:Play()
+    tween.Completed:Connect(function()
+        if tracerModel then 
+            tracerModel:Destroy() 
+        end
+    end)
+end
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local camera = Workspace.CurrentCamera
+local local_player = Players.LocalPlayer
+local function trackGlobalBullets()
+    local bfr = camera:FindFirstChild("Bullets")
+    if not bfr then 
+        bfr = Instance.new("Folder")
+        bfr.Name = "Bullets"
+        bfr.Parent = camera
+    end
+    
+    local function tblt(blt)
+        if not blt:IsA("BasePart") then return end
+        
+        local stp = blt.Position
+        local lsp = stp
+        local stc = 0
+        
+        local con
+        con = game:GetService("RunService").Heartbeat:Connect(function()
+            if not blt or not blt.Parent then
+                con:Disconnect()
+                if (lsp - stp).Magnitude > 1 then
+                    create(stp, lsp)
                 end
+                return
             end
             
-            writefile("aui_config.json", game:GetService("HttpService"):JSONEncode(allConfigs))
-            warn("Configuration saved!")
-        else
-            warn("Writefile not supported")
-        end
-    end
-})
-
-local loadConfigButton = saveSection:new_button({
-    name = "Load Config",
-    callback = function()
-        if readfile and isfile and isfile("aui_config.json") then
-            local success, data = pcall(function()
-                return game:GetService("HttpService"):JSONDecode(readfile("aui_config.json"))
-            end)
-            
-            if success and data then
-                for key, value in pairs(data) do
-                    if type(value) == "table" and value.__type == "Color3" then
-                        getgenv()[key] = Color3.fromRGB(value.R, value.G, value.B)
-                    else
-                        getgenv()[key] = value
+            local cp = blt.Position
+            if (cp - lsp).Magnitude < 0.01 then
+                stc = stc + 1
+                if stc > 3 then
+                    con:Disconnect()
+                    if (cp - stp).Magnitude > 1 then
+                        create(stp, cp)
                     end
                 end
-                warn("Configuration loaded!")
             else
-                warn("Failed to load config")
+                stc = 0
+                lsp = cp
             end
-        else
-            warn("Config file not found")
+        end)
+    end
+    
+    bfr.ChildAdded:Connect(tblt)
+    
+    for _, v in ipairs(bfr:GetChildren()) do
+        tblt(v)
+    end
+end
+
+local bulletTracerToggle = rightSection:new_toggle({
+    name = "Players bullet Tracers",
+    state = false,
+    flag = "bullet_tracers_enabled",
+    callback = function(state)
+        bulletTracersEnabled = state
+        if state then
+            trackGlobalBullets()
         end
     end
 })
 
-local resetConfigButton = saveSection:new_button({
-    name = "Reset to Default",
-    callback = function()
-        getgenv().CONFIG = {
-            Ragebot = {
-                Enabled = false,
-                RapidFire = false,
-                FireRate = 30,
-                Prediction = true,
-                PredictionAmount = 0.12,
-                TeamCheck = false,
-                VisibilityCheck = true,
-                FOV = 120,
-                ShowFOV = true,
-                Wallbang = true,
-                Tracers = true,
-                TracerColor = Color3.fromRGB(255, 0, 0),
-                TracerWidth = 1,
-                TracerLifetime = 3,
-                ShootRange = 15,
-                HitRange = 15,
-                HitNotify = true,
-                AutoReload = true,
-                HitSound = true,
-                HitColor = Color3.fromRGB(255, 182, 193),
-                UseTargetList = false,
-                UseWhitelist = false,
-                HitNotifyDuration = 5,
-                LowHealthCheck = false,
-                SelectedHitSound = "skeet",
-                FriendCheck = false,
-                MaxTarget = 0
-            },
-            Misc = {
-                SpeedEnabled = false,
-                SpeedValue = 50,
-                JumpPowerEnabled = false,
-                JumpPowerValue = 100,
-                LoopFOVEnabled = false,
-                HideHeadEnabled = false,
-                InfStaminaEnabled = false,
-                NoFallDmgEnabled = false,
-                SpeedConnection = nil,
-                FOVConnection = nil,
-                JumpPowerConnection = nil,
-                NoFallHook = nil,
-                InfStaminaHook = nil
-            }
-        }
-        
-        getgenv().Lists = {
-            TargetList = {},
-            Whitelist = {}
-        }
-        
-        warn("Configuration reset to default!")
-    end
-})
-local manageSection = configPage:new_section({
-    name = "Manage",
-    side = "right",
-    size = 250
-})
-
-local configNameTextbox = manageSection:new_textbox({
-    name = "Config Name",
-    placeholder = "enter config name",
-    default = "",
-    flag = "config_name",
-    callback = function(text)
-        getgenv().currentConfigName = text
+local tracerColorPicker = rightSection:new_colorpicker({
+    default = Color3.fromRGB(255, 50, 50),
+    flag = "tracer_color",
+    callback = function(color)
+        tracerColor = color
     end
 })
 
-local savePresetButton = manageSection:new_button({
-    name = "Save as Preset",
-    callback = function()
-        if writefile and getgenv().currentConfigName then
-            local name = getgenv().currentConfigName
-            if name ~= "" then
-                local allConfigs = {}
-                
-                local genv = getgenv()
-                for key, value in pairs(genv) do
-                    if type(value) == "table" then
-                        allConfigs[key] = value
-                    elseif type(value) == "Color3" then
-                        allConfigs[key] = {R = value.R, G = value.G, B = value.B, __type = "Color3"}
-                    else
-                        allConfigs[key] = value
-                    end
-                end
-                
-                writefile("aui_preset_" .. name .. ".json", game:GetService("HttpService"):JSONEncode(allConfigs))
-                warn("Preset saved as: " .. name)
-            end
-        end
+local tracerWidthSlider = rightSection:new_slider({
+    name = "Tracer Width",
+    min = 1,
+    max = 5,
+    default = 1,
+    text = "[value]%",
+    flag = "tracer_width",
+    callback = function(value)
+        tracerWidth = value
     end
 })
 
-local deletePresetButton = manageSection:new_button({
-    name = "Delete Preset",
-    callback = function()
-        if delfile and getgenv().currentConfigName then
-            local name = getgenv().currentConfigName
-            if name ~= "" then
-                local filename = "aui_preset_" .. name .. ".json"
-                if isfile(filename) then
-                    delfile(filename)
-                    warn("Preset deleted: " .. name)
-                end
-            end
-        end
+local tracerLifetimeSlider = rightSection:new_slider({
+    name = "Tracer Lifetime",
+    min = 1,
+    max = 100,
+    default = 15,
+    text = "[value]%",
+    flag = "tracer_lifetime",
+    callback = function(value)
+        tracerLifetime = value
     end
 })
 
-local listSection = configPage:new_section({
-    name = "Presets List",
-    side = "left",
-    size = 200
-})
-
-local refreshPresetsButton = listSection:new_button({
-    name = "Refresh Presets",
-    callback = function()
-        if isfile then
-            for _, file in pairs(listfiles("")) do
-                if file:find("aui_preset_") and file:find("%.json$") then
-                    local name = file:match("aui_preset_(.+)%.json")
-                    local loadPresetButton = listSection:new_button({
-                        name = name,
-                        callback = function()
-                            if readfile then
-                                local success, data = pcall(function()
-                                    return game:GetService("HttpService"):JSONDecode(readfile(file))
-                                end)
-                                
-                                if success and data then
-                                    for key, value in pairs(data) do
-                                        if type(value) == "table" and value.__type == "Color3" then
-                                            getgenv()[key] = Color3.fromRGB(value.R, value.G, value.B)
-                                        else
-                                            getgenv()[key] = value
-                                        end
-                                    end
-                                    warn("Preset loaded: " .. name)
-                                end
-                            end
-                        end
-                    })
-                end
-            end
-        end
-    end
-})
 
 local library = {
     directory = "Nebula/",
