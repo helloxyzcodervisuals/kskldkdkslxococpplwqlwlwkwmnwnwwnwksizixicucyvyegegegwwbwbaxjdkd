@@ -4448,4 +4448,205 @@ LocalPlayer.CharacterRemoving:Connect(function()
     characterCache = {}
 end)
 
-print("Nebula Nametag ESP Loaded")
+--local visualPage = window:new_page({
+--    name = "Visual"
+--})
+
+local richSection = visualPage:new_section({
+    name = "Rich Shader",
+    side = "left",
+    size = 250
+})
+
+local richShaderEnabled = false
+local richColor = Color3.fromRGB(255, 200, 150)
+local richBrightness = 20
+local richContrast = 50
+local richSaturation = 150
+
+local richShaderToggle = richSection:new_toggle({
+    name = "Rich Shader",
+    state = false,
+    flag = "rich_shader",
+    callback = function(state)
+        richShaderEnabled = state
+        if state then
+            local colorCorrection = Instance.new("ColorCorrectionEffect")
+            colorCorrection.Name = "RichShaderEffect"
+            colorCorrection.Parent = game:GetService("Lighting")
+            colorCorrection.Brightness = richBrightness / 100
+            colorCorrection.Contrast = richContrast / 100
+            colorCorrection.Saturation = richSaturation / 100
+            colorCorrection.TintColor = richColor
+        else
+            local lighting = game:GetService("Lighting")
+            local effect = lighting:FindFirstChild("RichShaderEffect")
+            if effect then effect:Destroy() end
+        end
+    end
+})
+
+local richColorPicker = richShaderToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 200, 150),
+    flag = "rich_shader_color",
+    callback = function(color)
+        richColor = color
+        if richShaderEnabled then
+            local lighting = game:GetService("Lighting")
+            local effect = lighting:FindFirstChild("RichShaderEffect")
+            if effect then effect.TintColor = color end
+        end
+    end
+})
+
+local brightnessSlider = richSection:new_slider({
+    name = "Brightness",
+    min = 0,
+    max = 100,
+    default = 20,
+    text = "[value]%",
+    flag = "rich_brightness",
+    callback = function(value)
+        richBrightness = value
+        if richShaderEnabled then
+            local lighting = game:GetService("Lighting")
+            local effect = lighting:FindFirstChild("RichShaderEffect")
+            if effect then effect.Brightness = value / 100 end
+        end
+    end
+})
+
+local contrastSlider = richSection:new_slider({
+    name = "Contrast",
+    min = 0,
+    max = 100,
+    default = 50,
+    text = "[value]%",
+    flag = "rich_contrast",
+    callback = function(value)
+        richContrast = value
+        if richShaderEnabled then
+            local lighting = game:GetService("Lighting")
+            local effect = lighting:FindFirstChild("RichShaderEffect")
+            if effect then effect.Contrast = value / 100 end
+        end
+    end
+})
+
+local saturationSlider = richSection:new_slider({
+    name = "Saturation",
+    min = 0,
+    max = 200,
+    default = 150,
+    text = "[value]%",
+    flag = "rich_saturation",
+    callback = function(value)
+        richSaturation = value
+        if richShaderEnabled then
+            local lighting = game:GetService("Lighting")
+            local effect = lighting:FindFirstChild("RichShaderEffect")
+            if effect then effect.Saturation = value / 100 end
+        end
+    end
+})
+
+local richPlayerSection = visualPage:new_section({
+    name = "Rich Player",
+    side = "right",
+    size = 250
+})
+
+local richPlayerEnabled = false
+local richPlayerColor = Color3.fromRGB(255, 255, 255)
+local richPlayerTransparency = 0
+local originalPlayerProperties = {}
+
+local richPlayerToggle = richPlayerSection:new_toggle({
+    name = "Rich Player",
+    state = false,
+    flag = "rich_player",
+    callback = function(state)
+        richPlayerEnabled = state
+        if state then
+            applyRichPlayer()
+        else
+            resetRichPlayer()
+        end
+    end
+})
+
+local richPlayerColorPicker = richPlayerToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 255, 255),
+    flag = "rich_player_color",
+    callback = function(color)
+        richPlayerColor = color
+        if richPlayerEnabled then
+            applyRichPlayer()
+        end
+    end
+})
+
+local transparencySlider = richPlayerSection:new_slider({
+    name = "Transparency",
+    min = 0,
+    max = 100,
+    default = 0,
+    text = "[value]%",
+    flag = "rich_transparency",
+    callback = function(value)
+        richPlayerTransparency = value
+        if richPlayerEnabled then
+            applyRichPlayer()
+        end
+    end
+})
+
+local function recordOriginalProperties(character)
+    originalPlayerProperties = {}
+    
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+            originalPlayerProperties[part] = {
+                Color = part.Color,
+                Transparency = part.Transparency
+            }
+        end
+    end
+end
+
+local function applyRichPlayer()
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    if not originalPlayerProperties[char] then
+        recordOriginalProperties(char)
+    end
+    
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+            part.Color = richPlayerColor
+            part.Transparency = richPlayerTransparency / 100
+        end
+    end
+end
+
+local function resetRichPlayer()
+    local char = LocalPlayer.Character
+    if not char then return end
+    
+    for part, properties in pairs(originalPlayerProperties) do
+        if part.Parent and part:IsDescendantOf(char) then
+            part.Color = properties.Color
+            part.Transparency = properties.Transparency
+        end
+    end
+    
+    originalPlayerProperties = {}
+end
+
+LocalPlayer.CharacterAdded:Connect(function(character)
+    if richPlayerEnabled then
+        task.wait(0.5)
+        applyRichPlayer()
+    end
+end)
