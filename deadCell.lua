@@ -49,8 +49,8 @@ local UI_FONT=vc()
 local HttpService=game:GetService("HttpService")
 
 local settings={
-    folder_name="zephyrus",
-    default_accent=Color3.fromRGB(255, 182, 193)  -- why
+    folder_name="deadcell",
+    default_accent=Color3.fromRGB(255, 182, 193)  
 }
 
 if not isfolder(settings.folder_name)then
@@ -1622,7 +1622,7 @@ function library:new_window(cfg)
                     Name="ToggleHolder",
                     Parent=section_content,
                     BackgroundTransparency=1,
-                    Size=UDim2.new(1,0,0,8),
+                    Size=UDim2.new(1,0,0,15),
                     BorderSizePixel=0,
                     Text="",
                     AutoButtonColor=false
@@ -1637,6 +1637,10 @@ function library:new_window(cfg)
                     BorderColor3=library.theme["Section Inner Border"],
                     Position=UDim2.new(0,0,0,3)
                 })
+
+                local toggle_shadow = utility.create("UIAspectRatioConstraint", {
+                    Parent = toggle_frame,
+                })
                 
                 local toggle_title=utility.create("TextLabel",{
                     Name="ToggleTitle",
@@ -1648,15 +1652,34 @@ function library:new_window(cfg)
                     FontFace=UI_FONT,
                     Position=UDim2.new(0,13,0,0),
                     Size=UDim2.new(1,-13,1,0),
-                    TextXAlignment=Enum.TextXAlignment.Left
+                    TextXAlignment=Enum.TextXAlignment.Left,
+                    TextYAlignment=Enum.TextYAlignment.Center
                 })
                 
                 local function setstate()
                     toggled=not toggled
                     if toggled then
                         toggle_frame.BackgroundColor3=library.theme["Accent"]
+                        if not toggle_frame:FindFirstChild("UIGradient") then
+                            local gradient = utility.create("UIGradient", {
+                                Parent = toggle_frame,
+                                Color = ColorSequence.new({
+                                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+                                    ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
+                                }),
+                                Transparency = NumberSequence.new({
+                                    NumberSequenceKeypoint.new(0, 0.5),
+                                    NumberSequenceKeypoint.new(1, 0)
+                                }),
+                                Rotation = 90
+                            })
+                        end
                     else
                         toggle_frame.BackgroundColor3=library.theme["Object Background"]
+                        local gradient = toggle_frame:FindFirstChild("UIGradient")
+                        if gradient then
+                            gradient:Destroy()
+                        end
                     end
                     library.flags[toggle_flag]=toggled
                     callback(toggled)
@@ -1766,6 +1789,19 @@ function library:new_window(cfg)
                     Size=UDim2.new((default-min)/(max-min),0,1,0),
                     BorderSizePixel=0
                 })
+
+                local slider_shadow = utility.create("UIGradient", {
+                    Parent = slider_fill,
+                    Color = ColorSequence.new({
+                        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+                        ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
+                    }),
+                    Transparency = NumberSequence.new({
+                        NumberSequenceKeypoint.new(0, 0.5),
+                        NumberSequenceKeypoint.new(1, 0)
+                    }),
+                    Rotation = 90
+                })
                 
                 local function set(value)
                     value=math.clamp(utility.round(value,float),min,max)
@@ -1791,7 +1827,7 @@ function library:new_window(cfg)
                     end
                 end)
                 
-                holder.InputEnded:Connect(function(input)
+                services.UserInputService.InputEnded:Connect(function(input)
                     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
                         sliding=false
                     end
