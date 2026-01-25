@@ -50,7 +50,7 @@ local HttpService=game:GetService("HttpService")
 
 local settings={
     folder_name="zephyrus",
-    default_accent=Color3.fromRGB(255, 182, 193)  -- Light Pink
+    default_accent=Color3.fromRGB(255, 182, 193)  -- why
 }
 
 if not isfolder(settings.folder_name)then
@@ -560,17 +560,16 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         default = Color3.fromHex(default)
     end
     
-    local icon=utility.createFrame({
+    local icon=utility.createTextButton({
         Name="ColorPickerIcon",
         Parent=parent,
         BackgroundColor3=default,
         Size=UDim2.new(0,17,0,9),
         Position=UDim2.new(1,-17-(count*17)-(count*6),0,4+offset),
         BorderSizePixel=0,
+        Text="",
         ZIndex = 9e9
     })
-    
-    
     
     local window=utility.createFrame({
         Name="ColorPickerWindow",
@@ -583,8 +582,6 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         ZIndex = 9e9
     })
     
-    
-    
     local saturation=utility.createFrame({
         Name="Saturation",
         Parent=window,
@@ -595,8 +592,6 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         ZIndex = 9e9,
         BackgroundTransparency=0   
     })
-    
-    
     
     local whiteGradient = Instance.new("UIGradient")
     whiteGradient.Color = ColorSequence.new{
@@ -632,14 +627,15 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         ZIndex = 9e9
     })
     
-    
-    
     local hueGradient=Instance.new("UIGradient")
     local hueColors = {}
-    for i = 0, 6 do
-        local hue = i / 6
-        table.insert(hueColors, ColorSequenceKeypoint.new(i/6, Color3.fromHSV(hue, 1, 1)))
-    end
+    table.insert(hueColors, ColorSequenceKeypoint.new(0, Color3.fromHSV(0, 1, 1)))
+    table.insert(hueColors, ColorSequenceKeypoint.new(1/6, Color3.fromHSV(1/6, 1, 1)))
+    table.insert(hueColors, ColorSequenceKeypoint.new(2/6, Color3.fromHSV(2/6, 1, 1)))
+    table.insert(hueColors, ColorSequenceKeypoint.new(3/6, Color3.fromHSV(3/6, 1, 1)))
+    table.insert(hueColors, ColorSequenceKeypoint.new(4/6, Color3.fromHSV(4/6, 1, 1)))
+    table.insert(hueColors, ColorSequenceKeypoint.new(5/6, Color3.fromHSV(5/6, 1, 1)))
+    table.insert(hueColors, ColorSequenceKeypoint.new(1, Color3.fromHSV(1, 1, 1)))
     hueGradient.Color=ColorSequence.new(hueColors)
     hueGradient.Rotation=90
     hueGradient.Parent=hueframe
@@ -951,16 +947,14 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         end
     end)
     
-    icon.InputBegan:Connect(function(input)
-        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-            window.Visible = not window.Visible
-            slidinghue=false
-            slidingsaturation=false
-            
-            for _, v in pairs(parent.Parent:GetChildren()) do
-                if v.Name == "ColorPickerWindow" and v ~= window then
-                    v.Visible = false
-                end
+    icon.MouseButton1Click:Connect(function()
+        window.Visible = not window.Visible
+        slidinghue=false
+        slidingsaturation=false
+        
+        for _, v in pairs(parent.Parent:GetChildren()) do
+            if v.Name == "ColorPickerWindow" and v ~= window then
+                v.Visible = false
             end
         end
     end)
@@ -1624,20 +1618,14 @@ function library:new_window(cfg)
                 local callback=cfg.callback or cfg.Callback or function()end
                 local toggled=false
                 
-                local holder=utility.createFrame({
+                local holder=utility.create("TextButton", {
                     Name="ToggleHolder",
                     Parent=section_content,
                     BackgroundTransparency=1,
-                    Size=UDim2.new(0.7,0,0,8),
-                    BorderSizePixel=0
-                })
-
-                local hold=utility.createFrame({
-                    Name="ToggleHolder",
-                    Parent=section_content,
-                    BackgroundTransparency=1,
-                    Size=UDim2.new(1,0,0,0),
-                    BorderSizePixel=0
+                    Size=UDim2.new(1,0,0,8),
+                    BorderSizePixel=0,
+                    Text="",
+                    AutoButtonColor=false
                 })
                 
                 local toggle_frame=utility.createFrame({
@@ -1646,7 +1634,8 @@ function library:new_window(cfg)
                     BackgroundColor3=library.theme["Object Background"],
                     Size=UDim2.new(0,8,0,8),
                     BorderSizePixel=1,
-                    BorderColor3=library.theme["Section Inner Border"]
+                    BorderColor3=library.theme["Section Inner Border"],
+                    Position=UDim2.new(0,0,0,3)
                 })
                 
                 local toggle_title=utility.create("TextLabel",{
@@ -1657,7 +1646,7 @@ function library:new_window(cfg)
                     TextColor3=toggle_risky and library.theme["Risky Text"]or library.theme["Text"],
                     TextSize=13,
                     FontFace=UI_FONT,
-                    Position=UDim2.new(0,13,0,-3),
+                    Position=UDim2.new(0,13,0,0),
                     Size=UDim2.new(1,-13,1,0),
                     TextXAlignment=Enum.TextXAlignment.Left
                 })
@@ -1673,10 +1662,8 @@ function library:new_window(cfg)
                     callback(toggled)
                 end
                 
-                holder.InputBegan:Connect(function(input)
-                    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-                        setstate()
-                    end
+                holder.MouseButton1Click:Connect(function()
+                    setstate()
                 end)
                 
                 local function set(bool)
@@ -1703,7 +1690,7 @@ function library:new_window(cfg)
                     
                     toggle_tbl.colorpickers=toggle_tbl.colorpickers+1
                     
-                    local cp=library.createcolorpicker(default,hold,toggle_tbl.colorpickers-1,flag,callback,-4)
+                    local cp=library.createcolorpicker(default,holder,toggle_tbl.colorpickers-1,flag,callback,-4)
                     
                     function colorpicker_tbl:set(color)
                         cp:set(color,false,true)
