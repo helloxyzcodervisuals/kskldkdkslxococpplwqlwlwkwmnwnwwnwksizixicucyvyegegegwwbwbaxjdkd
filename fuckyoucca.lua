@@ -217,56 +217,35 @@
             end
         end 
 
-        function library:makeResizable(frame) 
-            local Frame = Instance.new("TextButton")
-            Frame.Position = dim2(1, -10, 1, -10)
-            Frame.BorderColor3 = rgb(0, 0, 0)
-            Frame.Size = dim2(0, 10, 0, 10)
-            Frame.BorderSizePixel = 0
-            Frame.BackgroundColor3 = rgb(255, 255, 255)
-            Frame.Parent = frame
-            Frame.BackgroundTransparency = 1 
-            Frame.Text = ""
-
-            local resizing = false 
-            local start_size 
+        function library:draggify(frame)
+            local dragging = false 
+            local start_size = frame.Position
             local start 
-            local og_size = frame.Size  
 
-            Frame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    resizing = true
+            frame.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = true
                     start = input.Position
-                    start_size = frame.Size
+                    start_size = frame.Position
                 end
             end)
 
-            Frame.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    resizing = false
+            frame.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    dragging = false
                 end
             end)
 
             library:connection(uis.InputChanged, function(input, game_event) 
-                if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    local viewport_x = camera.ViewportSize.X
-                    local viewport_y = camera.ViewportSize.Y
-
-                    local current_size = dim2(
-                        start_size.X.Scale,
-                        math.clamp(
-                            start_size.X.Offset + (input.Position.X - start.X),
-                            og_size.X.Offset,
-                            viewport_x
-                        ),
-                        start_size.Y.Scale,
-                        math.clamp(
-                            start_size.Y.Offset + (input.Position.Y - start.Y),
-                            og_size.Y.Offset,
-                            viewport_y
-                        )
+                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    local current_position = dim2(
+                        0,
+                        start_size.X.Offset + (input.Position.X - start.X),
+                        0,
+                        start_size.Y.Offset + (input.Position.Y - start.Y)
                     )
-                    frame.Size = current_size
+
+                    frame.Position = current_position
                 end
             end)
         end
@@ -284,49 +263,48 @@
             return start * (1 - t) + finish * t
         end)
 
-        function library:draggify(frame)
-            local dragging = false 
-            local start_size = frame.Position
-            local start 
+        function library:makeResizable(frame) 
+            local Frame = Instance.new("TextButton")
+            Frame.Position = dim2(1, -10, 1, -10)
+            Frame.BorderColor3 = rgb(0, 0, 0)
+            Frame.Size = dim2(0, 10, 0, 10)
+            Frame.BorderSizePixel = 0
+            Frame.BackgroundColor3 = rgb(255, 255, 255)
+            Frame.Parent = frame
+            Frame.BackgroundTransparency = 1 
+            Frame.Text = ""
 
-            frame.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = true
+            local resizing = false 
+            local start_size 
+            local start 
+            local og_size = frame.Size  
+
+            Frame.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    resizing = true
                     start = input.Position
-                    start_size = frame.Position
+                    start_size = frame.Size
                 end
             end)
 
-            frame.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    dragging = false
+            Frame.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    resizing = false
                 end
             end)
 
             library:connection(uis.InputChanged, function(input, game_event) 
-                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    local viewport_x = camera.ViewportSize.X
-                    local viewport_y = camera.ViewportSize.Y
-
-                    local current_position = dim2(
-                        0,
-                        clamp(
-                            start_size.X.Offset + (input.Position.X - start.X),
-                            0,
-                            viewport_x - frame.Size.X.Offset
-                        ),
-                        0,
-                        math.clamp(
-                            start_size.Y.Offset + (input.Position.Y - start.Y),
-                            0,
-                            viewport_y - frame.Size.Y.Offset
-                        )
+                if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    local current_size = dim2(
+                        start_size.X.Scale,
+                        start_size.X.Offset + (input.Position.X - start.X),
+                        start_size.Y.Scale,
+                        start_size.Y.Offset + (input.Position.Y - start.Y)
                     )
-
-                    frame.Position = current_position
+                    frame.Size = current_size
                 end
             end)
-        end 
+        end
 
         function library:convertEnum(enum)
             local enum_parts = {}
@@ -988,7 +966,7 @@
                     end)
         
                     uis.InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             draggingSaturation = false
                             draggingHue = false
                             draggingAlpha = false 
@@ -996,11 +974,11 @@
                     end)
                     
                     uis.InputChanged:Connect(function(input)
-                        if (draggingSaturation or draggingHue or draggingAlpha) and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        if (draggingSaturation or draggingHue or draggingAlpha) and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                             cfg.updateColor() 
                         end
-                    end)	
-                -- 
+                    end)
+            
 
                 task.spawn(function()
                     while true do 
@@ -1427,7 +1405,7 @@
                     end)
         
                     uis.InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             draggingSaturation = false
                             draggingHue = false
                             draggingAlpha = false 
@@ -1435,16 +1413,16 @@
                     end)
                     
                     uis.InputChanged:Connect(function(input)
-                        if (draggingSaturation or draggingHue or draggingAlpha) and input.UserInputType == Enum.UserInputType.MouseMovement then
+                        if (draggingSaturation or draggingHue or draggingAlpha) and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                             cfg.updateColor() 
                         end
-                    end)	
-                -- 
-            -- 
+                    end)
+            
+            
 
             return setmetatable(cfg, library)
         end 
-    --
+    
         
     -- Library element functions
         function library:window(properties)
@@ -2396,7 +2374,7 @@
                     end)
 
                     library:connection(uis.InputChanged, function(input)
-                        if cfg.dragging and input.UserInputType == Enum.UserInputType.MouseMovement then 
+                        if cfg.dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then 
                             local size_x = (input.Position.X - slider_dragger.AbsolutePosition.X) / slider_dragger.AbsoluteSize.X
                             local value = ((cfg.max - cfg.min) * size_x) + cfg.min
 
@@ -2405,7 +2383,7 @@
                     end)
 
                     library:connection(uis.InputEnded, function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                             cfg.dragging = false 
                         end 
                     end)
