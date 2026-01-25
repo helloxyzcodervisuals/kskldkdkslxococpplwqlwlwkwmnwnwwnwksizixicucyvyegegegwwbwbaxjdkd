@@ -3364,6 +3364,7 @@ local safeColorPicker = safeESPToggle:new_colorpicker({
         misc.updateSafeColor(color)
     end
 })
+--[[
 local playersPage = window:new_page({
     name = "Players"
 })
@@ -3601,6 +3602,213 @@ end)
 task.spawn(function()
     task.wait(2)
     updatePlayerLists()
+end)
+--]]
+local playersPage = window:new_page({
+    name = "Players"
+})
+
+local leftSection = playersPage:new_section({
+    name = "Players",
+    side = "left",
+    size = 450
+})
+
+local playersBox = leftSection:new_listbox({
+    name = "Online",
+    options = {},
+    default = {},
+    multiple = true,
+    size = 200,
+    flag = "players_online",
+    callback = function(selected)
+    end
+})
+
+local addTargetBtn = leftSection:new_button({
+    name = "Add to Target",
+    callback = function()
+        for _, name in ipairs(library.flags.players_online or {}) do
+            local found = table.find(getgenv().Lists.TargetList, name)
+            if not found then
+                table.insert(getgenv().Lists.TargetList, name)
+            end
+        end
+    end
+})
+
+local addWhitelistBtn = leftSection:new_button({
+    name = "Add to Whitelist",
+    callback = function()
+        for _, name in ipairs(library.flags.players_online or {}) do
+            local found = table.find(getgenv().Lists.Whitelist, name)
+            if not found then
+                table.insert(getgenv().Lists.Whitelist, name)
+            end
+        end
+    end
+})
+
+local targetCount = leftSection:new_label({
+    name = "Targets: 0"
+})
+
+local whitelistCount = leftSection:new_label({
+    name = "Whitelist: 0"
+})
+
+local clearTargetBtn = leftSection:new_button({
+    name = "Clear Targets",
+    callback = function()
+        getgenv().Lists.TargetList = {}
+    end
+})
+
+local clearWhitelistBtn = leftSection:new_button({
+    name = "Clear Whitelist",
+    callback = function()
+        getgenv().Lists.Whitelist = {}
+    end
+})
+
+local rightSection = playersPage:new_section({
+    name = "Info",
+    side = "right",
+    size = 250
+})
+
+local selectedName = rightSection:new_label({
+    name = "Selected: None"
+})
+
+local playerTeam = rightSection:new_label({
+    name = "Team: -"
+})
+
+local playerHealth = rightSection:new_label({
+    name = "Health: -"
+})
+
+local playerDistance = rightSection:new_label({
+    name = "Distance: -"
+})
+
+local playerStatus = rightSection:new_label({
+    name = "Status: -"
+})
+
+local controlSection = playersPage:new_section({
+    name = "Controls",
+    side = "left",
+    size = 150
+})
+
+local useTargetToggle = controlSection:new_toggle({
+    name = "Use Target",
+    state = false,
+    flag = "players_usetarget",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.UseTargetList = state
+    end
+})
+
+local useWhitelistToggle = controlSection:new_toggle({
+    name = "Use Whitelist",
+    state = false,
+    flag = "players_usewhitelist",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.UseWhitelist = state
+    end
+})
+
+local function updatePlayerList()
+    local players = Players:GetPlayers()
+    local options = {}
+    
+    for _, player in ipairs(players) do
+        if player ~= LocalPlayer then
+            table.insert(options, player.Name)
+        end
+    end
+    
+    playersBox.options = options
+    
+    targetCount:set("Targets: " .. #getgenv().Lists.TargetList)
+    whitelistCount:set("Whitelist: " .. #getgenv().Lists.Whitelist)
+end
+
+Players.PlayerAdded:Connect(updatePlayerList)
+Players.PlayerRemoving:Connect(updatePlayerList)
+
+local function updatePlayerInfo()
+    local selected = library.flags.players_online or {}
+    local name = selected[1]
+    
+    if not name then
+        selectedName:set("Selected: None")
+        playerTeam:set("Team: -")
+        playerHealth:set("Health: -")
+        playerDistance:set("Distance: -")
+        playerStatus:set("Status: -")
+        return
+    end
+    
+    local player = Players:FindFirstChild(name)
+    if not player then
+        selectedName:set("Selected: " .. name .. " (Off)")
+        playerTeam:set("Team: -")
+        playerHealth:set("Health: -")
+        playerDistance:set("Distance: -")
+        playerStatus:set("Status: Offline")
+        return
+    end
+    
+    selectedName:set("Selected: " .. player.Name)
+    
+    if player.Team then
+        playerTeam:set("Team: " .. tostring(player.Team))
+    else
+        playerTeam:set("Team: None")
+    end
+    
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then
+            playerHealth:set(string.format("Health: %d/%d", math.floor(hum.Health), math.floor(hum.MaxHealth)))
+        else
+            playerHealth:set("Health: -")
+        end
+        
+        local myChar = LocalPlayer.Character
+        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        local theirRoot = char:FindFirstChild("HumanoidRootPart")
+        
+        if myRoot and theirRoot then
+            local dist = (myRoot.Position - theirRoot.Position).Magnitude
+            playerDistance:set(string.format("Distance: %d", math.floor(dist)))
+        else
+            playerDistance:set("Distance: -")
+        end
+        
+        playerStatus:set("Status: Alive")
+    else
+        playerHealth:set("Health: -")
+        playerDistance:set("Distance: -")
+        playerStatus:set("Status: Dead")
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    updatePlayerInfo()
+end)
+
+task.spawn(function()
+    task.wait(2)
+    updatePlayerList()
+    while task.wait(5) do
+        updatePlayerList()
+    end
 end)
 local configPage = window:new_page({
     name = "Configuration"
