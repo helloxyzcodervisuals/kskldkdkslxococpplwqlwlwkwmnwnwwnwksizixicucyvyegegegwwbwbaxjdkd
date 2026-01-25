@@ -3628,17 +3628,26 @@ local playersBox = leftSection:new_listbox({
 local addTargetBtn = leftSection:new_button({
     name = "Add to Target",
     callback = function()
-        local selected = library.flags.players_online or {}
-        for _, name in ipairs(selected) do
-            local found = false
-            for _, targetName in ipairs(getgenv().Lists.TargetList) do
-                if targetName == name then
-                    found = true
+        for _, name in ipairs(playersBox.options) do
+            local selected = false
+            for _, sel in ipairs(playersBox.default) do
+                if sel == name then
+                    selected = true
                     break
                 end
             end
-            if not found then
-                table.insert(getgenv().Lists.TargetList, name)
+            
+            if selected then
+                local found = false
+                for _, target in ipairs(getgenv().Lists.TargetList) do
+                    if target == name then
+                        found = true
+                        break
+                    end
+                end
+                if not found then
+                    table.insert(getgenv().Lists.TargetList, name)
+                end
             end
         end
     end
@@ -3647,21 +3656,31 @@ local addTargetBtn = leftSection:new_button({
 local addWhitelistBtn = leftSection:new_button({
     name = "Add to Whitelist",
     callback = function()
-        local selected = library.flags.players_online or {}
-        for _, name in ipairs(selected) do
-            local found = false
-            for _, whitelistName in ipairs(getgenv().Lists.Whitelist) do
-                if whitelistName == name then
-                    found = true
+        for _, name in ipairs(playersBox.options) do
+            local selected = false
+            for _, sel in ipairs(playersBox.default) do
+                if sel == name then
+                    selected = true
                     break
                 end
             end
-            if not found then
-                table.insert(getgenv().Lists.Whitelist, name)
+            
+            if selected then
+                local found = false
+                for _, whitelist in ipairs(getgenv().Lists.Whitelist) do
+                    if whitelist == name then
+                        found = true
+                        break
+                    end
+                end
+                if not found then
+                    table.insert(getgenv().Lists.Whitelist, name)
+                end
             end
         end
     end
 })
+
 
 local targetCount = leftSection:new_label({
     name = "Targets: 0"
@@ -3751,6 +3770,16 @@ local function updatePlayerList()
     targetCount:set("Targets: " .. #getgenv().Lists.TargetList)
     whitelistCount:set("Whitelist: " .. #getgenv().Lists.Whitelist)
 end
+local function updateCounts()
+    targetCount:set("Targets: " .. #getgenv().Lists.TargetList)
+    whitelistCount:set("Whitelist: " .. #getgenv().Lists.Whitelist)
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        updateCounts()
+    end
+end)
 for _, player in ipairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         playersBox:add_option(player.Name)
