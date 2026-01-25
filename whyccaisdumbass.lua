@@ -37,7 +37,7 @@ for _, v in pairs(getgc(true)) do
         end
     end
 end
-
+--why
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
