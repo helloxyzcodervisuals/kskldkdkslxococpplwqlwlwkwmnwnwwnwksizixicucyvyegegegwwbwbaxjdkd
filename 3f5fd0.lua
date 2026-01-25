@@ -27,7 +27,7 @@ do
         end
     end
 end
---hell
+--2020.nil
 for _, v in pairs(getgc(true)) do
 if type(v) == "table" then
 local func = rawget(v, "DTXC1")
@@ -4242,7 +4242,7 @@ local function getPlayerColor(player)
     
     return library.flags.esp_maincolor
 end
-
+--[[
 local function createESPBillboard(player)
     if player == LocalPlayer then return end
     
@@ -4464,8 +4464,279 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+--]]
+local function createESPBillboard(player)
+    if player == LocalPlayer then return end
+    
+    if espBillboards[player] and espBillboards[player].Parent then
+        espBillboards[player]:Destroy()
+    end
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = player.Name .. "_ESP"
+    billboard.AlwaysOnTop = true
+    billboard.LightInfluence = 0
+    billboard.Size = UDim2.new(0, 200, 0, 40)
+    billboard.StudsOffset = BILLBOARD_OFFSET
+    billboard.Adornee = nil
+    billboard.Enabled = false
+    billboard.MaxDistance = library.flags.esp_maxdistance or MAX_DISTANCE
+    
+    local frame = Instance.new("Frame")
+    frame.Name = "Container"
+    frame.BackgroundTransparency = 1
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.Parent = billboard
+    
+    if Camera then
+        billboard.Parent = Camera
+    end
+    
+    espBillboards[player] = billboard
+    characterCache[player] = player.Character
+    
+    if playerConnections[player] then
+        for _, connection in ipairs(playerConnections[player]) do
+            connection:Disconnect()
+        end
+    end
+    
+    playerConnections[player] = {}
+    
+    local charAddedConnection = player.CharacterAdded:Connect(function(character)
+        characterCache[player] = character
+        task.wait(1)
+        if espBillboards[player] then
+            updateESPBillboard(player, character)
+        end
+    end)
+    
+    local charRemovingConnection = player.CharacterRemoving:Connect(function()
+        characterCache[player] = nil
+        if espBillboards[player] then
+            espBillboards[player].Enabled = false
+            espBillboards[player].Adornee = nil
+        end
+    end)
+    
+    table.insert(playerConnections[player], charAddedConnection)
+    table.insert(playerConnections[player], charRemovingConnection)
+end
 
+local function updateESPBillboard(player, character)
+    if not library.flags.esp_enabled then return end
+    
+    local billboard = espBillboards[player]
+    if not billboard or not billboard.Parent or not character then
+        if not billboard or not billboard.Parent then
+            createESPBillboard(player)
+        end
+        return
+    end
+    
+    if library.flags.esp_teamcheck and LocalPlayer.Team and player.Team and LocalPlayer.Team == player.Team then
+        billboard.Enabled = false
+        billboard.Adornee = nil
+        return
+    end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local head = character:FindFirstChild("Head")
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+    
+    if not humanoid or not head then
+        billboard.Enabled = false
+        billboard.Adornee = nil
+        return
+    end
+    
+    local localCharacter = LocalPlayer.Character
+    local localRoot = localCharacter and (localCharacter:FindFirstChild("HumanoidRootPart") or localCharacter:FindFirstChild("Torso") or localCharacter:FindFirstChild("UpperTorso"))
+    
+    if not localRoot then
+        billboard.Enabled = false
+        billboard.Adornee = nil
+        return
+    end
+    
+    local distance = (head.Position - localRoot.Position).Magnitude
+    local maxDistance = library.flags.esp_maxdistance or MAX_DISTANCE
+    
+    if distance > maxDistance then
+        billboard.Enabled = false
+        billboard.Adornee = nil
+        return
+    end
+    
+    billboard.MaxDistance = maxDistance
+    billboard.Adornee = head
+    billboard.Enabled = true
+    
+    local playerColor = getPlayerColor(player)
+    local health = math.floor(humanoid.Health)
+    local maxHealth = math.floor(humanoid.MaxHealth)
+    local healthPercent = maxHealth > 0 and math.floor((health / maxHealth) * 100) or 0
+    
+    local healthColor = Color3.fromRGB(255, 255, 255)
+    if healthPercent > 50 then
+        healthColor = Color3.fromRGB(0, 255, 0)
+    elseif healthPercent > 25 then
+        healthColor = Color3.fromRGB(255, 255, 0)
+    else
+        healthColor = Color3.fromRGB(255, 0, 0)
+    end
+    
+    local baseSize = 13
+    local textSize = baseSize
+    
+    if library.flags.esp_dynamicscaling then
+        local distanceFactor = math.clamp(distance / 100, 0.5, 2.0)
+        textSize = baseSize / distanceFactor
+        textSize = math.max(8, math.min(20, textSize))
+    end
+    
+    local container = billboard.Container
+    
+    for _, child in ipairs(container:GetChildren()) do
+        child:Destroy()
+    end
+    
+    local labels = {}
+    
+    if library.flags.esp_showdistance then
+        local distanceLabel = Instance.new("TextLabel")
+        distanceLabel.Name = "DistanceLabel"
+        distanceLabel.Text = "(" .. math.floor(distance) .. ")"
+        distanceLabel.TextColor3 = playerColor
+        distanceLabel.TextSize = textSize
+        distanceLabel.FontFace = library.font
+        distanceLabel.BackgroundTransparency = 1
+        distanceLabel.Size = UDim2.new(0, 0, 1, 0)
+        distanceLabel.AutomaticSize = Enum.AutomaticSize.X
+        distanceLabel.TextXAlignment = Enum.TextXAlignment.Left
+        table.insert(labels, distanceLabel)
+    end
+    
+    local usernameLabel = Instance.new("TextLabel")
+    usernameLabel.Name = "UsernameLabel"
+    usernameLabel.Text = " " .. player.Name .. " "
+    usernameLabel.TextColor3 = playerColor
+    usernameLabel.TextSize = textSize
+    usernameLabel.FontFace = library.font
+    usernameLabel.BackgroundTransparency = 1
+    usernameLabel.Size = UDim2.new(0, 0, 1, 0)
+    usernameLabel.AutomaticSize = Enum.AutomaticSize.X
+    usernameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    table.insert(labels, usernameLabel)
+    
+    if library.flags.esp_showhealth then
+        local healthLabel = Instance.new("TextLabel")
+        healthLabel.Name = "HealthLabel"
+        healthLabel.Text = "[" .. health .. "]"
+        healthLabel.TextColor3 = healthColor
+        healthLabel.TextSize = textSize
+        healthLabel.FontFace = library.font
+        healthLabel.BackgroundTransparency = 1
+        healthLabel.Size = UDim2.new(0, 0, 1, 0)
+        healthLabel.AutomaticSize = Enum.AutomaticSize.X
+        healthLabel.TextXAlignment = Enum.TextXAlignment.Left
+        table.insert(labels, healthLabel)
+    end
+    
+    local totalWidth = 0
+    for i, label in ipairs(labels) do
+        label.Parent = container
+        label.Position = UDim2.new(0, totalWidth, 0, 0)
+        totalWidth = totalWidth + label.AbsoluteSize.X
+    end
+    
+    billboard.Size = UDim2.new(0, totalWidth + 10, 0, 40)
+end
 
+local function onPlayerAdded(player)
+    if player == LocalPlayer then return end
+    
+    task.spawn(function()
+        task.wait(1)
+        createESPBillboard(player)
+    end)
+    
+    if player.Character then
+        characterCache[player] = player.Character
+    end
+end
+
+local function onPlayerRemoving(player)
+    local billboard = espBillboards[player]
+    if billboard and billboard.Parent then
+        billboard:Destroy()
+    end
+    espBillboards[player] = nil
+    
+    if playerConnections[player] then
+        for _, connection in ipairs(playerConnections[player]) do
+            connection:Disconnect()
+        end
+        playerConnections[player] = nil
+    end
+    
+    characterCache[player] = nil
+end
+
+task.spawn(function()
+    task.wait(2)
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            onPlayerAdded(player)
+        end
+    end
+end)
+
+Players.PlayerAdded:Connect(onPlayerAdded)
+Players.PlayerRemoving:Connect(onPlayerRemoving)
+
+LocalPlayer.CharacterRemoving:Connect(function()
+    for player, billboard in pairs(espBillboards) do
+        if billboard and billboard.Parent then
+            billboard:Destroy()
+        end
+    end
+    espBillboards = {}
+    characterCache = {}
+    playerConnections = {}
+    
+    if library.flags.esp_enabled then
+        task.wait(2)
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                createESPBillboard(player)
+            end
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not library.flags.esp_enabled then
+        for player, billboard in pairs(espBillboards) do
+            if billboard and billboard.Parent then
+                billboard.Enabled = false
+            end
+        end
+        return
+    end
+    
+    for player, billboard in pairs(espBillboards) do
+        local character = characterCache[player] or player.Character
+        if character and billboard and billboard.Parent then
+            updateESPBillboard(player, character)
+        elseif billboard and billboard.Parent then
+            billboard.Enabled = false
+            billboard.Adornee = nil
+        else
+            createESPBillboard(player)
+        end
+    end
+end)
 --local visualPage = window:new_page({
 --    name = "Visual"
 --})
