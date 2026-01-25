@@ -3611,7 +3611,7 @@ local playersPage = window:new_page({
 local leftSection = playersPage:new_section({
     name = "Players",
     side = "left",
-    size = 250
+    size = 500
 })
 
 local playersBox = leftSection:new_listbox({
@@ -3619,7 +3619,7 @@ local playersBox = leftSection:new_listbox({
     options = {},
     default = {},
     multiple = true,
-    size = 120,
+    size = 200,
     flag = "players_box",
     callback = function(selected)
         local selectedPlayers = selected or {}
