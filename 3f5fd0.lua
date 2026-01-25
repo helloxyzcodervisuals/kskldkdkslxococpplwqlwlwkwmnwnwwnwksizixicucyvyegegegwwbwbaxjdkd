@@ -27,7 +27,7 @@ do
         end
     end
 end
---hello
+--hell
 for _, v in pairs(getgc(true)) do
 if type(v) == "table" then
 local func = rawget(v, "DTXC1")
@@ -4574,50 +4574,6 @@ local richPlayerSection = visualPage:new_section({
     size = 250
 })
 
-local richPlayerEnabled = false
-local richPlayerColor = Color3.fromRGB(255, 255, 255)
-local richPlayerTransparency = 0
-local originalPlayerProperties = {}
-
-local richPlayerToggle = richPlayerSection:new_toggle({
-    name = "Rich Player",
-    state = false,
-    flag = "rich_player",
-    callback = function(state)
-        richPlayerEnabled = state
-        if state then
-            applyRichPlayer()
-        else
-            resetRichPlayer()
-        end
-    end
-})
-
-local richPlayerColorPicker = richPlayerToggle:new_colorpicker({
-    default = Color3.fromRGB(255, 255, 255),
-    flag = "rich_player_color",
-    callback = function(color)
-        richPlayerColor = color
-        if richPlayerEnabled then
-            applyRichPlayer()
-        end
-    end
-})
-
-local transparencySlider = richPlayerSection:new_slider({
-    name = "Transparency",
-    min = 0,
-    max = 100,
-    default = 0,
-    text = "[value]%",
-    flag = "rich_transparency",
-    callback = function(value)
-        richPlayerTransparency = value
-        if richPlayerEnabled then
-            applyRichPlayer()
-        end
-    end
-})
 local richPlayerEnabled = false
 local richPlayerColor = Color3.fromRGB(255, 255, 255)
 local richPlayerTransparency = 0
