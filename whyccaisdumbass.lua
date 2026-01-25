@@ -1376,7 +1376,7 @@ local function loadMisc()
             if state then
                 hideHead()
             else
-                showHead()
+                print("l lazy do it:(")
             end
         end,
         toggleInfStamina = function(state)
