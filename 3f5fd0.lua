@@ -99,10 +99,12 @@ local Camera = Workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/deadCell.lua"))()
-local window = library:new_window({
-    size = Vector2.new(700, 550)
-})
+local screenY = workspace.CurrentCamera.ViewportSize.Y
+local windowHeight = screenY < 400 and 350 or 550
 
+local window = library:new_window({
+    size = Vector2.new(700, windowHeight)
+})
 local ragebotPage = window:new_page({
     name = "Ragebot"
 })
@@ -2743,7 +2745,616 @@ end
 
 local misc = loadMisc()
 loadRagebot()
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
+local camera = Workspace.CurrentCamera
+local local_player = Players.LocalPlayer
+
+getgenv().Legitbot = {
+    Enabled = false,
+    SilentAim = {
+        Enabled = false,
+        FOV = 100,
+        TeamCheck = true,
+        HitPart = "Torso",
+        HeadChance = 30,
+        Prediction = 0.165
+    },
+    Tracers = {
+        Enabled = true,
+        Color = Color3.fromRGB(255, 50, 50),
+        Width = 0.3,
+        Brightness = 2,
+        LightEmission = 1,
+        Lifetime = 0.5
+    }
+}
+
+getgenv().silent_aim_is_targetting = false
+getgenv().silent_aim_target = nil
+getgenv().aim_position = Vector3.new()
+
+local function createLegitTracer(startPos, endPos)
+    if not getgenv().Legitbot.Tracers.Enabled then return end
+    
+    local beamPart = Instance.new("Part")
+    beamPart.Anchored = true
+    beamPart.CanCollide = false
+    beamPart.Transparency = 1
+    beamPart.Size = Vector3.new(0.1, 0.1, 0.1)
+    beamPart.Parent = Workspace
+    
+    local attachment0 = Instance.new("Attachment")
+    attachment0.Parent = beamPart
+    
+    local attachment1 = Instance.new("Attachment")
+    attachment1.Parent = beamPart
+    
+    local beam = Instance.new("Beam")
+    beam.Attachment0 = attachment0
+    beam.Attachment1 = attachment1
+    beam.Texture = "rbxassetid://7136858729"
+    beam.Color = ColorSequence.new(getgenv().Legitbot.Tracers.Color)
+    beam.Width0 = getgenv().Legitbot.Tracers.Width
+    beam.Width1 = getgenv().Legitbot.Tracers.Width
+    beam.Brightness = getgenv().Legitbot.Tracers.Brightness
+    beam.LightEmission = getgenv().Legitbot.Tracers.LightEmission
+    beam.Parent = beamPart
+    
+    local midPoint = (startPos + endPos) / 2
+    local lookVector = (endPos - startPos).Unit
+    local distance = (startPos - endPos).Magnitude
+    
+    beamPart.CFrame = CFrame.new(midPoint, midPoint + lookVector) * CFrame.new(0, 0, -distance/2)
+    
+    attachment0.WorldPosition = startPos
+    attachment1.WorldPosition = endPos
+    
+    task.delay(getgenv().Legitbot.Tracers.Lifetime, function()
+        if beamPart and beamPart.Parent then
+            beamPart:Destroy()
+        end
+    end)
+end
+
+local function trackGlobalBullets()
+    local bfr = workspace.Camera:FindFirstChild("Bullets")
+    if not bfr then return end
+    
+    local function tblt(blt)
+        if not blt:IsA("BasePart") then return end
+        
+        local stp = blt.Position
+        local lsp = stp
+        local stc = 0
+        
+        local con
+        con = RunService.Heartbeat:Connect(function()
+            if not blt or not blt.Parent then
+                con:Disconnect()
+                if (lsp - stp).Magnitude > 1 then
+                    createTracer(stp, lsp)
+                end
+                return
+            end
+            
+            local cp = blt.Position
+            if (cp - lsp).Magnitude < 0.01 then
+                stc = stc + 1
+                if stc > 3 then
+                    con:Disconnect()
+                    if (cp - stp).Magnitude > 1 then
+                        createTracer(stp, cp)
+                    end
+                end
+            else
+                stc = 0
+                lsp = cp
+            end
+        end)
+    end
+    
+    bfr.ChildAdded:Connect(tblt)
+    
+    for _, v in ipairs(bfr:GetChildren()) do
+        tblt(v)
+    end
+end
+
+local function get_direction(origin, destination)
+    return ((destination - origin).Unit * 1000)
+end
+
+local function world_to_screen(position)
+    local viewport_position, on_screen = camera:WorldToViewportPoint(position)
+    return {position = Vector2.new(viewport_position.X, viewport_position.Y), on_screen = on_screen}
+end
+
+local function has_character(player)
+    return player and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+end
+
+local function is_in_fov(position)
+    local screen_pos = world_to_screen(position)
+    if not screen_pos.on_screen then return false end
+    
+    local center = camera.ViewportSize / 2
+    local distance = (screen_pos.position - center).Magnitude
+    return distance <= getgenv().Legitbot.SilentAim.FOV
+end
+
+local function get_closest_player_to_position(target_position)
+    local closest_player = nil
+    local closest_distance = math.huge
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == local_player then continue end
+        if not has_character(player) then continue end
+        
+        if getgenv().Legitbot.SilentAim.TeamCheck and player.Team and local_player.Team and player.Team == local_player.Team then
+            continue
+        end
+        
+        local character = player.Character
+        local humanoid_root_part = character:FindFirstChild("HumanoidRootPart")
+        if not humanoid_root_part then continue end
+        
+        if not is_in_fov(humanoid_root_part.Position) then
+            continue
+        end
+        
+        local player_position = humanoid_root_part.Position
+        local distance = (target_position - player_position).Magnitude
+        
+        if distance < closest_distance then
+            closest_distance = distance
+            closest_player = player
+        end
+    end
+    
+    return closest_player
+end
+
+local function get_target_part_position(character)
+    if not character then return Vector3.new(0, 0, 0) end
+    
+    local hit_part = getgenv().Legitbot.SilentAim.HitPart
+    local head_chance = getgenv().Legitbot.SilentAim.HeadChance
+    
+    local should_hit_head = math.random(1, 100) <= head_chance
+    local target_part_name = should_hit_head and "Head" or hit_part
+    
+    local target_part = character:FindFirstChild(target_part_name)
+    if not target_part and target_part_name == "Head" then
+        target_part = character:FindFirstChild("Torso")
+    end
+    if not target_part then
+        target_part = character:FindFirstChild("HumanoidRootPart")
+    end
+    
+    if target_part then
+        return target_part.Position
+    end
+    
+    return character:FindFirstChild("HumanoidRootPart").Position
+end
+
+RunService.RenderStepped:Connect(function()
+    if not getgenv().Legitbot.SilentAim.Enabled then
+        getgenv().silent_aim_is_targetting = false
+        getgenv().silent_aim_target = nil
+        return
+    end
+    
+    local target_position = camera.CFrame.Position + camera.CFrame.LookVector * 100
+    local new_target = get_closest_player_to_position(target_position)
+    
+    getgenv().silent_aim_is_targetting = new_target and true or false
+    getgenv().silent_aim_target = new_target or nil
+    
+    if getgenv().silent_aim_target and has_character(getgenv().silent_aim_target) then
+        local character = getgenv().silent_aim_target.Character
+        local base_position = get_target_part_position(character)
+        
+        local velocity = Vector3.new(0, 0, 0)
+        local hit_part = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso")
+        if hit_part then
+            velocity = hit_part.Velocity
+        end
+        
+        local prediction = getgenv().Legitbot.SilentAim.Prediction
+        local predicted_position = base_position + (velocity * prediction)
+        getgenv().aim_position = predicted_position
+    end
+end)
+
+local __namecall
+__namecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    local method = tostring(getnamecallmethod())
+    
+    if not checkcaller() and getgenv().silent_aim_is_targetting and getgenv().Legitbot.SilentAim.Enabled and getgenv().silent_aim_target and self == Workspace and method == "Raycast" then
+        local origin = args[1]
+        args[2] = get_direction(origin, getgenv().aim_position)
+        return __namecall(self, unpack(args))
+    end
+    
+    return __namecall(self, ...)
+end)
+
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local local_player = Players.LocalPlayer
+
+getgenv().GunMod = {
+    NoRecoil = true,
+    NoSpread = true,
+    NoEquipTime = true
+}
+
+local no_recoil_enabled = getgenv().GunMod.NoRecoil
+local no_spread_enabled = getgenv().GunMod.NoSpread
+local no_equiptime_enabled = getgenv().GunMod.NoEquipTime
+
+local config_modules_table = {}
+local weapon_config_data = {}
+local cached_configs = {}
+local current_tools = {}
+local backpack_tools = {}
+local character_tools = {}
+local all_configs_array = {}
+local gun_config_cache = {}
+
+local function applyNoRecoil()
+    if not no_recoil_enabled then return end
+    
+    local configs_found = {}
+    
+    for _, config_table in pairs(getgc(true)) do
+        if type(config_table) == "table" and rawget(config_table, "Recoil") then
+            table.insert(configs_found, config_table)
+        end
+    end
+    
+    for _, player_container in ipairs({local_player.Backpack, local_player.Character}) do
+        for _, weapon_tool in ipairs(player_container:GetChildren()) do
+            if weapon_tool:IsA("Tool") then
+                local weapon_config = weapon_tool:FindFirstChild("Config")
+                if weapon_config and weapon_config:IsA("ModuleScript") then
+                    local config_load_success, config_data_table = pcall(require, weapon_config)
+                    if config_load_success and type(config_data_table) == "table" then
+                        table.insert(configs_found, config_data_table)
+                    end
+                end
+            end
+        end
+    end
+    
+    for _, current_config_data in ipairs(configs_found) do
+        local function set_config_value(config_field, field_value)
+            if rawget(current_config_data, config_field) then
+                rawset(current_config_data, config_field, field_value)
+            end
+        end
+
+        set_config_value("Recoil", 0)
+        set_config_value("RecoilSpeed", 0)
+        set_config_value("RecoilDamper", 1)
+        set_config_value("RecoilRedution", 1)
+        set_config_value("AngleX_Min", 0)
+        set_config_value("AngleX_Max", 0)
+        set_config_value("AngleY_Min", 0)
+        set_config_value("AngleY_Max", 0)
+        set_config_value("AngleZ_Min", 0)
+        set_config_value("AngleZ_Max", 0)
+
+        if rawget(current_config_data, "AimSettings") and type(current_config_data.AimSettings) == "table" then
+            rawset(current_config_data.AimSettings, "RecoilReduction_X", 1)
+            rawset(current_config_data.AimSettings, "RecoilReduction_Y", 1)
+            rawset(current_config_data.AimSettings, "RecoilReduction_Z", 1)
+            rawset(current_config_data.AimSettings, "SpreadReductionP", 1)
+        end
+    end
+end
+
+local function applyNoSpread()
+    if not no_spread_enabled then return end
+    
+    local configs_found = {}
+    
+    for _, config_table in pairs(getgc(true)) do
+        if type(config_table) == "table" and rawget(config_table, "Spread") then
+            table.insert(configs_found, config_table)
+        end
+    end
+    
+    for _, player_container in ipairs({local_player.Backpack, local_player.Character}) do
+        for _, weapon_tool in ipairs(player_container:GetChildren()) do
+            if weapon_tool:IsA("Tool") then
+                local weapon_config = weapon_tool:FindFirstChild("Config")
+                if weapon_config and weapon_config:IsA("ModuleScript") then
+                    local config_load_success, config_data_table = pcall(require, weapon_config)
+                    if config_load_success and type(config_data_table) == "table" then
+                        table.insert(configs_found, config_data_table)
+                    end
+                end
+            end
+        end
+    end
+    
+    for _, current_config_data in ipairs(configs_found) do
+        if rawget(current_config_data, "Spread") then
+            rawset(current_config_data, "Spread", 0)
+        end
+    end
+end
+
+local function applyNoEquipTime()
+    if not no_equiptime_enabled then return end
+    
+    local configs_found = {}
+    
+    for _, config_table in pairs(getgc(true)) do
+        if type(config_table) == "table" and rawget(config_table, "EquipTime") then
+            table.insert(configs_found, config_table)
+        end
+    end
+    
+    for _, player_container in ipairs({local_player.Backpack, local_player.Character}) do
+        for _, weapon_tool in ipairs(player_container:GetChildren()) do
+            if weapon_tool:IsA("Tool") then
+                local weapon_config = weapon_tool:FindFirstChild("Config")
+                if weapon_config and weapon_config:IsA("ModuleScript") then
+                    local config_load_success, config_data_table = pcall(require, weapon_config)
+                    if config_load_success and type(config_data_table) == "table" then
+                        table.insert(configs_found, config_data_table)
+                    end
+                end
+            end
+        end
+    end
+    
+    for _, current_config_data in ipairs(configs_found) do
+        if rawget(current_config_data, "EquipTime") then
+            rawset(current_config_data, "EquipTime", 0)
+        end
+    end
+end
+
+local function applyAllGunMods()
+    applyNoRecoil()
+    applyNoSpread()
+    applyNoEquipTime()
+end
+
+local_player.CharacterAdded:Connect(function(character)
+    task.wait(1)
+    if getgenv().GunMod.NoRecoil or getgenv().GunMod.NoSpread or getgenv().GunMod.NoEquipTime then
+        applyAllGunMods()
+    end
+end)
+
+local_player.Backpack.ChildAdded:Connect(function(tool)
+    if tool:IsA("Tool") then
+        task.wait(0.1)
+        if getgenv().GunMod.NoRecoil or getgenv().GunMod.NoSpread or getgenv().GunMod.NoEquipTime then
+            applyAllGunMods()
+        end
+    end
+end)
+
+task.spawn(function()
+    task.wait(1)
+    applyAllGunMods()
+end)
+
+task.spawn(function()
+    task.wait(0.1)
+    trackGlobalBullets()
+end)
+local legitPage = window:new_page({
+    name = "LegitBot"
+})
+
+local legitSection = legitPage:new_section({
+    name = "Legitbot Settings",
+    side = "left",
+    size = 250
+})
+
+local silentAimToggle = legitSection:new_toggle({
+    name = "Silent Aim",
+    state = false,
+    flag = "legit_silentaim",
+    callback = function(state)
+        getgenv().Legitbot.SilentAim.Enabled = state
+    end
+})
+
+local silentAimFOV = legitSection:new_slider({
+    name = "Silent Aim FOV",
+    min = 10,
+    max = 500,
+    default = 100,
+    text = "[value]",
+    flag = "legit_fov",
+    callback = function(value)
+        getgenv().Legitbot.SilentAim.FOV = value
+    end
+})
+
+local headChanceSlider = legitSection:new_slider({
+    name = "Head Chance",
+    min = 0,
+    max = 100,
+    default = 30,
+    text = "[value]%",
+    flag = "legit_headchance",
+    callback = function(value)
+        getgenv().Legitbot.SilentAim.HeadChance = value
+    end
+})
+
+local predictionSlider = legitSection:new_slider({
+    name = "Prediction",
+    min = 0.05,
+    max = 0.3,
+    default = 0.165,
+    text = "[value]s",
+    flag = "legit_prediction",
+    callback = function(value)
+        getgenv().Legitbot.SilentAim.Prediction = value
+    end
+})
+
+local teamCheckToggle = legitSection:new_toggle({
+    name = "Team Check",
+    state = true,
+    flag = "legit_teamcheck",
+    callback = function(state)
+        getgenv().Legitbot.SilentAim.TeamCheck = state
+    end
+})
+
+local hitPartList = legitSection:new_listbox({
+    name = "Hit Part",
+    options = {"Head", "Torso", "Random"},
+    default = "Torso",
+    multiple = false,
+    flag = "legit_hitpart",
+    callback = function(selection)
+        getgenv().Legitbot.SilentAim.HitPart = selection
+    end
+})
+
+local tracersSection = legitPage:new_section({
+    name = "Tracers",
+    side = "right",
+    size = 250
+})
+
+local tracersToggle = tracersSection:new_toggle({
+    name = "Legit Tracers",
+    state = true,
+    flag = "legit_tracers",
+    callback = function(state)
+        getgenv().Legitbot.Tracers.Enabled = state
+    end
+})
+
+local tracerColor = tracersToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 50, 50),
+    flag = "legit_tracercolor",
+    callback = function(color)
+        getgenv().Legitbot.Tracers.Color = color
+    end
+})
+
+local tracerWidth = tracersSection:new_slider({
+    name = "Tracer Width",
+    min = 0.1,
+    max = 2,
+    default = 0.3,
+    text = "[value]",
+    flag = "legit_tracerwidth",
+    callback = function(value)
+        getgenv().Legitbot.Tracers.Width = value
+    end
+})
+
+local tracerLifetime = tracersSection:new_slider({
+    name = "Tracer Lifetime",
+    min = 0.1,
+    max = 2,
+    default = 0.5,
+    text = "[value]s",
+    flag = "legit_tracerlife",
+    callback = function(value)
+        getgenv().Legitbot.Tracers.Lifetime = value
+    end
+})
+
+local brightnessSlider = tracersSection:new_slider({
+    name = "Brightness",
+    min = 0,
+    max = 5,
+    default = 2,
+    text = "[value]",
+    flag = "legit_tracerbrightness",
+    callback = function(value)
+        getgenv().Legitbot.Tracers.Brightness = value
+    end
+})
+
+local lightEmissionSlider = tracersSection:new_slider({
+    name = "Light Emission",
+    min = 0,
+    max = 2,
+    default = 1,
+    text = "[value]",
+    flag = "legit_tracerlight",
+    callback = function(value)
+        getgenv().Legitbot.Tracers.LightEmission = value
+    end
+})
+
+local gunModSection = legitPage:new_section({
+    name = "Gun Mod",
+    side = "left",
+    size = 250
+})
+
+local noRecoilToggle = gunModSection:new_toggle({
+    name = "No Recoil",
+    state = true,
+    flag = "legit_norecoil",
+    callback = function(state)
+        getgenv().GunMod.NoRecoil = state
+        no_recoil_enabled = state
+        applyNoRecoil()
+    end
+})
+
+local noSpreadToggle = gunModSection:new_toggle({
+    name = "No Spread",
+    state = true,
+    flag = "legit_nospread",
+    callback = function(state)
+        getgenv().GunMod.NoSpread = state
+        no_spread_enabled = state
+        applyNoSpread()
+    end
+})
+
+local noEquipTimeToggle = gunModSection:new_toggle({
+    name = "No Equip Time",
+    state = true,
+    flag = "legit_noequiptime",
+    callback = function(state)
+        getgenv().GunMod.NoEquipTime = state
+        no_equiptime_enabled = state
+        applyNoEquipTime()
+    end
+})
+
+local bulletTrackToggle = legitPage:new_section({
+    name = "Bullet Tracking",
+    side = "right",
+    size = 250
+}):new_toggle({
+    name = "Track Global Bullets",
+    state = false,
+    flag = "legit_bullettrack",
+    callback = function(state)
+        if state then
+            trackGlobalBullets()
+        end
+    end
+})
 
 local ragebotToggle = ragebotMainSection:new_toggle({
     name = "Enable Ragebot",
