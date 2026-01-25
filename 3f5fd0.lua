@@ -3751,7 +3751,11 @@ local function updatePlayerList()
     targetCount:set("Targets: " .. #getgenv().Lists.TargetList)
     whitelistCount:set("Whitelist: " .. #getgenv().Lists.Whitelist)
 end
-
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        playersBox:add_option(player.Name)
+    end
+end
 Players.PlayerAdded:Connect(function(player)
     if player ~= LocalPlayer then
         playersBox:add_option(player.Name)
