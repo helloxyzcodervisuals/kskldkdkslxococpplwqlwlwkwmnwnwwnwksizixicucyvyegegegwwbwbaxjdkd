@@ -27,8 +27,7 @@ do
         end
     end
 end
---xcwhy
---why i
+--xcop
 for _, v in pairs(getgc(true)) do
 if type(v) == "table" then
 local func = rawget(v, "DTXC1")
@@ -3612,165 +3611,150 @@ local playersPage = window:new_page({
 local leftSection = playersPage:new_section({
     name = "Players",
     side = "left",
-    size = 450
-})
-local targetCount = leftSection:new_label({
-    name = "Selected Targets: 0"
-})
-
-local whitelistCount = leftSection:new_label({
-    name = "Selected Whitelist: 0"
-})
-
-local totalTargetCount = leftSection:new_label({
-    name = "Total Targets: 0"
-})
-
-local totalWhitelistCount = leftSection:new_label({
-    name = "Total Whitelist: 0"
+    size = 250
 })
 
 local playersBox = leftSection:new_listbox({
-    name = "Players",
+    name = "Online Players",
     options = {},
     default = {},
     multiple = true,
     size = 120,
     flag = "players_box",
     callback = function(selected)
-        local targets = {}
-        local whitelist = {}
-        
-        for _, name in ipairs(selected or {}) do
-            local isTarget = false
-            for _, target in ipairs(getgenv().Lists.TargetList) do
-                if target == name then
-                    isTarget = true
-                    break
-                end
-            end
-            
-            local isWhitelist = false
-            for _, wl in ipairs(getgenv().Lists.Whitelist) do
-                if wl == name then
-                    isWhitelist = true
-                    break
-                end
-            end
-            
-            if isTarget then
-                table.insert(targets, name)
-            end
-            
-            if isWhitelist then
-                table.insert(whitelist, name)
-            end
-        end
-        
-        targetCount:set("Selected Targets: " .. #targets)
-        whitelistCount:set("Selected Whitelist: " .. #whitelist)
+        local selectedPlayers = selected or {}
+        getgenv().selectedPlayersTable = selectedPlayers
     end
 })
 
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        playersBox:add_option(player.Name)
+    end
+end
 
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        playersBox:add_option(player.Name)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    playersBox:remove_option(player.Name)
+end)
 
 local addTargetBtn = leftSection:new_button({
     name = "Add to Target",
     callback = function()
-        local selected = playersBox.default or {}
+        local selected = getgenv().selectedPlayersTable or {}
         for _, name in ipairs(selected) do
             local found = false
             for _, target in ipairs(getgenv().Lists.TargetList) do
-                if target == name then
-                    found = true
-                    break
-                end
+                if target == name then found = true break end
             end
             if not found then
                 table.insert(getgenv().Lists.TargetList, name)
             end
         end
-        totalTargetCount:set("Total Targets: " .. #getgenv().Lists.TargetList)
     end
 })
 
 local addWhitelistBtn = leftSection:new_button({
     name = "Add to Whitelist",
     callback = function()
-        local selected = playersBox.default or {}
+        local selected = getgenv().selectedPlayersTable or {}
         for _, name in ipairs(selected) do
             local found = false
             for _, wl in ipairs(getgenv().Lists.Whitelist) do
-                if wl == name then
-                    found = true
-                    break
-                end
+                if wl == name then found = true break end
             end
             if not found then
                 table.insert(getgenv().Lists.Whitelist, name)
             end
         end
-        totalWhitelistCount:set("Total Whitelist: " .. #getgenv().Lists.Whitelist)
     end
 })
 
 local removeTargetBtn = leftSection:new_button({
     name = "Remove Target",
     callback = function()
-        local selected = playersBox.default or {}
+        local selected = getgenv().selectedPlayersTable or {}
         for _, name in ipairs(selected) do
-            for i, target in ipairs(getgenv().Lists.TargetList) do
-                if target == name then
+            for i = #getgenv().Lists.TargetList, 1, -1 do
+                if getgenv().Lists.TargetList[i] == name then
                     table.remove(getgenv().Lists.TargetList, i)
-                    break
                 end
             end
         end
-        totalTargetCount:set("Total Targets: " .. #getgenv().Lists.TargetList)
     end
 })
 
 local removeWhitelistBtn = leftSection:new_button({
     name = "Remove Whitelist",
     callback = function()
-        local selected = playersBox.default or {}
+        local selected = getgenv().selectedPlayersTable or {}
         for _, name in ipairs(selected) do
-            for i, wl in ipairs(getgenv().Lists.Whitelist) do
-                if wl == name then
+            for i = #getgenv().Lists.Whitelist, 1, -1 do
+                if getgenv().Lists.Whitelist[i] == name then
                     table.remove(getgenv().Lists.Whitelist, i)
-                    break
                 end
             end
         end
-        totalWhitelistCount:set("Total Whitelist: " .. #getgenv().Lists.Whitelist)
     end
 })
 
-local clearAllTargetsBtn = leftSection:new_button({
-    name = "Clear All Targets",
+local clearTargetBtn = leftSection:new_button({
+    name = "Clear Targets",
     callback = function()
         getgenv().Lists.TargetList = {}
-        totalTargetCount:set("Total Targets: 0")
     end
 })
 
-local clearAllWhitelistBtn = leftSection:new_button({
-    name = "Clear All Whitelist",
+local clearWhitelistBtn = leftSection:new_button({
+    name = "Clear Whitelist",
     callback = function()
         getgenv().Lists.Whitelist = {}
-        totalWhitelistCount:set("Total Whitelist: 0")
     end
+})
+
+local targetCount = leftSection:new_label({
+    name = "Targets: 0"
+})
+
+local whitelistCount = leftSection:new_label({
+    name = "Whitelist: 0"
 })
 
 task.spawn(function()
     while task.wait(1) do
-        totalTargetCount:set("Total Targets: " .. #getgenv().Lists.TargetList)
-        totalWhitelistCount:set("Total Whitelist: " .. #getgenv().Lists.Whitelist)
+        targetCount:set("Targets: " .. #getgenv().Lists.TargetList)
+        whitelistCount:set("Whitelist: " .. #getgenv().Lists.Whitelist)
     end
 end)
 
+local controlSection = playersPage:new_section({
+    name = "Controls",
+    side = "left",
+    size = 150
+})
 
+local useTargetToggle = controlSection:new_toggle({
+    name = "Use Target List",
+    state = false,
+    flag = "use_target_list",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.UseTargetList = state
+    end
+})
 
+local useWhitelistToggle = controlSection:new_toggle({
+    name = "Use Whitelist",
+    state = false,
+    flag = "use_whitelist",
+    callback = function(state)
+        getgenv().CONFIG.Ragebot.UseWhitelist = state
+    end
+})
 local rightSection = playersPage:new_section({
     name = "Info",
     side = "right",
@@ -3797,73 +3781,8 @@ local playerStatus = rightSection:new_label({
     name = "Status: -"
 })
 
-local controlSection = playersPage:new_section({
-    name = "Controls",
-    side = "left",
-    size = 150
-})
-
-local useTargetToggle = controlSection:new_toggle({
-    name = "Use Target",
-    state = false,
-    flag = "players_usetarget",
-    callback = function(state)
-        getgenv().CONFIG.Ragebot.UseTargetList = state
-    end
-})
-
-local useWhitelistToggle = controlSection:new_toggle({
-    name = "Use Whitelist",
-    state = false,
-    flag = "players_usewhitelist",
-    callback = function(state)
-        getgenv().CONFIG.Ragebot.UseWhitelist = state
-    end
-})
-
-local function updatePlayerList()
-    local players = Players:GetPlayers()
-    
-    for _, child in ipairs(playersBox.options) do
-        playersBox:remove_option(child)
-    end
-    
-    for _, player in ipairs(players) do
-        if player ~= LocalPlayer then
-            playersBox:add_option(player.Name)
-        end
-    end
-    
-    targetCount:set("Targets: " .. #getgenv().Lists.TargetList)
-    whitelistCount:set("Whitelist: " .. #getgenv().Lists.Whitelist)
-end
-local function updateCounts()
-    targetCount:set("Targets: " .. #getgenv().Lists.TargetList)
-    whitelistCount:set("Whitelist: " .. #getgenv().Lists.Whitelist)
-end
-
-task.spawn(function()
-    while task.wait(1) do
-        updateCounts()
-    end
-end)
-for _, player in ipairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        playersBox:add_option(player.Name)
-    end
-end
-Players.PlayerAdded:Connect(function(player)
-    if player ~= LocalPlayer then
-        playersBox:add_option(player.Name)
-    end
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    playersBox:remove_option(player.Name)
-end)
-
-local function updatePlayerInfo()
-    local selected = library.flags.players_online or {}
+RunService.RenderStepped:Connect(function()
+    local selected = getgenv().selectedPlayersTable or {}
     local name = selected[1]
     
     if not name then
@@ -3919,20 +3838,7 @@ local function updatePlayerInfo()
         playerDistance:set("Distance: -")
         playerStatus:set("Status: Dead")
     end
-end
-
-RunService.RenderStepped:Connect(function()
-    updatePlayerInfo()
 end)
-
-task.spawn(function()
-    task.wait(2)
-    updatePlayerList()
-    while task.wait(5) do
-        updatePlayerList()
-    end
-end)
-
 local configPage = window:new_page({
     name = "Configuration"
 })
