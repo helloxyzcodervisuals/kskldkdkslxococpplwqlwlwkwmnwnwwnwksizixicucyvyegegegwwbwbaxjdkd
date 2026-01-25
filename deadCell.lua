@@ -45,7 +45,7 @@ local function vc()
     writefile(v5,v19)
     return Font.fromEnum(Enum.Font.Code)
 end
---Heyman
+--Hey
 local UI_FONT=vc()
 local HttpService=game:GetService("HttpService")
 
@@ -1622,7 +1622,7 @@ function library:new_window(cfg)
                     Name="ToggleHolder",
                     Parent=section_content,
                     BackgroundTransparency=1,
-                    Size=UDim2.new(1,0,0,8),
+                    Size=UDim2.new(0.5,0,0,8),
                     BorderSizePixel=0
                 })
                 
@@ -1659,7 +1659,7 @@ function library:new_window(cfg)
                     callback(toggled)
                 end
                 
-                toggle_frame.InputBegan:Connect(function(input)
+                holder.InputBegan:Connect(function(input)
                     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
                         setstate()
                     end
@@ -1689,7 +1689,7 @@ function library:new_window(cfg)
                     
                     toggle_tbl.colorpickers=toggle_tbl.colorpickers+1
                     
-                    local cp=library.createcolorpicker(default,holder,toggle_tbl.colorpickers-1,flag,callback,-4)
+                    local cp=library.createcolorpicker(default,toggle_frame,toggle_tbl.colorpickers-1,flag,callback,-4)
                     
                     function colorpicker_tbl:set(color)
                         cp:set(color,false,true)
@@ -1781,7 +1781,7 @@ function library:new_window(cfg)
                 
                 local sliding=false
                 
-                slider_frame.InputBegan:Connect(function(input)
+                holder.InputBegan:Connect(function(input)
                     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
                         sliding=true
                         local sizeX=math.clamp((input.Position.X-slider_frame.AbsolutePosition.X)/slider_frame.AbsoluteSize.X,0,1)
@@ -1790,7 +1790,7 @@ function library:new_window(cfg)
                     end
                 end)
                 
-                slider_frame.InputEnded:Connect(function(input)
+                holder.InputEnded:Connect(function(input)
                     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
                         sliding=false
                     end
