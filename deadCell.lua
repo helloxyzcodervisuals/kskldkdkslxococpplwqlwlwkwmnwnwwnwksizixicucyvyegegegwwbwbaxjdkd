@@ -47,7 +47,7 @@ local function vc()
 end
 local UI_FONT=vc()
 local HttpService=game:GetService("HttpService")
---youcant
+--youcantajajdjdsks
 local settings={
     folder_name="deadcell",
     default_accent=Color3.fromRGB(255, 182, 193)  
@@ -1669,7 +1669,7 @@ function library:new_window(cfg)
                                 }),
                                 Transparency = NumberSequence.new({
                                     NumberSequenceKeypoint.new(0, 0.35),
-                                    NumberSequenceKeypoint.new(1, 0)
+                                    NumberSequenceKeypoint.new(1, 0.5)
                                 }),
                                 Rotation = 90
                             })
@@ -1798,7 +1798,7 @@ function library:new_window(cfg)
                     }),
                     Transparency = NumberSequence.new({
                         NumberSequenceKeypoint.new(0, 0.35),
-                        NumberSequenceKeypoint.new(1, 0)
+                        NumberSequenceKeypoint.new(1, 0.5)
                     }),
                     Rotation = 90
                 })
