@@ -4055,6 +4055,7 @@ local refreshPresetsButton = listSection:new_button({
         end
     end
 })
+
 local library = {
     directory = "Nebula/",
     folders = {"fonts", "configs", "logs"},
@@ -4110,6 +4111,7 @@ local BILLBOARD_OFFSET = Vector3.new(0, 3, 0)
 
 local espBillboards = {}
 local characterCache = {}
+local playerConnections = {}
 
 local visualPage = window:new_page({
     name = "Visual"
@@ -4394,12 +4396,6 @@ end
 local function onPlayerAdded(player)
     createESPBillboard(player)
     
-    player.CharacterAdded:Connect(function(character)
-        characterCache[player] = character
-        character:WaitForChild("Humanoid")
-        character:WaitForChild("Head")
-    end)
-    
     if player.Character then
         characterCache[player] = player.Character
     end
@@ -4411,15 +4407,44 @@ local function onPlayerRemoving(player)
         billboard:Destroy()
         espBillboards[player] = nil
     end
+    
+    if playerConnections[player] then
+        for _, connection in ipairs(playerConnections[player]) do
+            connection:Disconnect()
+        end
+        playerConnections[player] = nil
+    end
+    
     characterCache[player] = nil
 end
 
 for _, player in ipairs(Players:GetPlayers()) do
-    onPlayerAdded(player)
+    if player ~= LocalPlayer then
+        onPlayerAdded(player)
+    end
 end
 
 Players.PlayerAdded:Connect(onPlayerAdded)
 Players.PlayerRemoving:Connect(onPlayerRemoving)
+
+LocalPlayer.CharacterRemoving:Connect(function()
+    for player, billboard in pairs(espBillboards) do
+        if player ~= LocalPlayer then
+            billboard:Destroy()
+        end
+    end
+    espBillboards = {}
+    characterCache = {}
+    playerConnections = {}
+    
+    if library.flags.esp_enabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                createESPBillboard(player)
+            end
+        end
+    end
+end)
 
 RunService.RenderStepped:Connect(function()
     if not library.flags.esp_enabled then
@@ -4440,13 +4465,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-LocalPlayer.CharacterRemoving:Connect(function()
-    for _, billboard in pairs(espBillboards) do
-        billboard:Destroy()
-    end
-    espBillboards = {}
-    characterCache = {}
-end)
 
 --local visualPage = window:new_page({
 --    name = "Visual"
@@ -4600,30 +4618,30 @@ local transparencySlider = richPlayerSection:new_slider({
         end
     end
 })
-
-local function recordOriginalProperties(character)
-    originalPlayerProperties = {}
-    
-    for _, part in ipairs(character:GetDescendants()) do
-        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-            originalPlayerProperties[part] = {
-                Color = part.Color,
-                Transparency = part.Transparency
-            }
-        end
-    end
-end
+local richPlayerEnabled = false
+local richPlayerColor = Color3.fromRGB(255, 255, 255)
+local richPlayerTransparency = 0
+local originalPlayerProperties = {}
 
 local function applyRichPlayer()
     local char = LocalPlayer.Character
     if not char then return end
     
-    if not originalPlayerProperties[char] then
-        recordOriginalProperties(char)
+    if not next(originalPlayerProperties) then
+        for _, partName in ipairs({"Torso", "Right Leg", "Right Arm", "Left Leg", "Left Arm", "Head"}) do
+            local part = char:FindFirstChild(partName)
+            if part and part:IsA("BasePart") then
+                originalPlayerProperties[partName] = {
+                    Color = part.Color,
+                    Transparency = part.Transparency
+                }
+            end
+        end
     end
     
-    for _, part in ipairs(char:GetDescendants()) do
-        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+    for _, partName in ipairs({"Torso", "Right Leg", "Right Arm", "Left Leg", "Left Arm", "Head"}) do
+        local part = char:FindFirstChild(partName)
+        if part and part:IsA("BasePart") then
             part.Color = richPlayerColor
             part.Transparency = richPlayerTransparency / 100
         end
@@ -4634,8 +4652,9 @@ local function resetRichPlayer()
     local char = LocalPlayer.Character
     if not char then return end
     
-    for part, properties in pairs(originalPlayerProperties) do
-        if part.Parent and part:IsDescendantOf(char) then
+    for partName, properties in pairs(originalPlayerProperties) do
+        local part = char:FindFirstChild(partName)
+        if part and part:IsA("BasePart") then
             part.Color = properties.Color
             part.Transparency = properties.Transparency
         end
@@ -4644,9 +4663,52 @@ local function resetRichPlayer()
     originalPlayerProperties = {}
 end
 
-LocalPlayer.CharacterAdded:Connect(function(character)
+local richPlayerToggle = richPlayerSection:new_toggle({
+    name = "Rich Player",
+    state = false,
+    flag = "rich_player",
+    callback = function(state)
+        richPlayerEnabled = state
+        if state then
+            if LocalPlayer.Character then
+                applyRichPlayer()
+            end
+        else
+            if LocalPlayer.Character then
+                resetRichPlayer()
+            end
+        end
+    end
+})
+
+local richPlayerColorPicker = richPlayerToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 255, 255),
+    flag = "rich_player_color",
+    callback = function(color)
+        richPlayerColor = color
+        if richPlayerEnabled and LocalPlayer.Character then
+            applyRichPlayer()
+        end
+    end
+})
+
+local transparencySlider = richPlayerSection:new_slider({
+    name = "Transparency",
+    min = 0,
+    max = 100,
+    default = 0,
+    text = "[value]%",
+    flag = "rich_transparency",
+    callback = function(value)
+        richPlayerTransparency = value
+        if richPlayerEnabled and LocalPlayer.Character then
+            applyRichPlayer()
+        end
+    end
+})
+
+LocalPlayer.CharacterAdded:Connect(function()
     if richPlayerEnabled then
-        task.wait(0.5)
         applyRichPlayer()
     end
 end)
