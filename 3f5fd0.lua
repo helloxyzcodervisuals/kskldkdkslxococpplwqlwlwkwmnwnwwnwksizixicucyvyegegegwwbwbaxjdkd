@@ -99,7 +99,7 @@ local Camera = Workspace.CurrentCamera
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/deadCell.lua"))()
-local screenY = workspace.CurrentCamera.ViewportSize.Y
+local screenY = Workspace.CurrentCamera.ViewportSize.Y
 local windowHeight = screenY < 400 and 350 or 550
 
 local window = library:new_window({
