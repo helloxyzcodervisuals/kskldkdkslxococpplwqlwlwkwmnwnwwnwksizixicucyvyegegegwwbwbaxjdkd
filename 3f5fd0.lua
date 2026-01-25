@@ -28,6 +28,7 @@ do
     end
 end
 --xcwhy
+--why icant fix players
 for _, v in pairs(getgc(true)) do
 if type(v) == "table" then
 local func = rawget(v, "DTXC1")
@@ -3614,95 +3615,161 @@ local leftSection = playersPage:new_section({
     size = 450
 })
 
+
 local playersBox = leftSection:new_listbox({
-    name = "Online",
+    name = "Players",
     options = {},
     default = {},
     multiple = true,
-    size = 200,
-    flag = "players_online",
+    size = 120,
+    flag = "players_box",
     callback = function(selected)
+        local targets = {}
+        local whitelist = {}
+        
+        for _, name in ipairs(selected or {}) do
+            local isTarget = false
+            for _, target in ipairs(getgenv().Lists.TargetList) do
+                if target == name then
+                    isTarget = true
+                    break
+                end
+            end
+            
+            local isWhitelist = false
+            for _, wl in ipairs(getgenv().Lists.Whitelist) do
+                if wl == name then
+                    isWhitelist = true
+                    break
+                end
+            end
+            
+            if isTarget then
+                table.insert(targets, name)
+            end
+            
+            if isWhitelist then
+                table.insert(whitelist, name)
+            end
+        end
+        
+        targetCount:set("Selected Targets: " .. #targets)
+        whitelistCount:set("Selected Whitelist: " .. #whitelist)
     end
+})
+
+local targetCount = leftSection:new_label({
+    name = "Selected Targets: 0"
+})
+
+local whitelistCount = leftSection:new_label({
+    name = "Selected Whitelist: 0"
+})
+
+local totalTargetCount = leftSection:new_label({
+    name = "Total Targets: 0"
+})
+
+local totalWhitelistCount = leftSection:new_label({
+    name = "Total Whitelist: 0"
 })
 
 local addTargetBtn = leftSection:new_button({
     name = "Add to Target",
     callback = function()
-        for _, name in ipairs(playersBox.options) do
-            local selected = false
-            for _, sel in ipairs(playersBox.default) do
-                if sel == name then
-                    selected = true
+        local selected = playersBox.default or {}
+        for _, name in ipairs(selected) do
+            local found = false
+            for _, target in ipairs(getgenv().Lists.TargetList) do
+                if target == name then
+                    found = true
                     break
                 end
             end
-            
-            if selected then
-                local found = false
-                for _, target in ipairs(getgenv().Lists.TargetList) do
-                    if target == name then
-                        found = true
-                        break
-                    end
-                end
-                if not found then
-                    table.insert(getgenv().Lists.TargetList, name)
-                end
+            if not found then
+                table.insert(getgenv().Lists.TargetList, name)
             end
         end
+        totalTargetCount:set("Total Targets: " .. #getgenv().Lists.TargetList)
     end
 })
 
 local addWhitelistBtn = leftSection:new_button({
     name = "Add to Whitelist",
     callback = function()
-        for _, name in ipairs(playersBox.options) do
-            local selected = false
-            for _, sel in ipairs(playersBox.default) do
-                if sel == name then
-                    selected = true
+        local selected = playersBox.default or {}
+        for _, name in ipairs(selected) do
+            local found = false
+            for _, wl in ipairs(getgenv().Lists.Whitelist) do
+                if wl == name then
+                    found = true
                     break
                 end
             end
-            
-            if selected then
-                local found = false
-                for _, whitelist in ipairs(getgenv().Lists.Whitelist) do
-                    if whitelist == name then
-                        found = true
-                        break
-                    end
-                end
-                if not found then
-                    table.insert(getgenv().Lists.Whitelist, name)
+            if not found then
+                table.insert(getgenv().Lists.Whitelist, name)
+            end
+        end
+        totalWhitelistCount:set("Total Whitelist: " .. #getgenv().Lists.Whitelist)
+    end
+})
+
+local removeTargetBtn = leftSection:new_button({
+    name = "Remove Target",
+    callback = function()
+        local selected = playersBox.default or {}
+        for _, name in ipairs(selected) do
+            for i, target in ipairs(getgenv().Lists.TargetList) do
+                if target == name then
+                    table.remove(getgenv().Lists.TargetList, i)
+                    break
                 end
             end
         end
+        totalTargetCount:set("Total Targets: " .. #getgenv().Lists.TargetList)
     end
 })
 
-
-local targetCount = leftSection:new_label({
-    name = "Targets: 0"
+local removeWhitelistBtn = leftSection:new_button({
+    name = "Remove Whitelist",
+    callback = function()
+        local selected = playersBox.default or {}
+        for _, name in ipairs(selected) do
+            for i, wl in ipairs(getgenv().Lists.Whitelist) do
+                if wl == name then
+                    table.remove(getgenv().Lists.Whitelist, i)
+                    break
+                end
+            end
+        end
+        totalWhitelistCount:set("Total Whitelist: " .. #getgenv().Lists.Whitelist)
+    end
 })
 
-local whitelistCount = leftSection:new_label({
-    name = "Whitelist: 0"
-})
-
-local clearTargetBtn = leftSection:new_button({
-    name = "Clear Targets",
+local clearAllTargetsBtn = leftSection:new_button({
+    name = "Clear All Targets",
     callback = function()
         getgenv().Lists.TargetList = {}
+        totalTargetCount:set("Total Targets: 0")
     end
 })
 
-local clearWhitelistBtn = leftSection:new_button({
-    name = "Clear Whitelist",
+local clearAllWhitelistBtn = leftSection:new_button({
+    name = "Clear All Whitelist",
     callback = function()
         getgenv().Lists.Whitelist = {}
+        totalWhitelistCount:set("Total Whitelist: 0")
     end
 })
+
+task.spawn(function()
+    while task.wait(1) do
+        totalTargetCount:set("Total Targets: " .. #getgenv().Lists.TargetList)
+        totalWhitelistCount:set("Total Whitelist: " .. #getgenv().Lists.Whitelist)
+    end
+end)
+
+
 
 local rightSection = playersPage:new_section({
     name = "Info",
