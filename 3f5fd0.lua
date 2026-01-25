@@ -28,7 +28,7 @@ do
     end
 end
 --xcwhy
---why icant fix players
+--why i
 for _, v in pairs(getgc(true)) do
 if type(v) == "table" then
 local func = rawget(v, "DTXC1")
@@ -3614,7 +3614,21 @@ local leftSection = playersPage:new_section({
     side = "left",
     size = 450
 })
+local targetCount = leftSection:new_label({
+    name = "Selected Targets: 0"
+})
 
+local whitelistCount = leftSection:new_label({
+    name = "Selected Whitelist: 0"
+})
+
+local totalTargetCount = leftSection:new_label({
+    name = "Total Targets: 0"
+})
+
+local totalWhitelistCount = leftSection:new_label({
+    name = "Total Whitelist: 0"
+})
 
 local playersBox = leftSection:new_listbox({
     name = "Players",
@@ -3658,21 +3672,7 @@ local playersBox = leftSection:new_listbox({
     end
 })
 
-local targetCount = leftSection:new_label({
-    name = "Selected Targets: 0"
-})
 
-local whitelistCount = leftSection:new_label({
-    name = "Selected Whitelist: 0"
-})
-
-local totalTargetCount = leftSection:new_label({
-    name = "Total Targets: 0"
-})
-
-local totalWhitelistCount = leftSection:new_label({
-    name = "Total Whitelist: 0"
-})
 
 local addTargetBtn = leftSection:new_button({
     name = "Add to Target",
