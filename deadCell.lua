@@ -1419,7 +1419,7 @@ function library:new_window(cfg)
         Name="WindowDrag",
         Parent=window_outline,
         BackgroundTransparency=1,
-        Size=UDim2.new(1,0,0,10),
+        Size=UDim2.new(1,0,1,0),
         Position=UDim2.new(0,0,0,0),
         BorderSizePixel=0
     })
@@ -1622,7 +1622,15 @@ function library:new_window(cfg)
                     Name="ToggleHolder",
                     Parent=section_content,
                     BackgroundTransparency=1,
-                    Size=UDim2.new(0.5,0,0,8),
+                    Size=UDim2.new(0.7,0,0,8),
+                    BorderSizePixel=0
+                })
+
+                local hold=utility.createFrame({
+                    Name="ToggleHolder",
+                    Parent=section_content,
+                    BackgroundTransparency=1,
+                    Size=UDim2.new(1,0,0,8),
                     BorderSizePixel=0
                 })
                 
@@ -1689,7 +1697,7 @@ function library:new_window(cfg)
                     
                     toggle_tbl.colorpickers=toggle_tbl.colorpickers+1
                     
-                    local cp=library.createcolorpicker(default,toggle_frame,toggle_tbl.colorpickers-1,flag,callback,-4)
+                    local cp=library.createcolorpicker(default,hold,toggle_tbl.colorpickers-1,flag,callback,-4)
                     
                     function colorpicker_tbl:set(color)
                         cp:set(color,false,true)
