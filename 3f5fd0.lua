@@ -27,7 +27,7 @@ do
         end
     end
 end
-
+--xc
 for _, v in pairs(getgc(true)) do
 if type(v) == "table" then
 local func = rawget(v, "DTXC1")
@@ -3628,8 +3628,15 @@ local playersBox = leftSection:new_listbox({
 local addTargetBtn = leftSection:new_button({
     name = "Add to Target",
     callback = function()
-        for _, name in ipairs(library.flags.players_online or {}) do
-            local found = table.find(getgenv().Lists.TargetList, name)
+        local selected = library.flags.players_online or {}
+        for _, name in ipairs(selected) do
+            local found = false
+            for _, targetName in ipairs(getgenv().Lists.TargetList) do
+                if targetName == name then
+                    found = true
+                    break
+                end
+            end
             if not found then
                 table.insert(getgenv().Lists.TargetList, name)
             end
@@ -3640,8 +3647,15 @@ local addTargetBtn = leftSection:new_button({
 local addWhitelistBtn = leftSection:new_button({
     name = "Add to Whitelist",
     callback = function()
-        for _, name in ipairs(library.flags.players_online or {}) do
-            local found = table.find(getgenv().Lists.Whitelist, name)
+        local selected = library.flags.players_online or {}
+        for _, name in ipairs(selected) do
+            local found = false
+            for _, whitelistName in ipairs(getgenv().Lists.Whitelist) do
+                if whitelistName == name then
+                    found = true
+                    break
+                end
+            end
             if not found then
                 table.insert(getgenv().Lists.Whitelist, name)
             end
@@ -3674,7 +3688,7 @@ local clearWhitelistBtn = leftSection:new_button({
 local rightSection = playersPage:new_section({
     name = "Info",
     side = "right",
-    size = 250
+    size = 200
 })
 
 local selectedName = rightSection:new_label({
@@ -3723,22 +3737,30 @@ local useWhitelistToggle = controlSection:new_toggle({
 
 local function updatePlayerList()
     local players = Players:GetPlayers()
-    local options = {}
+    
+    for _, child in ipairs(playersBox.options) do
+        playersBox:remove_option(child)
+    end
     
     for _, player in ipairs(players) do
         if player ~= LocalPlayer then
-            table.insert(options, player.Name)
+            playersBox:add_option(player.Name)
         end
     end
-    
-    playersBox.options = options
     
     targetCount:set("Targets: " .. #getgenv().Lists.TargetList)
     whitelistCount:set("Whitelist: " .. #getgenv().Lists.Whitelist)
 end
 
-Players.PlayerAdded:Connect(updatePlayerList)
-Players.PlayerRemoving:Connect(updatePlayerList)
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        playersBox:add_option(player.Name)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    playersBox:remove_option(player.Name)
+end)
 
 local function updatePlayerInfo()
     local selected = library.flags.players_online or {}
@@ -3810,6 +3832,7 @@ task.spawn(function()
         updatePlayerList()
     end
 end)
+
 local configPage = window:new_page({
     name = "Configuration"
 })
