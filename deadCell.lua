@@ -1638,7 +1638,7 @@ function library:new_window(cfg)
                     Name="ToggleHolder",
                     Parent=section_content,
                     BackgroundTransparency=1,
-                    Size=UDim2.new(1,0,0,8),
+                    Size=UDim2.new(1,0,0,0),
                     BorderSizePixel=0
                 })
                 
