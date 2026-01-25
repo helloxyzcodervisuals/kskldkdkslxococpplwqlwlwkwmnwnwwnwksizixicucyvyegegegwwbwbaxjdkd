@@ -27,7 +27,7 @@ do
         end
     end
 end
---2020.nil
+--2020.nilcvv
 for _, v in pairs(getgc(true)) do
 if type(v) == "table" then
 local func = rawget(v, "DTXC1")
@@ -5469,6 +5469,188 @@ local noclipToggle = movementSection:new_toggle({
             startNoclip()
         else
             stopNoclip()
+        end
+    end
+})
+local configPage = window:new_page({
+    name = "Configuration"
+})
+
+local saveSection = configPage:new_section({
+    name = "Save/Load",
+    side = "left",
+    size = 250
+})
+
+local configNameTextbox = saveSection:new_textbox({
+    name = "Config Name",
+    placeholder = "enter config name",
+    default = "",
+    flag = "config_name",
+    callback = function(text)
+        getgenv().currentConfigName = text
+    end
+})
+
+local saveConfigButton = saveSection:new_button({
+    name = "Save Config",
+    callback = function()
+        if writefile then
+            local configData = {}
+            
+            for flag, value in pairs(library.flags) do
+                if type(value) ~= "function" then
+                    configData[flag] = value
+                end
+            end
+            
+            writefile("aui_config.json", game:GetService("HttpService"):JSONEncode(configData))
+            warn("Configuration saved!")
+        else
+            warn("Writefile not supported")
+        end
+    end
+})
+
+local loadConfigButton = saveSection:new_button({
+    name = "Load Config",
+    callback = function()
+        if isfile("aui_config.json") then
+            local file = readfile("aui_config.json")
+            local config = game:GetService("HttpService"):JSONDecode(file)
+            
+            for flag, value in pairs(config) do
+                if library.flags[flag] then
+                    if type(library.flags[flag]) == "function" then
+                        library.flags[flag](value)
+                    else
+                        library.flags[flag] = value
+                    end
+                end
+            end
+            
+            warn("Configuration loaded!")
+        else
+            warn("Config file not found")
+        end
+    end
+})
+
+local resetConfigButton = saveSection:new_button({
+    name = "Reset to Default",
+    callback = function()
+        local defaultValues = {
+            Enabled = false,
+            State = false,
+            Value = 0,
+            Amount = 0,
+            Range = 0,
+            Color = Color3.fromRGB(255, 0, 0),
+            Text = "",
+            Selected = nil
+        }
+        
+        for flag, value in pairs(library.flags) do
+            if type(value) == "function" then
+                for key, defaultValue in pairs(defaultValues) do
+                    if flag:find(key) then
+                        value(defaultValue)
+                        break
+                    end
+                end
+            end
+        end
+        
+        warn("Configuration reset to default!")
+    end
+})
+
+local manageSection = configPage:new_section({
+    name = "Manage",
+    side = "right",
+    size = 250
+})
+
+local savePresetButton = manageSection:new_button({
+    name = "Save as Preset",
+    callback = function()
+        if writefile and getgenv().currentConfigName then
+            local name = getgenv().currentConfigName
+            if name ~= "" then
+                local configData = {}
+                
+                for flag, value in pairs(library.flags) do
+                    if type(value) ~= "function" then
+                        configData[flag] = value
+                    end
+                end
+                
+                writefile("aui_preset_" .. name .. ".json", game:GetService("HttpService"):JSONEncode(configData))
+                warn("Preset saved as: " .. name)
+            end
+        end
+    end
+})
+
+local deletePresetButton = manageSection:new_button({
+    name = "Delete Preset",
+    callback = function()
+        if delfile and getgenv().currentConfigName then
+            local name = getgenv().currentConfigName
+            if name ~= "" then
+                local filename = "aui_preset_" .. name .. ".json"
+                if isfile(filename) then
+                    delfile(filename)
+                    warn("Preset deleted: " .. name)
+                end
+            end
+        end
+    end
+})
+
+local listSection = configPage:new_section({
+    name = "Presets List",
+    side = "left",
+    size = 200
+})
+
+local refreshPresetsButton = listSection:new_button({
+    name = "Refresh Presets",
+    callback = function()
+        local children = {}
+        for _, child in pairs(listSection.section_content:GetChildren()) do
+            if child.Name:find("PresetButton_") then
+                table.insert(children, child)
+            end
+        end
+        for _, child in ipairs(children) do
+            child:Destroy()
+        end
+        
+        for _, file in pairs(listfiles("")) do
+            if file:find("aui_preset_") and file:find("%.json$") then
+                local name = file:match("aui_preset_(.+)%.json")
+                local presetButton = listSection:new_button({
+                    name = "Load: " .. name,
+                    callback = function()
+                        local file = readfile(file)
+                        local config = game:GetService("HttpService"):JSONDecode(file)
+                        
+                        for flag, value in pairs(config) do
+                            if library.flags[flag] then
+                                if type(library.flags[flag]) == "function" then
+                                    library.flags[flag](value)
+                                else
+                                    library.flags[flag] = value
+                                end
+                            end
+                        end
+                        
+                        warn("Preset loaded: " .. name)
+                    end
+                })
+                presetButton.Name = "PresetButton_" .. name
+            end
         end
     end
 })
