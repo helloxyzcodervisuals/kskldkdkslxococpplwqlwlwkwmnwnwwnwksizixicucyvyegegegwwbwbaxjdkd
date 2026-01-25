@@ -45,7 +45,7 @@ local function vc()
     writefile(v5,v19)
     return Font.fromEnum(Enum.Font.Code)
 end
---Hey
+--He
 local UI_FONT=vc()
 local HttpService=game:GetService("HttpService")
 
@@ -1414,8 +1414,7 @@ function library:new_window(cfg)
         Position=UDim2.new(0,0,0,0),
         BorderSizePixel=0
     })
-    
-    local window_drag=utility.createFrame({
+    local wxn=utility.createFrame({
         Name="WindowDrag",
         Parent=window_outline,
         BackgroundTransparency=1,
@@ -1423,8 +1422,17 @@ function library:new_window(cfg)
         Position=UDim2.new(0,0,0,0),
         BorderSizePixel=0
     })
+    local window_drag=utility.createFrame({
+        Name="WindowDrag",
+        Parent=window_outline,
+        BackgroundTransparency=1,
+        Size=UDim2.new(1,0,0,10),
+        Position=UDim2.new(0,0,0,0),
+        BorderSizePixel=0
+    })
     
-    utility.dragify(window_drag,window_outline)
+    
+    utility.dragify(wxn,window_outline)
     
     function window_tbl:new_page(cfg)
         local page_tbl={sections={}}
