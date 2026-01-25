@@ -47,7 +47,7 @@ local function vc()
 end
 local UI_FONT=vc()
 local HttpService=game:GetService("HttpService")
-
+--youcant
 local settings={
     folder_name="deadcell",
     default_accent=Color3.fromRGB(255, 182, 193)  
@@ -1665,10 +1665,10 @@ function library:new_window(cfg)
                                 Parent = toggle_frame,
                                 Color = ColorSequence.new({
                                     ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-                                    ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
+                                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 182, 193))
                                 }),
                                 Transparency = NumberSequence.new({
-                                    NumberSequenceKeypoint.new(0, 0.5),
+                                    NumberSequenceKeypoint.new(0, 0.35),
                                     NumberSequenceKeypoint.new(1, 0)
                                 }),
                                 Rotation = 90
@@ -1794,10 +1794,10 @@ function library:new_window(cfg)
                     Parent = slider_fill,
                     Color = ColorSequence.new({
                         ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-                        ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
+                        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 182, 193))
                     }),
                     Transparency = NumberSequence.new({
-                        NumberSequenceKeypoint.new(0, 0.5),
+                        NumberSequenceKeypoint.new(0, 0.35),
                         NumberSequenceKeypoint.new(1, 0)
                     }),
                     Rotation = 90
