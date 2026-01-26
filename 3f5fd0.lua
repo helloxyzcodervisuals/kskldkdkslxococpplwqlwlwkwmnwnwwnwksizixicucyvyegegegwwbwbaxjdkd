@@ -4662,16 +4662,24 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
+
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
 local bulletTracersEnabled = false
 local tracerColor = Color3.fromRGB(255, 50, 50)
 local tracerWidth = 0.2
 local tracerLifetime = 1
 
+local camera = Workspace.CurrentCamera
+
 local function create(startPos, endPos)
     if not bulletTracersEnabled then return end
     
     local tracerModel = Instance.new("Model")
-    tracerModel.Name = "TracerBeam"
+    tracerModel.Name = "Tracer"
     
     local beam = Instance.new("Beam")
     beam.Color = ColorSequence.new(tracerColor)
@@ -4680,45 +4688,41 @@ local function create(startPos, endPos)
     beam.Texture = "rbxassetid://7136858729"
     beam.TextureSpeed = 1
     beam.Brightness = 2
-    beam.LightEmission = 2
+    beam.LightEmission = 1
     beam.FaceCamera = true
     
     local a0 = Instance.new("Attachment")
     local a1 = Instance.new("Attachment")
     a0.WorldPosition = startPos
     a1.WorldPosition = endPos
+    
     beam.Attachment0 = a0
     beam.Attachment1 = a1
-    
     beam.Parent = tracerModel
     a0.Parent = tracerModel
     a1.Parent = tracerModel
     tracerModel.Parent = Workspace
     
-    local tweenInfo = TweenInfo.new(
-        tracerLifetime,
-        Enum.EasingStyle.Linear,
-        Enum.EasingDirection.Out
-    )
-    
-    local tween = tweenService:Create(beam, tweenInfo, {
-        Brightness = 0
-    })
+    local tweenInfo = TweenInfo.new(tracerLifetime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(beam, tweenInfo, {Brightness = 0, Width0 = 0, Width1 = 0})
     
     tween:Play()
+    
     tween.Completed:Connect(function()
-        if tracerModel then 
-            tracerModel:Destroy() 
+        if tracerModel then tracerModel:Destroy() end
+    end)
+
+    task.delay(tracerLifetime + 0.1, function()
+        if tracerModel and tracerModel.Parent then
+            tracerModel:Destroy()
         end
     end)
 end
-local Workspace = game:GetService("Workspace")
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 
-local camera = Workspace.CurrentCamera
-local local_player = Players.LocalPlayer
 local function trackGlobalBullets()
+    if _G.TracersRunning then return end
+    _G.TracersRunning = true
+
     local bfr = camera:FindFirstChild("Bullets")
     if not bfr then 
         bfr = Instance.new("Folder")
@@ -4734,7 +4738,7 @@ local function trackGlobalBullets()
         local stc = 0
         
         local con
-        con = game:GetService("RunService").Heartbeat:Connect(function()
+        con = RunService.Heartbeat:Connect(function()
             if not blt or not blt.Parent then
                 con:Disconnect()
                 if (lsp - stp).Magnitude > 1 then
@@ -4744,7 +4748,7 @@ local function trackGlobalBullets()
             end
             
             local cp = blt.Position
-            if (cp - lsp).Magnitude < 0.01 then
+            if (cp - lsp).Magnitude < 0.1 then
                 stc = stc + 1
                 if stc > 3 then
                     con:Disconnect()
@@ -4760,7 +4764,6 @@ local function trackGlobalBullets()
     end
     
     bfr.ChildAdded:Connect(tblt)
-    
     for _, v in ipairs(bfr:GetChildren()) do
         tblt(v)
     end
@@ -4790,11 +4793,11 @@ local tracerWidthSlider = rightSection:new_slider({
     name = "Tracer Width",
     min = 1,
     max = 5,
-    default = 1,
-    text = "[value]%",
+    default = 2,
+    text = "[value]",
     flag = "tracer_width",
     callback = function(value)
-        tracerWidth = value
+        tracerWidth = value / 1
     end
 })
 
@@ -4802,11 +4805,11 @@ local tracerLifetimeSlider = rightSection:new_slider({
     name = "Tracer Lifetime",
     min = 1,
     max = 100,
-    default = 15,
-    text = "[value]%",
+    default = 10,
+    text = "[value]",
     flag = "tracer_lifetime",
     callback = function(value)
-        tracerLifetime = value
+        tracerLifetime = value / 5
     end
 })
 
