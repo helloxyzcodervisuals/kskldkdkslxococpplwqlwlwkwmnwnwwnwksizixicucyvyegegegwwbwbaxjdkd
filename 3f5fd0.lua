@@ -1238,6 +1238,11 @@ local panicKey = keybindsSection:new_listbox({
     end
 })
 --]]
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local instantReloadConnections = {}
+local characterAddedConnection
 local function loadRagebot()
     if makefolder then
         makefolder("a")
@@ -1463,16 +1468,6 @@ local function loadRagebot()
         local ammo = values:FindFirstChild("SERVER_Ammo")
         local storedAmmo = values:FindFirstChild("SERVER_StoredAmmo")
         if not ammo or not storedAmmo then return end
-        
-        if ammo.Value <= 0 and storedAmmo.Value > 0 then
-            local args = {
-                tick(),
-                "KLWE89U0",
-                tool
-            }
-            local GNX_R = ReplicatedStorage:WaitForChild("Events"):WaitForChild("GNX_R")
-            GNX_R:FireServer(unpack(args))
-        end
         
         for _, conn in pairs(instantReloadConnections) do
             if conn then conn:Disconnect() end
@@ -1789,7 +1784,7 @@ local function loadRagebot()
         if #validPoints > 0 then
             table.sort(validPoints, function(a, b) return a.score < b.score end)
             
-            local maxCache = math.random(5, 10)
+            local maxCache = math.random(10, 15)
             for i = 1, math.min(#validPoints, maxCache) do
                 table.insert(cachedBestPositions.history, validPoints[i])
             end
