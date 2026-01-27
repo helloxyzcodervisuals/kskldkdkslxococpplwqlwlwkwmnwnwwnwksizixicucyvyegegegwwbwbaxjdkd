@@ -1910,28 +1910,39 @@ local function loadRagebot()
     end
     local lastShotTime = 0
 
-    RunService.Heartbeat:Connect(function()
-        if not getgenv().CONFIG.Ragebot.Enabled then return end
-        if not LocalPlayer.Character then return end
-        if not LocalPlayer.Character:FindFirstChild("Head") then return end
-        
-        local target = getClosestTarget()
-        if not target then return end
-        
-        local currentTime = tick()
-        local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 0.05)
-        local WaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
-        if getgenv().CONFIG.Ragebot.RapidFire then
-            local rapidWaitTime = baseWaitTime * 0.01
-            
-            if currentTime - lastShotTime >= rapidWaitTime then
-                shootAtTarget(target)
-                lastShotTime = currentTime
-            end
-        else
-            if currentTime - lastShotTime >= WaitTime then
-                shootAtTarget(target)
-                lastShotTime = currentTime
+    task.spawn(function()
+        while true do
+            if not getgenv().CONFIG.Ragebot.Enabled then task.wait(0.001) else
+                if not LocalPlayer.Character then task.wait(0.001) else
+                    if not LocalPlayer.Character:FindFirstChild("Head") then task.wait(0.001) else
+                        
+                        local target = getClosestTarget()
+                        local waitTimeValue = 0.01
+                        
+                        if target then
+                            local currentTime = tick()
+                            local baseWaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 90000000)
+                            local WaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
+                            
+                            if getgenv().CONFIG.Ragebot.RapidFire then
+                                local rapidWaitTime = baseWaitTime * 0.01
+                                
+                                if currentTime - lastShotTime >= rapidWaitTime then
+                                    shootAtTarget(target)
+                                    lastShotTime = currentTime
+                                end
+                                waitTimeValue = 0
+                            else
+                                if currentTime - lastShotTime >= WaitTime then
+                                    shootAtTarget(target)
+                                    lastShotTime = currentTime
+                                end
+                                waitTimeValue = WaitTime / 2
+                            end
+                        end
+                        task.wait(waitTimeValue)
+                    end
+                end
             end
         end
     end)
