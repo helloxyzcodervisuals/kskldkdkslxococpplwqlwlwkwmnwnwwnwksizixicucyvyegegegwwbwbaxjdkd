@@ -27,7 +27,7 @@ do
         end
     end
 end
---why
+--wowfh
 for _, v in pairs(getgc(true)) do
 if type(v) == "table" then
 local func = rawget(v, "DTXC1")
