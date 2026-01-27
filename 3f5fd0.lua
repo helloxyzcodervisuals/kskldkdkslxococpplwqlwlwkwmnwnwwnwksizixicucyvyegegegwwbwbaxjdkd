@@ -27,7 +27,6 @@ do
         end
     end
 end
---wowfh
 for _, v in pairs(getgc(true)) do
 if type(v) == "table" then
 local func = rawget(v, "DTXC1")
@@ -37,7 +36,7 @@ break
 end
 end
 end
-
+--fin
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -2330,8 +2329,8 @@ local function loadMisc()
 
                 local neck = torso:FindFirstChild("Neck")
                 if neck and neck:IsA("Motor6D") then
-                    neck.C0 = CFrame.new(0, -0.25, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-                    neck.C1 = CFrame.new(0, 0.5, 0)
+                    neck.C0 = CFrame.new(0, 0, 0.75) * CFrame.Angles(math.rad(90), 0, 0)
+                    neck.C1 = CFrame.new(0, 0.25, 0) * CFrame.Angles(0, 0, 0)
                 end
             else
                 if renderConnection then
@@ -3767,26 +3766,6 @@ local wallbangToggle = targetingSection:new_toggle({
     end
 })
 
-local fovSlider = targetingSection:new_slider({
-    name = "FOV",
-    min = 10,
-    max = 360,
-    default = 120,
-    text = "[value]",
-    flag = "ragebot_fov",
-    callback = function(value)
-        getgenv().CONFIG.Ragebot.FOV = value
-    end
-})
-
-local showFovToggle = targetingSection:new_toggle({
-    name = "Show FOV",
-    state = true,
-    flag = "ragebot_showfov",
-    callback = function(state)
-        getgenv().CONFIG.Ragebot.ShowFOV = state
-    end
-})
 
 local downedCheckToggle = targetingSection:new_toggle({
     name = "Downed Check",
