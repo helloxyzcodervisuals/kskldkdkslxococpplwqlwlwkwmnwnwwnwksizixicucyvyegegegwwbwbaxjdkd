@@ -1638,9 +1638,7 @@ function library:new_window(cfg)
                     Position=UDim2.new(0,0,0,3)
                 })
 
-                local toggle_shadow = utility.create("UIAspectRatioConstraint", {
-                    Parent = toggle_frame,
-                })
+                
                 
                 local toggle_title=utility.create("TextLabel",{
                     Name="ToggleTitle",
@@ -1660,26 +1658,8 @@ function library:new_window(cfg)
                     toggled=not toggled
                     if toggled then
                         toggle_frame.BackgroundColor3=library.theme["Accent"]
-                        if not toggle_frame:FindFirstChild("UIGradient") then
-                            local gradient = utility.create("UIGradient", {
-                                Parent = toggle_frame,
-                                Color = ColorSequence.new({
-                                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-                                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 182, 193))
-                                }),
-                                Transparency = NumberSequence.new({
-                                    NumberSequenceKeypoint.new(0, 0.35),
-                                    NumberSequenceKeypoint.new(1, 0.5)
-                                }),
-                                Rotation = 90
-                            })
-                        end
                     else
                         toggle_frame.BackgroundColor3=library.theme["Object Background"]
-                        local gradient = toggle_frame:FindFirstChild("UIGradient")
-                        if gradient then
-                            gradient:Destroy()
-                        end
                     end
                     library.flags[toggle_flag]=toggled
                     callback(toggled)
@@ -1788,19 +1768,6 @@ function library:new_window(cfg)
                     BackgroundColor3=library.theme["Accent"],
                     Size=UDim2.new((default-min)/(max-min),0,1,0),
                     BorderSizePixel=0
-                })
-
-                local slider_shadow = utility.create("UIGradient", {
-                    Parent = slider_fill,
-                    Color = ColorSequence.new({
-                        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-                        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 182, 193))
-                    }),
-                    Transparency = NumberSequence.new({
-                        NumberSequenceKeypoint.new(0, 0.35),
-                        NumberSequenceKeypoint.new(1, 0.5)
-                    }),
-                    Rotation = 90
                 })
                 
                 local function set(value)
