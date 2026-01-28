@@ -5837,11 +5837,15 @@ local configPage = window:new_page({
 })
 
 local saveSection = configPage:new_section({
-    name = "Save/Load",
+    name = "config",
     side = "left",
-    size = 250
+    size = 450
 })
-
+local Section = configPage:new_section({
+    name = "setting",
+    side = "right",
+    size = 500
+})
 local configNameTextbox = saveSection:new_textbox({
     name = "Config Name",
     placeholder = "enter config name",
@@ -5925,13 +5929,7 @@ local resetConfigButton = saveSection:new_button({
     end
 })
 
-local manageSection = configPage:new_section({
-    name = "Manage",
-    side = "right",
-    size = 250
-})
-
-local savePresetButton = manageSection:new_button({
+local savePresetButton = saveSection:new_button({
     name = "Save as Preset",
     callback = function()
         if writefile and getgenv().currentConfigName then
@@ -5952,7 +5950,7 @@ local savePresetButton = manageSection:new_button({
     end
 })
 
-local deletePresetButton = manageSection:new_button({
+local deletePresetButton = saveSection:new_button({
     name = "Delete Preset",
     callback = function()
         if delfile and getgenv().currentConfigName then
@@ -5968,13 +5966,7 @@ local deletePresetButton = manageSection:new_button({
     end
 })
 
-local listSection = configPage:new_section({
-    name = "Presets List",
-    side = "left",
-    size = 200
-})
-
-local refreshPresetsButton = listSection:new_button({
+local refreshPresetsButton = saveSection:new_button({
     name = "Refresh Presets",
     callback = function()
         local children = {}
@@ -6010,6 +6002,62 @@ local refreshPresetsButton = listSection:new_button({
                     end
                 })
                 presetButton.Name = "PresetButton_" .. name
+            end
+        end
+    end
+})
+
+local themeBox = Section:new_listbox({
+    name = "Theme",
+    options = {"Default", "Blue", "Green", "Purple"},
+    default = {"Default"},
+    multiple = false,
+    size = 300,
+    flag = "theme_box",
+    callback = function(selected)
+        library:set_theme(selected[1] or selected)
+    end
+})
+
+local themeToggle = Section:new_toggle({
+    name = "Custom Accent",
+    state = false,
+    flag = "custom_accent_toggle",
+    callback = function(state)
+        if state then
+            accentColorpicker:set(library.theme["Accent"])
+        end
+    end
+})
+
+local accentColorpicker = themeToggle:new_colorpicker({
+    default = library.theme["Accent"],
+    flag = "accent_color",
+    callback = function(color)
+        library.theme["Accent"] = color
+        local function update_accent_objects(parent)
+            for _, child in pairs(parent:GetDescendants()) do
+                if child:IsA("Frame") and child.Name == "WindowAccent" then
+                    child.BackgroundColor3 = color
+                elseif child:IsA("Frame") and child.Name == "PageAccent" and child.Visible then
+                    child.BackgroundColor3 = color
+                elseif child:IsA("Frame") and child.BackgroundColor3 == library.theme["Accent"] then
+                    child.BackgroundColor3 = color
+                elseif child:IsA("TextLabel") and child.TextColor3 == library.theme["Accent"] then
+                    child.TextColor3 = color
+                elseif child:IsA("TextButton") and child.TextColor3 == library.theme["Accent"] then
+                    child.TextColor3 = color
+                end
+            end
+        end
+        if library.holder then
+            update_accent_objects(library.holder)
+        end
+        for _, child in pairs(themeSection.section:GetDescendants()) do
+            if child:IsA("Frame") and child.BackgroundColor3 == library.theme["Accent"] then
+                child.BackgroundColor3 = color
+            elseif child:IsA("TextLabel") and child.TextColor3 == library.theme["Accent"] then
+                child.TextColor3 = color
             end
         end
     end
