@@ -261,6 +261,92 @@ function utility.changeobjecttheme(object,color)
         object.BackgroundColor3=library.theme[color]or object.BackgroundColor3
     end
 end
+library.themes = table.clone(themes)
+
+function library:set_theme(theme_name)
+    if not self.themes[theme_name] then
+        theme_name = "Default"
+    end
+    self.theme = table.clone(self.themes[theme_name])
+    for object, color_key in pairs(themeobjects) do
+        if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+            object.TextColor3 = self.theme[color_key] or object.TextColor3
+        else
+            object.BackgroundColor3 = self.theme[color_key] or object.BackgroundColor3
+        end
+    end
+end
+
+function library:set_accent_color(color)
+    if type(color) == "string" then
+        color = Color3.fromHex(color)
+    end
+    self.theme["Accent"] = color
+    local function update_accent_objects(parent)
+        for _, child in pairs(parent:GetDescendants()) do
+            if child:IsA("Frame") and child.Name == "WindowAccent" then
+                child.BackgroundColor3 = color
+            elseif child:IsA("Frame") and child.Name == "PageAccent" and child.Visible then
+                child.BackgroundColor3 = color
+            elseif child:IsA("Frame") and child.BackgroundColor3 == library.theme["Accent"] then
+                child.BackgroundColor3 = color
+            elseif child:IsA("TextLabel") and child.TextColor3 == library.theme["Accent"] then
+                child.TextColor3 = color
+            end
+        end
+    end
+    if library.holder then
+        update_accent_objects(library.holder)
+    end
+end
+
+library.themes["Blue"] = {
+    ["Accent"] = Color3.fromRGB(0, 150, 255),
+    ["Window Outline Background"] = Color3.fromRGB(30, 30, 40),
+    ["Window Inline Background"] = Color3.fromRGB(20, 20, 28),
+    ["Window Holder Background"] = Color3.fromRGB(25, 25, 35),
+    ["Page Unselected"] = Color3.fromRGB(25, 25, 35),
+    ["Page Selected"] = Color3.fromRGB(40, 40, 55),
+    ["Section Background"] = Color3.fromRGB(22, 22, 30),
+    ["Section Inner Border"] = Color3.fromRGB(45, 45, 55),
+    ["Section Outer Border"] = Color3.fromRGB(15, 15, 25),
+    ["Window Border"] = Color3.fromRGB(50, 50, 65),
+    ["Text"] = Color3.fromRGB(245, 245, 245),
+    ["Risky Text"] = Color3.fromRGB(255, 220, 100),
+    ["Object Background"] = Color3.fromRGB(35, 35, 45)
+}
+
+library.themes["Green"] = {
+    ["Accent"] = Color3.fromRGB(0, 200, 100),
+    ["Window Outline Background"] = Color3.fromRGB(30, 35, 32),
+    ["Window Inline Background"] = Color3.fromRGB(20, 25, 22),
+    ["Window Holder Background"] = Color3.fromRGB(25, 30, 27),
+    ["Page Unselected"] = Color3.fromRGB(25, 30, 27),
+    ["Page Selected"] = Color3.fromRGB(40, 50, 45),
+    ["Section Background"] = Color3.fromRGB(22, 27, 24),
+    ["Section Inner Border"] = Color3.fromRGB(45, 55, 50),
+    ["Section Outer Border"] = Color3.fromRGB(15, 20, 17),
+    ["Window Border"] = Color3.fromRGB(50, 60, 55),
+    ["Text"] = Color3.fromRGB(245, 245, 245),
+    ["Risky Text"] = Color3.fromRGB(255, 200, 100),
+    ["Object Background"] = Color3.fromRGB(35, 40, 37)
+}
+
+library.themes["Purple"] = {
+    ["Accent"] = Color3.fromRGB(170, 0, 255),
+    ["Window Outline Background"] = Color3.fromRGB(35, 30, 40),
+    ["Window Inline Background"] = Color3.fromRGB(25, 20, 30),
+    ["Window Holder Background"] = Color3.fromRGB(30, 25, 35),
+    ["Page Unselected"] = Color3.fromRGB(30, 25, 35),
+    ["Page Selected"] = Color3.fromRGB(50, 40, 60),
+    ["Section Background"] = Color3.fromRGB(27, 22, 32),
+    ["Section Inner Border"] = Color3.fromRGB(55, 45, 65),
+    ["Section Outer Border"] = Color3.fromRGB(20, 15, 25),
+    ["Window Border"] = Color3.fromRGB(60, 50, 70),
+    ["Text"] = Color3.fromRGB(245, 245, 245),
+    ["Risky Text"] = Color3.fromRGB(255, 180, 120),
+    ["Object Background"] = Color3.fromRGB(40, 35, 45)
+}
 
 function utility.createGradient(color1,color2,rotation)
     local gradient=Instance.new("UIGradient")
