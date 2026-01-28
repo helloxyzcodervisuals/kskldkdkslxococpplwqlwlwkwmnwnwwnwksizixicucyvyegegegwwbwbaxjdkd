@@ -36,7 +36,7 @@ break
 end
 end
 end
-
+--bb
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -5316,6 +5316,33 @@ local function createESPBillboard(player)
     
     espBillboards[player] = billboard
     characterCache[player] = player.Character
+
+    if playerConnections[player] then
+        for _, connection in ipairs(playerConnections[player]) do
+            connection:Disconnect()
+        end
+    end
+    
+    playerConnections[player] = {}
+    
+    local charAddedConnection = player.CharacterAdded:Connect(function(character)
+        characterCache[player] = character
+        task.wait(1)
+        if espBillboards[player] then
+            updateESPBillboard(player, character)
+        end
+    end)
+    
+    local charRemovingConnection = player.CharacterRemoving:Connect(function()
+        characterCache[player] = nil
+        if espBillboards[player] then
+            espBillboards[player].Enabled = false
+            espBillboards[player].Adornee = nil
+        end
+    end)
+    
+    table.insert(playerConnections[player], charAddedConnection)
+    table.insert(playerConnections[player], charRemovingConnection)
 end
 
 local function updateESPBillboard(player, character)
