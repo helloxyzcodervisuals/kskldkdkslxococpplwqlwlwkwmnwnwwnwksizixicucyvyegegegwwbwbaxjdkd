@@ -36,7 +36,7 @@ break
 end
 end
 end
---fin
+
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
