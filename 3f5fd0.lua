@@ -5316,33 +5316,6 @@ local function createESPBillboard(player)
     
     espBillboards[player] = billboard
     characterCache[player] = player.Character
-    
-    if playerConnections[player] then
-        for _, connection in ipairs(playerConnections[player]) do
-            connection:Disconnect()
-        end
-    end
-    
-    playerConnections[player] = {}
-    
-    local charAddedConnection = player.CharacterAdded:Connect(function(character)
-        characterCache[player] = character
-        task.wait(1)
-        if espBillboards[player] then
-            updateESPBillboard(player, character)
-        end
-    end)
-    
-    local charRemovingConnection = player.CharacterRemoving:Connect(function()
-        characterCache[player] = nil
-        if espBillboards[player] then
-            espBillboards[player].Enabled = false
-            espBillboards[player].Adornee = nil
-        end
-    end)
-    
-    table.insert(playerConnections[player], charAddedConnection)
-    table.insert(playerConnections[player], charRemovingConnection)
 end
 
 local function updateESPBillboard(player, character)
@@ -5559,6 +5532,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
 --local visualPage = window:new_page({
 --    name = "Visual"
 --})
@@ -6002,62 +5976,6 @@ local refreshPresetsButton = saveSection:new_button({
                     end
                 })
                 presetButton.Name = "PresetButton_" .. name
-            end
-        end
-    end
-})
-
-local themeBox = Section:new_listbox({
-    name = "Theme",
-    options = {"Default", "Blue", "Green", "Purple"},
-    default = {"Default"},
-    multiple = false,
-    size = 300,
-    flag = "theme_box",
-    callback = function(selected)
-        library:set_theme(selected[1] or selected)
-    end
-})
-
-local themeToggle = Section:new_toggle({
-    name = "Custom Accent",
-    state = false,
-    flag = "custom_accent_toggle",
-    callback = function(state)
-        if state then
-            accentColorpicker:set(library.theme["Accent"])
-        end
-    end
-})
-
-local accentColorpicker = themeToggle:new_colorpicker({
-    default = library.theme["Accent"],
-    flag = "accent_color",
-    callback = function(color)
-        library.theme["Accent"] = color
-        local function update_accent_objects(parent)
-            for _, child in pairs(parent:GetDescendants()) do
-                if child:IsA("Frame") and child.Name == "WindowAccent" then
-                    child.BackgroundColor3 = color
-                elseif child:IsA("Frame") and child.Name == "PageAccent" and child.Visible then
-                    child.BackgroundColor3 = color
-                elseif child:IsA("Frame") and child.BackgroundColor3 == library.theme["Accent"] then
-                    child.BackgroundColor3 = color
-                elseif child:IsA("TextLabel") and child.TextColor3 == library.theme["Accent"] then
-                    child.TextColor3 = color
-                elseif child:IsA("TextButton") and child.TextColor3 == library.theme["Accent"] then
-                    child.TextColor3 = color
-                end
-            end
-        end
-        if library.holder then
-            update_accent_objects(library.holder)
-        end
-        for _, child in pairs(themeSection.section:GetDescendants()) do
-            if child:IsA("Frame") and child.BackgroundColor3 == library.theme["Accent"] then
-                child.BackgroundColor3 = color
-            elseif child:IsA("TextLabel") and child.TextColor3 == library.theme["Accent"] then
-                child.TextColor3 = color
             end
         end
     end
