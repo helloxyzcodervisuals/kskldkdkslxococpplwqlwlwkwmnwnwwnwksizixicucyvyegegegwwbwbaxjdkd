@@ -6007,3 +6007,302 @@ local refreshPresetsButton = saveSection:new_button({
         end
     end
 })
+getgenv().Legit = {
+    ForcefieldArms = {
+        Enabled = false,
+        Transparency = 0.5,
+        Color = Color3.fromRGB(255, 255, 255),
+        OriginalTransparency = {},
+        OriginalColor = {},
+        OriginalMaterial = {}
+    },
+    ForcefieldTool = {
+        Enabled = false,
+        Transparency = 0.5,
+        Color = Color3.fromRGB(255, 255, 255),
+        OriginalTransparency = {},
+        OriginalColor = {},
+        OriginalMaterial = {}
+    }
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+local function saveOriginalArmProperties(arm)
+    if not arm then return end
+    
+    if arm:IsA("BasePart") then
+        getgenv().Legit.ForcefieldArms.OriginalTransparency[arm] = arm.Transparency
+        getgenv().Legit.ForcefieldArms.OriginalColor[arm] = arm.Color
+        getgenv().Legit.ForcefieldArms.OriginalMaterial[arm] = arm.Material
+    elseif arm:IsA("Model") then
+        for _, part in pairs(arm:GetDescendants()) do
+            if part:IsA("BasePart") then
+                getgenv().Legit.ForcefieldArms.OriginalTransparency[part] = part.Transparency
+                getgenv().Legit.ForcefieldArms.OriginalColor[part] = part.Color
+                getgenv().Legit.ForcefieldArms.OriginalMaterial[part] = part.Material
+            end
+        end
+    end
+end
+
+local function saveOriginalToolProperties(tool)
+    if not tool then return end
+    
+    for _, part in pairs(tool:GetDescendants()) do
+        if part:IsA("BasePart") then
+            getgenv().Legit.ForcefieldTool.OriginalTransparency[part] = part.Transparency
+            getgenv().Legit.ForcefieldTool.OriginalColor[part] = part.Color
+            getgenv().Legit.ForcefieldTool.OriginalMaterial[part] = part.Material
+        end
+    end
+end
+
+local function restoreOriginalArmProperties(arm)
+    if not arm then return end
+    
+    if arm:IsA("BasePart") then
+        local origTransparency = getgenv().Legit.ForcefieldArms.OriginalTransparency[arm]
+        local origColor = getgenv().Legit.ForcefieldArms.OriginalColor[arm]
+        local origMaterial = getgenv().Legit.ForcefieldArms.OriginalMaterial[arm]
+        
+        if origTransparency then arm.Transparency = origTransparency end
+        if origColor then arm.Color = origColor end
+        if origMaterial then arm.Material = origMaterial end
+        
+        getgenv().Legit.ForcefieldArms.OriginalTransparency[arm] = nil
+        getgenv().Legit.ForcefieldArms.OriginalColor[arm] = nil
+        getgenv().Legit.ForcefieldArms.OriginalMaterial[arm] = nil
+    elseif arm:IsA("Model") then
+        for _, part in pairs(arm:GetDescendants()) do
+            if part:IsA("BasePart") then
+                local origTransparency = getgenv().Legit.ForcefieldArms.OriginalTransparency[part]
+                local origColor = getgenv().Legit.ForcefieldArms.OriginalColor[part]
+                local origMaterial = getgenv().Legit.ForcefieldArms.OriginalMaterial[part]
+                
+                if origTransparency then part.Transparency = origTransparency end
+                if origColor then part.Color = origColor end
+                if origMaterial then part.Material = origMaterial end
+                
+                getgenv().Legit.ForcefieldArms.OriginalTransparency[part] = nil
+                getgenv().Legit.ForcefieldArms.OriginalColor[part] = nil
+                getgenv().Legit.ForcefieldArms.OriginalMaterial[part] = nil
+            end
+        end
+    end
+end
+
+local function restoreOriginalToolProperties(tool)
+    if not tool then return end
+    
+    for _, part in pairs(tool:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local origTransparency = getgenv().Legit.ForcefieldTool.OriginalTransparency[part]
+            local origColor = getgenv().Legit.ForcefieldTool.OriginalColor[part]
+            local origMaterial = getgenv().Legit.ForcefieldTool.OriginalMaterial[part]
+            
+            if origTransparency then part.Transparency = origTransparency end
+            if origColor then part.Color = origColor end
+            if origMaterial then part.Material = origMaterial end
+            
+            getgenv().Legit.ForcefieldTool.OriginalTransparency[part] = nil
+            getgenv().Legit.ForcefieldTool.OriginalColor[part] = nil
+            getgenv().Legit.ForcefieldTool.OriginalMaterial[part] = nil
+        end
+    end
+end
+
+local function applyForcefieldToArms()
+    if not getgenv().Legit.ForcefieldArms.Enabled then return end
+    
+    local viewModel = workspace.Camera.ViewModel
+    if not viewModel then return end
+    
+    local rightArm = viewModel:FindFirstChild("Right Arm")
+    local leftArm = viewModel:FindFirstChild("Left Arm")
+    
+    if rightArm then saveOriginalArmProperties(rightArm) end
+    if leftArm then saveOriginalArmProperties(leftArm) end
+    
+    local function applyToArm(arm)
+        if arm:IsA("BasePart") then
+            arm.Material = Enum.Material.ForceField
+            arm.Transparency = getgenv().Legit.ForcefieldArms.Transparency
+            arm.Color = getgenv().Legit.ForcefieldArms.Color
+        elseif arm:IsA("Model") then
+            for _, part in pairs(arm:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Material = Enum.Material.ForceField
+                    part.Transparency = getgenv().Legit.ForcefieldArms.Transparency
+                    part.Color = getgenv().Legit.ForcefieldArms.Color
+                end
+            end
+        end
+    end
+    
+    if rightArm then applyToArm(rightArm) end
+    if leftArm then applyToArm(leftArm) end
+end
+
+local function applyForcefieldToTool()
+    if not getgenv().Legit.ForcefieldTool.Enabled then return end
+    
+    local currentTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    if currentTool then
+        saveOriginalToolProperties(currentTool)
+        
+        for _, part in pairs(currentTool:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Material = Enum.Material.ForceField
+                part.Transparency = getgenv().Legit.ForcefieldTool.Transparency
+                part.Color = getgenv().Legit.ForcefieldTool.Color
+            end
+        end
+    end
+end
+
+local function removeForcefieldFromArms()
+    local viewModel = workspace.Camera.ViewModel
+    if not viewModel then return end
+    
+    local rightArm = viewModel:FindFirstChild("Right Arm")
+    local leftArm = viewModel:FindFirstChild("Left Arm")
+    
+    if rightArm then restoreOriginalArmProperties(rightArm) end
+    if leftArm then restoreOriginalArmProperties(leftArm) end
+end
+
+local function removeForcefieldFromTool()
+    local currentTool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    if currentTool then
+        restoreOriginalToolProperties(currentTool)
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    if getgenv().Legit.ForcefieldArms.Enabled then
+        applyForcefieldToArms()
+    else
+        removeForcefieldFromArms()
+    end
+    
+    if getgenv().Legit.ForcefieldTool.Enabled then
+        applyForcefieldToTool()
+    else
+        removeForcefieldFromTool()
+    end
+end)
+
+local armsSection = legitPage:new_section({
+    name = "Arms Forcefield",
+    side = "left",
+    size = 250
+})
+
+local armsToggle = armsSection:new_toggle({
+    name = "Arms Forcefield",
+    state = false,
+    flag = "legit_armsforcefield",
+    callback = function(state)
+        getgenv().Legit.ForcefieldArms.Enabled = state
+        if state then
+            applyForcefieldToArms()
+        else
+            removeForcefieldFromArms()
+        end
+    end
+})
+
+local armsTransparency = armsToggle:new_slider({
+    name = "Arms Transparency",
+    min = 0,
+    max = 1,
+    default = 0.5,
+    float = 0.1,
+    text = "[value]",
+    flag = "legit_armstrans",
+    callback = function(value)
+        getgenv().Legit.ForcefieldArms.Transparency = value
+        if getgenv().Legit.ForcefieldArms.Enabled then
+            applyForcefieldToArms()
+        end
+    end
+})
+
+local armsColor = armsToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 255, 255),
+    flag = "legit_armscolor",
+    callback = function(color)
+        getgenv().Legit.ForcefieldArms.Color = color
+        if getgenv().Legit.ForcefieldArms.Enabled then
+            applyForcefieldToArms()
+        end
+    end
+})
+
+local toolSection = legitPage:new_section({
+    name = "Tool Forcefield",
+    side = "right",
+    size = 250
+})
+
+local toolToggle = toolSection:new_toggle({
+    name = "Tool Forcefield",
+    state = false,
+    flag = "legit_toolforcefield",
+    callback = function(state)
+        getgenv().Legit.ForcefieldTool.Enabled = state
+        if state then
+            applyForcefieldToTool()
+        else
+            removeForcefieldFromTool()
+        end
+    end
+})
+
+local toolTransparency = toolToggle:new_slider({
+    name = "Tool Transparency",
+    min = 0,
+    max = 1,
+    default = 0.5,
+    float = 0.1,
+    text = "[value]",
+    flag = "legit_tooltrans",
+    callback = function(value)
+        getgenv().Legit.ForcefieldTool.Transparency = value
+        if getgenv().Legit.ForcefieldTool.Enabled then
+            applyForcefieldToTool()
+        end
+    end
+})
+
+local toolColor = toolToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 255, 255),
+    flag = "legit_toolcolor",
+    callback = function(color)
+        getgenv().Legit.ForcefieldTool.Color = color
+        if getgenv().Legit.ForcefieldTool.Enabled then
+            applyForcefieldToTool()
+        end
+    end
+})
+
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    if getgenv().Legit.ForcefieldArms.Enabled then
+        applyForcefieldToArms()
+    end
+    if getgenv().Legit.ForcefieldTool.Enabled then
+        applyForcefieldToTool()
+    end
+end)
+
+LocalPlayer.Backpack.ChildAdded:Connect(function()
+    task.wait(0.1)
+    if getgenv().Legit.ForcefieldTool.Enabled then
+        applyForcefieldToTool()
+    end
+end)
