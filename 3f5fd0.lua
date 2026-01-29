@@ -6007,6 +6007,7 @@ local refreshPresetsButton = saveSection:new_button({
         end
     end
 })
+--[[
 getgenv().Legit = {
     ForcefieldArms = {
         Enabled = false,
@@ -6306,3 +6307,4 @@ LocalPlayer.Backpack.ChildAdded:Connect(function()
         applyForcefieldToTool()
     end
 end)
+--]]
