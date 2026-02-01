@@ -36,7 +36,7 @@ break
 end
 end
 end
---insanity
+--inv
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -5960,7 +5960,6 @@ local targetlistColorPicker = targetlistColorToggle:new_colorpicker({
         chamsConfig.TargetlistColor = color
         updateBoxColors()
     end
-})
 })
 
 local whitelistColorPicker = chamsSection:new_colorpicker({
