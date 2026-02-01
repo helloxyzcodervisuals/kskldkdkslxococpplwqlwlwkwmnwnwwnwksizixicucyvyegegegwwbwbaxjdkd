@@ -36,7 +36,7 @@ break
 end
 end
 end
---index
+--indexffg
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -3384,9 +3384,24 @@ getgenv().Legit = {
     NoRecoil = true,
     AimAssist = false,
     AimAssistStrength = 0.3,
-    Smoothing = 0.2
+    Smoothing = 0.2,
+    ForcefieldArms = {
+        Enabled = false,
+        Transparency = 0.5,
+        Color = Color3.fromRGB(255, 255, 255),
+        OriginalTransparency = {},
+        OriginalColor = {},
+        OriginalMaterial = {}
+    },
+    ForcefieldTool = {
+        Enabled = false,
+        Transparency = 0.5,
+        Color = Color3.fromRGB(255, 255, 255),
+        OriginalTransparency = {},
+        OriginalColor = {},
+        OriginalMaterial = {}
+    }
 }
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -6368,24 +6383,6 @@ local refreshPresetsButton = saveSection:new_button({
         end
     end
 })
-getgenv().Legit = {
-    ForcefieldArms = {
-        Enabled = false,
-        Transparency = 0.5,
-        Color = Color3.fromRGB(255, 255, 255),
-        OriginalTransparency = {},
-        OriginalColor = {},
-        OriginalMaterial = {}
-    },
-    ForcefieldTool = {
-        Enabled = false,
-        Transparency = 0.5,
-        Color = Color3.fromRGB(255, 255, 255),
-        OriginalTransparency = {},
-        OriginalColor = {},
-        OriginalMaterial = {}
-    }
-}
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
