@@ -36,7 +36,7 @@ break
 end
 end
 end
-
+--insanity
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -6668,7 +6668,7 @@ LocalPlayer.Backpack.ChildAdded:Connect(function()
         applyForcefieldToTool()
     end
 end)
-
+--[[
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -6986,7 +6986,7 @@ end)
 
 Players.PlayerRemoving:Connect(function(player)
     local character = player.Character
-    if character and espParts[character] then
+    if character and espParts[character] Thence
         for _, boxData in ipairs(espParts[character]) do
             boxData.outer:Destroy()
             boxData.inner:Destroy()
@@ -7012,3 +7012,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, gameProce
         end
     end
 end)
+--]]
