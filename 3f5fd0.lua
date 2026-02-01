@@ -36,7 +36,7 @@ break
 end
 end
 end
---bb
+
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -6682,22 +6682,6 @@ local function removeForcefieldFromTool()
         restoreOriginalToolProperties(currentTool)
     end
 end
-
-RunService.RenderStepped:Connect(function()
-    if ChamsConfig.ArmChams.Enabled then
-        applyForcefieldToArms()
-    else
-        removeForcefieldFromArms()
-    end
-    
-    if ChamsConfig.ToolChams.Enabled then
-        applyForcefieldToTool()
-    else
-        removeForcefieldFromTool()
-    end
-end)
-
-
 local playerSection = visualPage:new_section({
     name = "Player Chams",
     side = "left",
@@ -6749,12 +6733,32 @@ local teamCheckToggle = playerSection:new_toggle({
     end
 })
 
+local whitelistToggle = playerSection:new_toggle({
+    name = "Whitelist Color",
+    state = false,
+    flag = "chams_whitelist_toggle",
+    callback = function(state)
+        ChamsConfig.PlayerChams.UseWhitelistColor = state
+        updatePlayerBoxColors()
+    end
+})
+
 local whitelistColor = playerSection:new_colorpicker({
     name = "Whitelist Color",
     default = Color3.fromRGB(50, 255, 50),
-    flag = "player_chams_whitelistcolor",
+    flag = "chams_whitelist_color",
     callback = function(color)
         ChamsConfig.PlayerChams.WhitelistColor = color
+        updatePlayerBoxColors()
+    end
+})
+
+local targetlistToggle = playerSection:new_toggle({
+    name = "Targetlist Color",
+    state = false,
+    flag = "chams_targetlist_toggle",
+    callback = function(state)
+        ChamsConfig.PlayerChams.UseTargetlistColor = state
         updatePlayerBoxColors()
     end
 })
@@ -6762,7 +6766,7 @@ local whitelistColor = playerSection:new_colorpicker({
 local targetlistColor = playerSection:new_colorpicker({
     name = "Targetlist Color",
     default = Color3.fromRGB(255, 50, 255),
-    flag = "player_chams_targetlistcolor",
+    flag = "chams_targetlist_color",
     callback = function(color)
         ChamsConfig.PlayerChams.TargetlistColor = color
         updatePlayerBoxColors()
@@ -6789,7 +6793,7 @@ local armsToggle = armsSection:new_toggle({
     end
 })
 
-local armsTransparency = armsToggle:new_slider({
+local armsTransparency = armsSection:new_slider({
     name = "Arms Transparency",
     min = 0,
     max = 1,
@@ -6836,7 +6840,7 @@ local toolToggle = toolSection:new_toggle({
     end
 })
 
-local toolTransparency = toolToggle:new_slider({
+local toolTransparency = toolSection:new_slider({
     name = "Tool Transparency",
     min = 0,
     max = 1,
@@ -6862,6 +6866,20 @@ local toolColor = toolToggle:new_colorpicker({
         end
     end
 })
+
+RunService.RenderStepped:Connect(function()
+    if ChamsConfig.ArmChams.Enabled then
+        applyForcefieldToArms()
+    else
+        removeForcefieldFromArms()
+    end
+    
+    if ChamsConfig.ToolChams.Enabled then
+        applyForcefieldToTool()
+    else
+        removeForcefieldFromTool()
+    end
+end)
 
 localPlayer.CharacterAdded:Connect(function()
     task.wait(1)
