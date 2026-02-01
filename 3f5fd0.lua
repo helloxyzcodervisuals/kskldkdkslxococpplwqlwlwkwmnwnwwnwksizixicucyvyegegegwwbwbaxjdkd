@@ -36,7 +36,7 @@ break
 end
 end
 end
---inv
+--index
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -6391,7 +6391,19 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local viewModel = Camera:FindFirstChild("ViewModel") or Camera:WaitForChild("ViewModel", 5)
 
+
+local viewModel = Camera and Camera:FindFirstChild("ViewModel")
+
+
+if not viewModel then
+    repeat
+        viewModel = Camera:FindFirstChild("ViewModel")
+        task.wait(0.1)
+    until viewModel
+end
 local function saveOriginalArmProperties(arm)
     if not arm then return end
     
@@ -6479,7 +6491,7 @@ end
 local function applyForcefieldToArms()
     if not getgenv().Legit.ForcefieldArms.Enabled then return end
     
-    local viewModel = workspace.Camera.ViewModel
+    
     if not viewModel then return end
     
     local rightArm = viewModel:FindFirstChild("Right Arm")
@@ -6526,7 +6538,7 @@ local function applyForcefieldToTool()
 end
 
 local function removeForcefieldFromArms()
-    local viewModel = workspace.Camera.ViewModel
+    
     if not viewModel then return end
     
     local rightArm = viewModel:FindFirstChild("Right Arm")
