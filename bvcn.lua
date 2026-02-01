@@ -8,7 +8,7 @@ for _,v in pairs(getgc(true)) do if type(v)=="table" then local func=rawget(v,"D
 
 getgenv().CONFIG={Ragebot={Enabled=false,RapidFire=false,FireRate=30,Prediction=true,PredictionAmount=0.12,TeamCheck=false,VisibilityCheck=true,FOV=9e9,ShowFOV=false,Wallbang=true,Tracers=true,TracerColor=Color3.fromRGB(255,0,0),TracerWidth=1,TracerLifetime=3,ShootRange=15,HitRange=15,HitNotify=true,AutoReload=true,HitSound=true,HitColor=Color3.fromRGB(255,182,193),UseTargetList=false,UseWhitelist=false,HitNotifyDuration=5,LowHealthCheck=false,SelectedHitSound="skeet",FriendCheck=false,MaxTarget=0},Misc={SpeedEnabled=false,SpeedValue=50,JumpPowerEnabled=false,JumpPowerValue=100,LoopFOVEnabled=false,HideHeadEnabled=false,InfStaminaEnabled=false,NoFallDmgEnabled=false,SpeedConnection=nil,FOVConnection=nil,JumpPowerConnection=nil,NoFallHook=nil,InfStaminaHook=nil}}
 getgenv().Lists={TargetList={},Whitelist={}}
---666
+--ixc
 local Players,RunService,Workspace,TweenService=game:GetService("Players"),game:GetService("RunService"),game:GetService("Workspace"),game:GetService("TweenService")
 local LocalPlayer,Camera,ReplicatedStorage=Players.LocalPlayer,Workspace.CurrentCamera,game:GetService("ReplicatedStorage")
 local library=loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/deadCell.lua"))()
@@ -310,10 +310,25 @@ local function loadRagebot()
             for i=1,math.min(#validPoints,maxCache) do table.insert(cachedBestPositions.history,validPoints[i]) end
             return validPoints[1].shootPos,validPoints[1].hitPos
         end
-        local randomY=math.random(-16,-14)
-        local fallbackShootPos=Vector3.new(startPos.X,randomY,startPos.Z)
-        local fallbackHitPos=Vector3.new(targetPos.X,randomY,targetPos.Z)
-        return fallbackShootPos,fallbackHitPos
+        for i=1,10 do
+            local depthY=-math.random(15,16)
+            local offX,offZ=math.random(-5,4),math.random(-5,4)
+            local fbShoot=Vector3.new(startPos.X+offX,depthY,startPos.Z+offZ)
+            local fbHit=Vector3.new(targetPos.X+offX,depthY,targetPos.Z+offZ)
+            if checkClearPath(startPos,fbShoot) and checkClearPath(fbShoot,fbHit) then
+                return fbShoot,fbHit
+            end
+        end
+        for i=1,10 do
+            local skyY=math.random(17,19)
+            local offX,offZ=math.random(-5,5),math.random(-5,5)
+            local fbShoot=Vector3.new(startPos.X+offX,skyY,startPos.Z+offZ)
+            local fbHit=Vector3.new(targetPos.X+offX,skyY,targetPos.Z+offZ)
+            if checkClearPath(startPos,fbShoot) and checkClearPath(fbShoot,fbHit) then
+                return fbShoot,fbHit
+            end
+        end
+        return nil,nil
     end
     local function createTracer(startPos,endPos)
         if not getgenv().CONFIG.Ragebot.Tracers then return end
@@ -395,7 +410,7 @@ local function loadRagebot()
                             local baseWaitTime=1/(getgenv().CONFIG.Ragebot.FireRate*9999999999999999999999999)
                             local WaitTime=1/(getgenv().CONFIG.Ragebot.FireRate*1)
                             if getgenv().CONFIG.Ragebot.RapidFire then
-                                local rapidWaitTime=baseWaitTime*0.00001
+                                local rapidWaitTime=baseWaitTime*0.000000001
                                 if currentTime-lastShotTime>=rapidWaitTime then shootAtTarget(target) lastShotTime=currentTime end
                                 waitTimeValue=0
                             else
