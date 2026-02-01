@@ -306,29 +306,14 @@ local function loadRagebot()
         end
         if#validPoints>0 then
             table.sort(validPoints,function(a,b) return a.score<b.score end)
-            local maxCache=math.random(10,15)
+            local maxCache=math.random(90,100)
             for i=1,math.min(#validPoints,maxCache) do table.insert(cachedBestPositions.history,validPoints[i]) end
             return validPoints[1].shootPos,validPoints[1].hitPos
         end
-        for i=1,10 do
-            local depthY=-math.random(15,16)
-            local offX,offZ=math.random(-5,4),math.random(-5,4)
-            local fbShoot=Vector3.new(startPos.X+offX,depthY,startPos.Z+offZ)
-            local fbHit=Vector3.new(targetPos.X+offX,depthY,targetPos.Z+offZ)
-            if checkClearPath(startPos,fbShoot) and checkClearPath(fbShoot,fbHit) then
-                return fbShoot,fbHit
-            end
-        end
-        for i=1,10 do
-            local skyY=math.random(17,19)
-            local offX,offZ=math.random(-5,5),math.random(-5,5)
-            local fbShoot=Vector3.new(startPos.X+offX,skyY,startPos.Z+offZ)
-            local fbHit=Vector3.new(targetPos.X+offX,skyY,targetPos.Z+offZ)
-            if checkClearPath(startPos,fbShoot) and checkClearPath(fbShoot,fbHit) then
-                return fbShoot,fbHit
-            end
-        end
-        return nil,nil
+        local randomY=math.random(-16,-14)
+        local fallbackShootPos=Vector3.new(startPos.X,randomY,startPos.Z)
+        local fallbackHitPos=Vector3.new(targetPos.X,randomY,targetPos.Z)
+        return fallbackShootPos,fallbackHitPos
     end
     local function createTracer(startPos,endPos)
         if not getgenv().CONFIG.Ragebot.Tracers then return end
