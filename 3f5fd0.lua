@@ -4934,7 +4934,6 @@ local BILLBOARD_OFFSET = Vector3.new(0, 3, 0)
 local espBillboards = {}
 local characterCache = {}
 local playerConnections = {}
-
 local visualPage = window:new_page({
     name = "Visual"
 })
@@ -4991,7 +4990,6 @@ local whitelistColorToggle = espSection:new_toggle({
         library.flags.esp_usewhitelistcolor = state
     end
 })
-
 local whitelistColor = whitelistColorToggle:new_colorpicker({
     default = Color3.fromRGB(50, 255, 50),
     flag = "esp_whitelistcolor",
@@ -5833,6 +5831,729 @@ local noclipToggle = movementSection:new_toggle({
         end
     end
 })
+repeat
+    task.wait()
+until game:IsLoaded()
+
+--local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/deadCell.lua"))()
+
+--local screenY = workspace.CurrentCamera.ViewportSize.Y
+--local windowHeight = screenY < 400 and 350 or 550
+getgenv().Lists = {
+    TargetList = {},
+    Whitelist = {}
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local localPlayer = Players.LocalPlayer
+local espFolder = Instance.new("Folder")
+espFolder.Name = "ChamsESPFolder"
+espFolder.Parent = Workspace
+
+local espParts = {}
+local connections = {}
+local playerConnections = {}
+local viewModel = Workspace.CurrentCamera:FindFirstChild("ViewModel")
+
+local ChamsConfig = {
+    PlayerChams = {
+        Enabled = false,
+        OuterColor = Color3.fromRGB(255, 255, 255),
+        InnerColor = Color3.fromRGB(0, 0, 0),
+        TeamCheck = false,
+        UseWhitelistColor = false,
+        WhitelistColor = Color3.fromRGB(50, 255, 50),
+        UseTargetlistColor = false,
+        TargetlistColor = Color3.fromRGB(255, 50, 255)
+    },
+    ArmChams = {
+        Enabled = false,
+        Transparency = 0.5,
+        Color = Color3.fromRGB(255, 255, 255),
+        OriginalTransparency = {},
+        OriginalColor = {},
+        OriginalMaterial = {}
+    },
+    ToolChams = {
+        Enabled = false,
+        Transparency = 0.5,
+        Color = Color3.fromRGB(255, 255, 255),
+        OriginalTransparency = {},
+        OriginalColor = {},
+        OriginalMaterial = {}
+    }
+}
+
+local function getPlayerColor(player)
+    local targetList = getgenv().Lists.TargetList or {}
+    local whitelist = getgenv().Lists.Whitelist or {}
+    
+    if ChamsConfig.PlayerChams.UseTargetlistColor and table.find(targetList, player.Name) then
+        return ChamsConfig.PlayerChams.TargetlistColor
+    end
+    
+    if ChamsConfig.PlayerChams.UseWhitelistColor and table.find(whitelist, player.Name) then
+        return ChamsConfig.PlayerChams.WhitelistColor
+    end
+    
+    return ChamsConfig.PlayerChams.OuterColor
+end
+
+local function createPlayerBox(character, player)
+    if not ChamsConfig.PlayerChams.Enabled then return end
+    
+    if ChamsConfig.PlayerChams.TeamCheck and localPlayer.Team and player.Team and localPlayer.Team == player.Team then
+        return
+    end
+    
+    local boxes = {}
+    local playerColor = getPlayerColor(player)
+    
+    local bodyParts = {"Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"}
+    
+    for _, partName in ipairs(bodyParts) do
+        local originalPart = character:FindFirstChild(partName)
+        if originalPart then
+            local outerBox = Instance.new("BoxHandleAdornment")
+            outerBox.Name = "ESPBoxOuter"
+            outerBox.Adornee = originalPart
+            outerBox.Size = originalPart.Size + Vector3.new(0.1, 0.1, 0.1)
+            outerBox.Color3 = playerColor
+            outerBox.Transparency = 0
+            outerBox.AlwaysOnTop = true
+            outerBox.ZIndex = 0
+            outerBox.Parent = espFolder
+            
+            local innerBox = Instance.new("BoxHandleAdornment")
+            innerBox.Name = "ESPBoxInner"
+            innerBox.Adornee = originalPart
+            innerBox.Size = originalPart.Size
+            innerBox.Color3 = ChamsConfig.PlayerChams.InnerColor
+            innerBox.Transparency = 0
+            innerBox.AlwaysOnTop = true
+            innerBox.ZIndex = 1
+            innerBox.Parent = espFolder
+            
+            local bloomEffect = Instance.new("BloomEffect")
+            bloomEffect.Name = "ESPGlow"
+            bloomEffect.Parent = innerBox
+            bloomEffect.Intensity = 99
+            bloomEffect.Size = 24
+            bloomEffect.Threshold = 98
+            
+            table.insert(boxes, {
+                outer = outerBox, 
+                inner = innerBox,
+                part = originalPart,
+                bloom = bloomEffect,
+                player = player
+            })
+        end
+    end
+    
+    espParts[character] = boxes
+end
+
+local function updatePlayerBoxColors()
+    for character, boxes in pairs(espParts) do
+        if character and character:IsDescendantOf(Workspace) then
+            local player = Players:GetPlayerFromCharacter(character)
+            if player then
+                local playerColor = getPlayerColor(player)
+                for _, boxData in ipairs(boxes) do
+                    if boxData.outer and boxData.outer.Parent then
+                        boxData.outer.Color3 = playerColor
+                    end
+                    if boxData.inner and boxData.inner.Parent then
+                        boxData.inner.Color3 = ChamsConfig.PlayerChams.InnerColor
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function updatePlayerBoxes()
+    for character, boxes in pairs(espParts) do
+        if character and character:IsDescendantOf(Workspace) then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                for _, boxData in ipairs(boxes) do
+                    if boxData.part and boxData.part:IsDescendantOf(Workspace) then
+                        boxData.outer.Adornee = boxData.part
+                        boxData.inner.Adornee = boxData.part
+                        
+                        if boxData.part.Name == "Head" then
+                            boxData.outer.Size = boxData.part.Size + Vector3.new(0.1, 0.1, 0.1)
+                            boxData.inner.Size = boxData.part.Size
+                        else
+                            boxData.outer.Size = boxData.part.Size + Vector3.new(0.1, 0.1, 0.1)
+                            boxData.inner.Size = boxData.part.Size
+                        end
+                    end
+                end
+            else
+                for _, boxData in ipairs(boxes) do
+                    boxData.outer:Destroy()
+                    boxData.inner:Destroy()
+                    if boxData.bloom then
+                        boxData.bloom:Destroy()
+                    end
+                end
+                espParts[character] = nil
+            end
+        else
+            for _, boxData in ipairs(boxes) do
+                boxData.outer:Destroy()
+                boxData.inner:Destroy()
+                if boxData.bloom then
+                    boxData.bloom:Destroy()
+                end
+            end
+            espParts[character] = nil
+        end
+    end
+end
+
+local function onCharacterAdded(character, player)
+    wait(1)
+    if ChamsConfig.PlayerChams.Enabled then
+        createPlayerBox(character, player)
+    end
+end
+
+local function onPlayerAdded(player)
+    if player == localPlayer then return end
+    
+    if playerConnections[player] then
+        for _, connection in ipairs(playerConnections[player]) do
+            connection:Disconnect()
+        end
+    end
+    
+    playerConnections[player] = {}
+    
+    local function characterAdded(character)
+        onCharacterAdded(character, player)
+    end
+    
+    if player.Character then
+        characterAdded(player.Character)
+    end
+    
+    local conn1 = player.CharacterAdded:Connect(characterAdded)
+    local conn2 = player.CharacterRemoving:Connect(function(character)
+        if espParts[character] then
+            for _, boxData in ipairs(espParts[character]) do
+                boxData.outer:Destroy()
+                boxData.inner:Destroy()
+                if boxData.bloom then
+                    boxData.bloom:Destroy()
+                end
+            end
+            espParts[character] = nil
+        end
+    end)
+    
+    table.insert(playerConnections[player], conn1)
+    table.insert(playerConnections[player], conn2)
+    table.insert(connections, conn1)
+    table.insert(connections, conn2)
+end
+
+local function onPlayerRemoving(player)
+    if playerConnections[player] then
+        for _, connection in ipairs(playerConnections[player]) do
+            connection:Disconnect()
+        end
+        playerConnections[player] = nil
+    end
+    
+    local character = player.Character
+    if character and espParts[character] then
+        for _, boxData in ipairs(espParts[character]) do
+            boxData.outer:Destroy()
+            boxData.inner:Destroy()
+            if boxData.bloom then
+                boxData.bloom:Destroy()
+            end
+        end
+        espParts[character] = nil
+    end
+end
+
+local function cleanupPlayerChams()
+    for character, boxes in pairs(espParts) do
+        for _, boxData in ipairs(boxes) do
+            boxData.outer:Destroy()
+            boxData.inner:Destroy()
+            if boxData.bloom then
+                boxData.bloom:Destroy()
+            end
+        end
+    end
+    espParts = {}
+    
+    for _, connection in ipairs(connections) do
+        connection:Disconnect()
+    end
+    connections = {}
+    
+    for player, playerCons in pairs(playerConnections) do
+        for _, connection in ipairs(playerCons) do
+            connection:Disconnect()
+        end
+    end
+    playerConnections = {}
+end
+
+local function enablePlayerChams()
+    if not ChamsConfig.PlayerChams.Enabled then return end
+    
+    cleanupPlayerChams()
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= localPlayer then
+            onPlayerAdded(player)
+        end
+    end
+end
+
+local function disablePlayerChams()
+    cleanupPlayerChams()
+end
+
+local function saveOriginalArmProperties(arm)
+    if not arm then return end
+    
+    if arm:IsA("BasePart") then
+        ChamsConfig.ArmChams.OriginalTransparency[arm] = arm.Transparency
+        ChamsConfig.ArmChams.OriginalColor[arm] = arm.Color
+        ChamsConfig.ArmChams.OriginalMaterial[arm] = arm.Material
+    elseif arm:IsA("Model") then
+        for _, part in pairs(arm:GetDescendants()) do
+            if part:IsA("BasePart") then
+                ChamsConfig.ArmChams.OriginalTransparency[part] = part.Transparency
+                ChamsConfig.ArmChams.OriginalColor[part] = part.Color
+                ChamsConfig.ArmChams.OriginalMaterial[part] = part.Material
+            end
+        end
+    end
+end
+
+local function saveOriginalToolProperties(tool)
+    if not tool then return end
+    
+    for _, part in pairs(tool:GetDescendants()) do
+        if part:IsA("BasePart") then
+            ChamsConfig.ToolChams.OriginalTransparency[part] = part.Transparency
+            ChamsConfig.ToolChams.OriginalColor[part] = part.Color
+            ChamsConfig.ToolChams.OriginalMaterial[part] = part.Material
+        end
+    end
+end
+
+local function restoreOriginalArmProperties(arm)
+    if not arm then return end
+    
+    if arm:IsA("BasePart") then
+        local origTransparency = ChamsConfig.ArmChams.OriginalTransparency[arm]
+        local origColor = ChamsConfig.ArmChams.OriginalColor[arm]
+        local origMaterial = ChamsConfig.ArmChams.OriginalMaterial[arm]
+        
+        if origTransparency then arm.Transparency = origTransparency end
+        if origColor then arm.Color = origColor end
+        if origMaterial then arm.Material = origMaterial end
+        
+        ChamsConfig.ArmChams.OriginalTransparency[arm] = nil
+        ChamsConfig.ArmChams.OriginalColor[arm] = nil
+        ChamsConfig.ArmChams.OriginalMaterial[arm] = nil
+    elseif arm:IsA("Model") then
+        for _, part in pairs(arm:GetDescendants()) do
+            if part:IsA("BasePart") then
+                local origTransparency = ChamsConfig.ArmChams.OriginalTransparency[part]
+                local origColor = ChamsConfig.ArmChams.OriginalColor[part]
+                local origMaterial = ChamsConfig.ArmChams.OriginalMaterial[part]
+                
+                if origTransparency then part.Transparency = origTransparency end
+                if origColor then part.Color = origColor end
+                if origMaterial then part.Material = origMaterial end
+                
+                ChamsConfig.ArmChams.OriginalTransparency[part] = nil
+                ChamsConfig.ArmChams.OriginalColor[part] = nil
+                ChamsConfig.ArmChams.OriginalMaterial[part] = nil
+            end
+        end
+    end
+end
+
+local function restoreOriginalToolProperties(tool)
+    if not tool then return end
+    
+    for _, part in pairs(tool:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local origTransparency = ChamsConfig.ToolChams.OriginalTransparency[part]
+            local origColor = ChamsConfig.ToolChams.OriginalColor[part]
+            local origMaterial = ChamsConfig.ToolChams.OriginalMaterial[part]
+            
+            if origTransparency then part.Transparency = origTransparency end
+            if origColor then part.Color = origColor end
+            if origMaterial then part.Material = origMaterial end
+            
+            ChamsConfig.ToolChams.OriginalTransparency[part] = nil
+            ChamsConfig.ToolChams.OriginalColor[part] = nil
+            ChamsConfig.ToolChams.OriginalMaterial[part] = nil
+        end
+    end
+end
+
+local function applyForcefieldToArms()
+    if not ChamsConfig.ArmChams.Enabled then return end
+    
+    if not viewModel then return end
+    
+    local rightArm = viewModel:FindFirstChild("Right Arm")
+    local leftArm = viewModel:FindFirstChild("Left Arm")
+    
+    if rightArm then saveOriginalArmProperties(rightArm) end
+    if leftArm then saveOriginalArmProperties(leftArm) end
+    
+    local function applyToArm(arm)
+        if arm:IsA("BasePart") then
+            arm.Material = Enum.Material.ForceField
+            arm.Transparency = ChamsConfig.ArmChams.Transparency
+            arm.Color = ChamsConfig.ArmChams.Color
+        elseif arm:IsA("Model") then
+            for _, part in pairs(arm:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Material = Enum.Material.ForceField
+                    part.Transparency = ChamsConfig.ArmChams.Transparency
+                    part.Color = ChamsConfig.ArmChams.Color
+                end
+            end
+        end
+    end
+    
+    if rightArm then applyToArm(rightArm) end
+    if leftArm then applyToArm(leftArm) end
+end
+
+local function applyForcefieldToTool()
+    if not ChamsConfig.ToolChams.Enabled then return end
+    
+    local currentTool = localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Tool")
+    if currentTool then
+        saveOriginalToolProperties(currentTool)
+        
+        for _, part in pairs(currentTool:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Material = Enum.Material.ForceField
+                part.Transparency = ChamsConfig.ToolChams.Transparency
+                part.Color = ChamsConfig.ToolChams.Color
+            end
+        end
+    end
+end
+
+local function removeForcefieldFromArms()
+    if not viewModel then return end
+    
+    local rightArm = viewModel:FindFirstChild("Right Arm")
+    local leftArm = viewModel:FindFirstChild("Left Arm")
+    
+    if rightArm then restoreOriginalArmProperties(rightArm) end
+    if leftArm then restoreOriginalArmProperties(leftArm) end
+end
+
+local function removeForcefieldFromTool()
+    local currentTool = localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Tool")
+    if currentTool then
+        restoreOriginalToolProperties(currentTool)
+    end
+end
+
+local function onLocalPlayerCharacterAdded()
+    task.wait(1)
+    
+    if ChamsConfig.PlayerChams.Enabled then
+        enablePlayerChams()
+    end
+    
+    if ChamsConfig.ArmChams.Enabled then
+        applyForcefieldToArms()
+    end
+    
+    if ChamsConfig.ToolChams.Enabled then
+        applyForcefieldToTool()
+    end
+end
+
+local function onLocalPlayerCharacterRemoving(character)
+    if espParts[character] then
+        for _, boxData in ipairs(espParts[character]) do
+            boxData.outer:Destroy()
+            boxData.inner:Destroy()
+            if boxData.bloom then
+                boxData.bloom:Destroy()
+            end
+        end
+        espParts[character] = nil
+    end
+end
+
+local playerSection = visualPage:new_section({
+    name = "Player Chams",
+    side = "left",
+    size = 300
+})
+
+local playerChamsToggle = playerSection:new_toggle({
+    name = "Enable Player Chams",
+    state = false,
+    flag = "player_chams_enable",
+    callback = function(state)
+        ChamsConfig.PlayerChams.Enabled = state
+        if state then
+            enablePlayerChams()
+        else
+            disablePlayerChams()
+        end
+    end
+})
+
+local outerColor = playerChamsToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 255, 255),
+    flag = "player_chams_outercolor",
+    callback = function(color)
+        ChamsConfig.PlayerChams.OuterColor = color
+        updatePlayerBoxColors()
+    end
+})
+
+local innerColor = playerChamsToggle:new_colorpicker({
+    default = Color3.fromRGB(0, 0, 0),
+    flag = "player_chams_innercolor",
+    callback = function(color)
+        ChamsConfig.PlayerChams.InnerColor = color
+        updatePlayerBoxColors()
+    end
+})
+
+local teamCheckToggle = playerSection:new_toggle({
+    name = "Team Check",
+    state = false,
+    flag = "player_chams_teamcheck",
+    callback = function(state)
+        ChamsConfig.PlayerChams.TeamCheck = state
+        if ChamsConfig.PlayerChams.Enabled then
+            disablePlayerChams()
+            enablePlayerChams()
+        end
+    end
+})
+
+local whitelistToggle = playerSection:new_toggle({
+    name = "Use Whitelist Color",
+    state = false,
+    flag = "chams_whitelist_toggle",
+    callback = function(state)
+        ChamsConfig.PlayerChams.UseWhitelistColor = state
+        updatePlayerBoxColors()
+    end
+})
+
+local whitelistColor = whitelistToggle:new_colorpicker({
+    name = "Whitelist Color",
+    default = Color3.fromRGB(50, 255, 50),
+    flag = "chams_whitelist_color",
+    callback = function(color)
+        ChamsConfig.PlayerChams.WhitelistColor = color
+        updatePlayerBoxColors()
+    end
+})
+
+local targetlistToggle = playerSection:new_toggle({
+    name = "Use Targetlist Color",
+    state = false,
+    flag = "chams_targetlist_toggle",
+    callback = function(state)
+        ChamsConfig.PlayerChams.UseTargetlistColor = state
+        updatePlayerBoxColors()
+    end
+})
+
+local targetlistColor = targetlistToggle:new_colorpicker({
+    name = "Targetlist Color",
+    default = Color3.fromRGB(255, 50, 255),
+    flag = "chams_targetlist_color",
+    callback = function(color)
+        ChamsConfig.PlayerChams.TargetlistColor = color
+        updatePlayerBoxColors()
+    end
+})
+
+local armsSection = visualPage:new_section({
+    name = "Arms Chams",
+    side = "right",
+    size = 300
+})
+
+local armsToggle = armsSection:new_toggle({
+    name = "Enable Arms Chams",
+    state = false,
+    flag = "arms_chams_enable",
+    callback = function(state)
+        ChamsConfig.ArmChams.Enabled = state
+        if state then
+            applyForcefieldToArms()
+        else
+            removeForcefieldFromArms()
+        end
+    end
+})
+
+local armsTransparency = armsSection:new_slider({
+    name = "Arms Transparency",
+    min = 0,
+    max = 1,
+    default = 0.5,
+    float = 0.1,
+    text = "[value]",
+    flag = "arms_chams_transparency",
+    callback = function(value)
+        ChamsConfig.ArmChams.Transparency = value
+        if ChamsConfig.ArmChams.Enabled then
+            applyForcefieldToArms()
+        end
+    end
+})
+
+local armsColor = armsToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 255, 255),
+    flag = "arms_chams_color",
+    callback = function(color)
+        ChamsConfig.ArmChams.Color = color
+        if ChamsConfig.ArmChams.Enabled then
+            applyForcefieldToArms()
+        end
+    end
+})
+
+local toolSection = visualPage:new_section({
+    name = "Tool Chams",
+    side = "left",
+    size = 300
+})
+
+local toolToggle = toolSection:new_toggle({
+    name = "Enable Tool Chams",
+    state = false,
+    flag = "tool_chams_enable",
+    callback = function(state)
+        ChamsConfig.ToolChams.Enabled = state
+        if state then
+            applyForcefieldToTool()
+        else
+            removeForcefieldFromTool()
+        end
+    end
+})
+
+local toolTransparency = toolSection:new_slider({
+    name = "Tool Transparency",
+    min = 0,
+    max = 1,
+    default = 0.5,
+    float = 0.1,
+    text = "[value]",
+    flag = "tool_chams_transparency",
+    callback = function(value)
+        ChamsConfig.ToolChams.Transparency = value
+        if ChamsConfig.ToolChams.Enabled then
+            applyForcefieldToTool()
+        end
+    end
+})
+
+local toolColor = toolToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 255, 255),
+    flag = "tool_chams_color",
+    callback = function(color)
+        ChamsConfig.ToolChams.Color = color
+        if ChamsConfig.ToolChams.Enabled then
+            applyForcefieldToTool()
+        end
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if ChamsConfig.ArmChams.Enabled then
+        applyForcefieldToArms()
+    else
+        removeForcefieldFromArms()
+    end
+    
+    if ChamsConfig.ToolChams.Enabled then
+        applyForcefieldToTool()
+    else
+        removeForcefieldFromTool()
+    end
+end)
+
+localPlayer.CharacterAdded:Connect(onLocalPlayerCharacterAdded)
+localPlayer.CharacterRemoving:Connect(onLocalPlayerCharacterRemoving)
+
+localPlayer.Backpack.ChildAdded:Connect(function()
+    task.wait(0.1)
+    if ChamsConfig.ToolChams.Enabled then
+        applyForcefieldToTool()
+    end
+end)
+
+local updateConnection = RunService.RenderStepped:Connect(function()
+    if ChamsConfig.PlayerChams.Enabled then
+        updatePlayerBoxes()
+    end
+end)
+
+Players.PlayerAdded:Connect(function(player)
+    if player ~= localPlayer and ChamsConfig.PlayerChams.Enabled then
+        onPlayerAdded(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    onPlayerRemoving(player)
+end)
+
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightControl then
+        ChamsConfig.PlayerChams.Enabled = not ChamsConfig.PlayerChams.Enabled
+        if ChamsConfig.PlayerChams.Enabled then
+            enablePlayerChams()
+        else
+            disablePlayerChams()
+        end
+    end
+end)
+
+task.spawn(function()
+    wait(1)
+    if localPlayer.Character and ChamsConfig.PlayerChams.Enabled then
+        enablePlayerChams()
+    end
+    
+    if ChamsConfig.ArmChams.Enabled then
+        applyForcefieldToArms()
+    end
+    
+    if ChamsConfig.ToolChams.Enabled then
+        applyForcefieldToTool()
+    end
+end)
 local configPage = window:new_page({
     name = "Configuration"
 })
