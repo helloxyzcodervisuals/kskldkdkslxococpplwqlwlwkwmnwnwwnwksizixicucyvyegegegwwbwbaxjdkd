@@ -1820,3 +1820,36 @@ saveSection:new_button({name="Refresh Presets",callback=function()
         end
     end
 end})
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local CurrentCharacter = LocalPlayer.Character
+local Head = CurrentCharacter and CurrentPlayer.Character:FindFirstChild("Head")
+local SoundConnection = RunService.Heartbeat:Connect(function()
+    if Head then
+        for _, SoundObject in pairs(Head:GetChildren()) do
+            if SoundObject:IsA("Sound") then
+                SoundObject:Destroy()
+            end
+        end
+    end
+end)
+
+local function OnCharacterAdded(NewCharacter)
+    Head = nil
+    SoundConnection:Disconnect()
+    task.wait(0.5)
+    Head = NewCharacter:WaitForChild("Head")
+    SoundConnection = RunService.Heartbeat:Connect(function()
+        for _, SoundObject in pairs(Head:GetChildren()) do
+            if SoundObject:IsA("Sound") then
+                SoundObject:Destroy()
+            end
+        end
+    end)
+end
+
+LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
+if CurrentCharacter then
+    OnCharacterAdded(CurrentCharacter)
+end
