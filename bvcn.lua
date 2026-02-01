@@ -8,6 +8,7 @@ for _,v in pairs(getgc(true)) do if type(v)=="table" then local func=rawget(v,"D
 
 getgenv().CONFIG={Ragebot={Enabled=false,RapidFire=false,FireRate=30,Prediction=true,PredictionAmount=0.12,TeamCheck=false,VisibilityCheck=true,FOV=9e9,ShowFOV=false,Wallbang=true,Tracers=true,TracerColor=Color3.fromRGB(255,0,0),TracerWidth=1,TracerLifetime=3,ShootRange=15,HitRange=15,HitNotify=true,AutoReload=true,HitSound=true,HitColor=Color3.fromRGB(255,182,193),UseTargetList=false,UseWhitelist=false,HitNotifyDuration=5,LowHealthCheck=false,SelectedHitSound="skeet",FriendCheck=false,MaxTarget=0},Misc={SpeedEnabled=false,SpeedValue=50,JumpPowerEnabled=false,JumpPowerValue=100,LoopFOVEnabled=false,HideHeadEnabled=false,InfStaminaEnabled=false,NoFallDmgEnabled=false,SpeedConnection=nil,FOVConnection=nil,JumpPowerConnection=nil,NoFallHook=nil,InfStaminaHook=nil}}
 getgenv().Lists={TargetList={},Whitelist={}}
+--666
 local Players,RunService,Workspace,TweenService=game:GetService("Players"),game:GetService("RunService"),game:GetService("Workspace"),game:GetService("TweenService")
 local LocalPlayer,Camera,ReplicatedStorage=Players.LocalPlayer,Workspace.CurrentCamera,game:GetService("ReplicatedStorage")
 local library=loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/deadCell.lua"))()
@@ -391,10 +392,10 @@ local function loadRagebot()
                         local waitTimeValue=0.01
                         if target then
                             local currentTime=tick()
-                            local baseWaitTime=1/(getgenv().CONFIG.Ragebot.FireRate*90000000)
+                            local baseWaitTime=1/(getgenv().CONFIG.Ragebot.FireRate*9999999999999999999999999)
                             local WaitTime=1/(getgenv().CONFIG.Ragebot.FireRate*1)
                             if getgenv().CONFIG.Ragebot.RapidFire then
-                                local rapidWaitTime=baseWaitTime*0.01
+                                local rapidWaitTime=baseWaitTime*0.00001
                                 if currentTime-lastShotTime>=rapidWaitTime then shootAtTarget(target) lastShotTime=currentTime end
                                 waitTimeValue=0
                             else
@@ -886,6 +887,43 @@ local function apply_no_recoil()
         end
     end
 end
+local ragebotPage = window:new_page({name="Ragebot"})
+local ragebotMainSection = ragebotPage:new_section({name="Ragebot Main",side="left",size=450})
+ragebotMainSection:new_toggle({name="Enable Ragebot",state=false,flag="ragebot_enabled",callback=function(state) getgenv().CONFIG.Ragebot.Enabled=state end})
+ragebotMainSection:new_toggle({name="Rapid Fire",state=false,flag="ragebot_rapidfire",callback=function(state) getgenv().CONFIG.Ragebot.RapidFire=state end})
+ragebotMainSection:new_toggle({name="Hit Sound",state=true,flag="ragebot_hitsound",callback=function(state) getgenv().CONFIG.Ragebot.HitSound=state end})
+ragebotMainSection:new_toggle({name="Auto Reload",state=true,flag="ragebot_autoreload",callback=function(state) getgenv().CONFIG.Ragebot.AutoReload=state end})
+ragebotMainSection:new_slider({name="Fire Rate",min=1,max=1000,default=30,text="[value] RPS",flag="ragebot_firerate",callback=function(value) getgenv().CONFIG.Ragebot.FireRate=value end})
+ragebotMainSection:new_slider({name="Shoot Range",min=1,max=30,default=15,text="[value]",flag="ragebot_shootrange",callback=function(value) getgenv().CONFIG.Ragebot.ShootRange=value end})
+ragebotMainSection:new_slider({name="Hit Range",min=1,max=30,default=15,text="[value]",flag="ragebot_hitrange",callback=function(value) getgenv().CONFIG.Ragebot.HitRange=value end})
+ragebotMainSection:new_listbox({name="Hit Sound",options={"Bameware","Bell","Bubble","Pick","Pop","Rust","Sans","Fart","Big","Vine","Bruh","Skeet","Neverlose","Fatality","Bonk","Minecraft"},default="Skeet",multiple=false,flag="ragebot_hitsoundlist",callback=function(value) getgenv().CONFIG.Ragebot.SelectedHitSound=value end})
+
+local targetingSection = ragebotPage:new_section({name="Targeting",side="right",size=250})
+targetingSection:new_toggle({name="Team Check",state=false,flag="ragebot_teamcheck",callback=function(state) getgenv().CONFIG.Ragebot.TeamCheck=state end})
+targetingSection:new_toggle({name="Visibility Check",state=true,flag="ragebot_visibilitycheck",callback=function(state) getgenv().CONFIG.Ragebot.VisibilityCheck=state end})
+targetingSection:new_toggle({name="Wallbang",state=true,flag="ragebot_wallbang",callback=function(state) getgenv().CONFIG.Ragebot.Wallbang=state end})
+targetingSection:new_toggle({name="Downed Check",state=false,flag="ragebot_downcheck",callback=function(state) getgenv().CONFIG.Ragebot.LowHealthCheck=state end})
+targetingSection:new_toggle({name="Friend Check",state=false,flag="ragebot_friendcheck",callback=function(state) getgenv().CONFIG.Ragebot.FriendCheck=state end})
+--targetingSection:new_slider({name="Max Target",min=0,max=20,default=0,text="[value] players",flag="ragebot_maxtarget",callback=function(value) getgenv().CONFIG.Ragebot.MaxTarget=value end})
+
+local aimSection = ragebotPage:new_section({name="Aim Settings",side="left",size=200})
+aimSection:new_toggle({name="Prediction",state=true,flag="ragebot_prediction",callback=function(state) getgenv().CONFIG.Ragebot.Prediction=state end})
+aimSection:new_slider({name="Prediction Amount",min=0.05,max=0.3,default=0.12,text="[value]",flag="ragebot_predictionamount",callback=function(value) getgenv().CONFIG.Ragebot.PredictionAmount=value end})
+
+local visualsSection = ragebotPage:new_section({name="Tracers",side="right",size=200})
+local tracersToggle = visualsSection:new_toggle({name="Tracers",state=true,flag="ragebot_tracers",callback=function(state) getgenv().CONFIG.Ragebot.Tracers=state end})
+tracersToggle:new_colorpicker({default=Color3.fromRGB(255,0,0),flag="ragebot_tracercolor",callback=function(color) getgenv().CONFIG.Ragebot.TracerColor=color end})
+visualsSection:new_slider({name="Tracer Width",min=0.1,max=5,default=1,text="[value] width",flag="ragebot_tracerwidth",callback=function(value) getgenv().CONFIG.Ragebot.TracerWidth=value end})
+visualsSection:new_slider({name="Tracer Lifetime",min=0.5,max=100,default=3,text="[value] time",flag="ragebot_tracerlife",callback=function(value) getgenv().CONFIG.Ragebot.TracerLifetime=value end})
+
+local colorsSection = ragebotPage:new_section({name="Notifications",side="left",size=200})
+local hitNotifyToggle = colorsSection:new_toggle({name="Hit Notify",state=true,flag="ragebot_hitnotify",callback=function(state) getgenv().CONFIG.Ragebot.HitNotify=state end})
+hitNotifyToggle:new_colorpicker({default=Color3.fromRGB(255,182,193),flag="ragebot_hitcolor",callback=function(color) getgenv().CONFIG.Ragebot.HitColor=color end})
+colorsSection:new_slider({name="Hit Notify Duration",min=1,max=10,default=5,text="[value]s",flag="ragebot_hitduration",callback=function(value) getgenv().CONFIG.Ragebot.HitNotifyDuration=value end})
+
+--local fovSection = ragebotPage:new_section({name="FOV Settings",side="right",size=150})
+--fovSection:new_toggle({name="Show FOV",state=false,flag="ragebot_showfov",callback=function(state) getgenv().CONFIG.Ragebot.ShowFOV=state end})
+--fovSection:new_slider({name="FOV Size",min=10,max=,default=9e9,text="[value]",flag="ragebot_fovsize",callback=function(value) getgenv().CONFIG.Ragebot.FOV=value end})
 local legitPage=window:new_page({name="Legit"})
 local legitSection=legitPage:new_section({name="Legit Settings",side="left",size=350})
 legitSection:new_toggle({name="Enable",state=false,flag="legit_enable",callback=function(state)getgenv().Legit.Enabled=state end})
