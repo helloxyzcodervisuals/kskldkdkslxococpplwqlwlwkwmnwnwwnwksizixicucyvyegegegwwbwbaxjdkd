@@ -36,7 +36,7 @@ break
 end
 end
 end
---bb
+
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -5661,6 +5661,368 @@ local saturationSlider = richSection:new_slider({
         end
     end
 })
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+
+local localPlayer = Players.LocalPlayer
+local camera = Workspace.CurrentCamera
+
+local espFolder = Instance.new("Folder")
+espFolder.Name = "ESPFolder"
+espFolder.Parent = Workspace
+
+local espParts = {}
+local connections = {}
+
+local chamsConfig = {
+    Enabled = false,
+    OuterColor = Color3.fromRGB(255, 255, 255),
+    InnerColor = Color3.fromRGB(0, 0, 0),
+    TeamCheck = false,
+    UseWhitelistColor = false,
+    WhitelistColor = Color3.fromRGB(50, 255, 50),
+    UseTargetlistColor = false,
+    TargetlistColor = Color3.fromRGB(255, 50, 255)
+}
+local function getPlayerColor(player)
+    local targetList = getgenv().Lists.TargetList or {}
+    local whitelist = getgenv().Lists.Whitelist or {}
+    
+    if table.find(targetList, player.Name) then
+        return chamsConfig.TargetlistColor
+    end
+    
+    if table.find(whitelist, player.Name) then
+        return chamsConfig.WhitelistColor
+    end
+    
+    return chamsConfig.OuterColor
+end
+
+local function createBox(character, player)
+    if not chamsConfig.Enabled then return end
+    
+    if chamsConfig.TeamCheck and localPlayer.Team and player.Team and localPlayer.Team == player.Team then
+        return
+    end
+    
+    local boxes = {}
+    local playerColor = getPlayerColor(player)
+    
+    local bodyParts = {
+        "Head",
+        "Torso",
+        "Left Arm",
+        "Right Arm",
+        "Left Leg",
+        "Right Leg"
+    }
+    
+    for _, partName in ipairs(bodyParts) do
+        local originalPart = character:FindFirstChild(partName)
+        if originalPart then
+            local outerBox = Instance.new("BoxHandleAdornment")
+            outerBox.Name = "ESPBoxOuter"
+            outerBox.Adornee = originalPart
+            outerBox.Size = originalPart.Size + Vector3.new(0.1, 0.1, 0.1)
+            outerBox.Color3 = playerColor
+            outerBox.Transparency = 0
+            outerBox.AlwaysOnTop = true
+            outerBox.ZIndex = 0
+            outerBox.Parent = espFolder
+            
+            local innerBox = Instance.new("BoxHandleAdornment")
+            innerBox.Name = "ESPBoxInner"
+            innerBox.Adornee = originalPart
+            innerBox.Size = originalPart.Size
+            innerBox.Color3 = chamsConfig.InnerColor
+            innerBox.Transparency = 0
+            innerBox.AlwaysOnTop = true
+            innerBox.ZIndex = 1
+            innerBox.Parent = espFolder
+            
+            local bloomEffect = Instance.new("BloomEffect")
+            bloomEffect.Name = "ESPGlow"
+            bloomEffect.Parent = innerBox
+            bloomEffect.Intensity = 99
+            bloomEffect.Size = 24
+            bloomEffect.Threshold = 98
+            
+            table.insert(boxes, {
+                outer = outerBox, 
+                inner = innerBox,
+                part = originalPart,
+                bloom = bloomEffect,
+                player = player
+            })
+        end
+    end
+    
+    espParts[character] = boxes
+end
+
+local function updateBoxColors()
+    for character, boxes in pairs(espParts) do
+        if character and character:IsDescendantOf(Workspace) then
+            local player = Players:GetPlayerFromCharacter(character)
+            if player then
+                local playerColor = getPlayerColor(player)
+                for _, boxData in ipairs(boxes) do
+                    if boxData.outer and boxData.outer.Parent then
+                        boxData.outer.Color3 = playerColor
+                    end
+                    if boxData.inner and boxData.inner.Parent then
+                        boxData.inner.Color3 = chamsConfig.InnerColor
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function updateBoxes()
+    for character, boxes in pairs(espParts) do
+        if character and character:IsDescendantOf(Workspace) then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                for _, boxData in ipairs(boxes) do
+                    if boxData.part and boxData.part:IsDescendantOf(Workspace) then
+                        boxData.outer.Adornee = boxData.part
+                        boxData.inner.Adornee = boxData.part
+                        
+                        if boxData.part.Name == "Head" then
+                            boxData.outer.Size = boxData.part.Size + Vector3.new(0.1, 0.1, 0.1)
+                            boxData.inner.Size = boxData.part.Size
+                        else
+                            boxData.outer.Size = boxData.part.Size + Vector3.new(0.1, 0.1, 0.1)
+                            boxData.inner.Size = boxData.part.Size
+                        end
+                    end
+                end
+            else
+                for _, boxData in ipairs(boxes) do
+                    boxData.outer:Destroy()
+                    boxData.inner:Destroy()
+                    if boxData.bloom then
+                        boxData.bloom:Destroy()
+                    end
+                end
+                espParts[character] = nil
+            end
+        else
+            for _, boxData in ipairs(boxes) do
+                boxData.outer:Destroy()
+                boxData.inner:Destroy()
+                if boxData.bloom then
+                    boxData.bloom:Destroy()
+                end
+            end
+            espParts[character] = nil
+        end
+    end
+end
+
+local function onCharacterAdded(character, player)
+    wait(1)
+    if chamsConfig.Enabled then
+        createBox(character, player)
+    end
+end
+
+local function onPlayerAdded(player)
+    if player ~= localPlayer then
+        local function characterAdded(character)
+            onCharacterAdded(character, player)
+        end
+        
+        if player.Character then
+            characterAdded(player.Character)
+        end
+        
+        table.insert(connections, player.CharacterAdded:Connect(characterAdded))
+    end
+end
+
+local function cleanupESP()
+    for character, boxes in pairs(espParts) do
+        for _, boxData in ipairs(boxes) do
+            boxData.outer:Destroy()
+            boxData.inner:Destroy()
+            if boxData.bloom then
+                boxData.bloom:Destroy()
+            end
+        end
+    end
+    espParts = {}
+end
+
+local function enableESP()
+    if not chamsConfig.Enabled then return end
+    
+    cleanupESP()
+    
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= localPlayer then
+            onPlayerAdded(player)
+        end
+    end
+end
+
+local function disableESP()
+    cleanupESP()
+    
+    for _, connection in ipairs(connections) do
+        connection:Disconnect()
+    end
+    connections = {}
+end
+
+local chamsToggle = espSection:new_toggle({
+    name = "Enable Chams",
+    state = false,
+    flag = "chams_enabled",
+    callback = function(state)
+        chamsConfig.Enabled = state
+        if state then
+            enableESP()
+        else
+            disableESP()
+        end
+    end
+})
+
+local outerColorPicker = chamsToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 255, 255),
+    flag = "chams_outercolor",
+    callback = function(color)
+        chamsConfig.OuterColor = color
+        updateBoxColors()
+    end
+})
+
+local innerColorPicker = chamsToggle:new_colorpicker({
+    default = Color3.fromRGB(0, 0, 0),
+    flag = "chams_innercolor",
+    callback = function(color)
+        chamsConfig.InnerColor = color
+        updateBoxColors()
+    end
+})
+
+local teamCheckToggle = espSection:new_toggle({
+    name = "Team Check",
+    state = false,
+    flag = "chams_teamcheck",
+    callback = function(state)
+        chamsConfig.TeamCheck = state
+        if chamsConfig.Enabled then
+            cleanupESP()
+            enableESP()
+        end
+    end
+})
+
+local whitelistColorToggle = espSection:new_toggle({
+    name = "Whitelist Color",
+    state = false,
+    flag = "chams_usewhitelistcolor",
+    callback = function(state)
+        chamsConfig.UseWhitelistColor = state
+        updateBoxColors()
+    end
+})
+
+local whitelistColorPicker = whitelistColorToggle:new_colorpicker({
+    default = Color3.fromRGB(50, 255, 50),
+    flag = "chams_whitelistcolor",
+    callback = function(color)
+        chamsConfig.WhitelistColor = color
+        updateBoxColors()
+    end
+})
+
+local targetlistColorToggle = espSection:new_toggle({
+    name = "Targetlist Color",
+    state = false,
+    flag = "chams_usetargetlistcolor",
+    callback = function(state)
+        chamsConfig.UseTargetlistColor = state
+        updateBoxColors()
+    end
+})
+
+local targetlistColorPicker = targetlistColorToggle:new_colorpicker({
+    default = Color3.fromRGB(255, 50, 255),
+    flag = "chams_targetlistcolor",
+    callback = function(color)
+        chamsConfig.TargetlistColor = color
+        updateBoxColors()
+    end
+})
+})
+
+local whitelistColorPicker = chamsSection:new_colorpicker({
+    name = "Whitelist Color",
+    default = Color3.fromRGB(50, 255, 50),
+    flag = "chams_whitelistcolor",
+    callback = function(color)
+        chamsConfig.WhitelistColor = color
+        updateBoxColors()
+    end
+})
+
+local targetlistColorPicker = chamsSection:new_colorpicker({
+    name = "Targetlist Color",
+    default = Color3.fromRGB(255, 50, 255),
+    flag = "chams_targetlistcolor",
+    callback = function(color)
+        chamsConfig.TargetlistColor = color
+        updateBoxColors()
+    end
+})
+
+local updateConnection = RunService.RenderStepped:Connect(function()
+    if chamsConfig.Enabled then
+        updateBoxes()
+    end
+end)
+
+Players.PlayerAdded:Connect(function(player)
+    if player ~= localPlayer and chamsConfig.Enabled then
+        onPlayerAdded(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    local character = player.Character
+    if character and espParts[character] then
+        for _, boxData in ipairs(espParts[character]) do
+            boxData.outer:Destroy()
+            boxData.inner:Destroy()
+            if boxData.bloom then
+                boxData.bloom:Destroy()
+            end
+        end
+        espParts[character] = nil
+    end
+end)
+
+localPlayer.CharacterRemoving:Connect(function()
+    cleanupESP()
+end)
+
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightControl then
+        chamsConfig.Enabled = not chamsConfig.Enabled
+        if chamsConfig.Enabled then
+            enableESP()
+        else
+            disableESP()
+        end
+    end
+end)
 local richPlayerSection = visualPage:new_section({
     name = "Rich Player",
     side = "right",
@@ -6007,7 +6369,6 @@ local refreshPresetsButton = saveSection:new_button({
         end
     end
 })
---[[
 getgenv().Legit = {
     ForcefieldArms = {
         Enabled = false,
@@ -6307,7 +6668,7 @@ LocalPlayer.Backpack.ChildAdded:Connect(function()
         applyForcefieldToTool()
     end
 end)
---]]
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
