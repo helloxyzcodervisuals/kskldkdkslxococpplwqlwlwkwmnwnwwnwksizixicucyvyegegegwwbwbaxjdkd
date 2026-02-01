@@ -36,7 +36,6 @@ break
 end
 end
 end
---indexffg
 getgenv().CONFIG = {
     Ragebot = {
         Enabled = false,
@@ -6026,7 +6025,6 @@ end)
 localPlayer.CharacterRemoving:Connect(function()
     cleanupESP()
 end)
-
 game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.RightControl then
         chamsConfig.Enabled = not chamsConfig.Enabled
@@ -6383,7 +6381,7 @@ local refreshPresetsButton = saveSection:new_button({
         end
     end
 })
-
+--[[
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -6676,6 +6674,7 @@ LocalPlayer.Backpack.ChildAdded:Connect(function()
         applyForcefieldToTool()
     end
 end)
+--]]
 --[[
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
