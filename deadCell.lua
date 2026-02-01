@@ -47,7 +47,7 @@ local function vc()
 end
 local UI_FONT=vc()
 local HttpService=game:GetService("HttpService")
---youcantajajdjdsks
+
 local settings={
     folder_name="deadcell",
     default_accent=Color3.fromRGB(255, 182, 193)  
@@ -656,6 +656,15 @@ function library.createcolorpicker(default,parent,count,flag,callback,offset)
         Text="",
         ZIndex = 9e9
     })
+
+    local icon_gradient=Instance.new("UIGradient")
+    icon_gradient.Name="ColorPickerGradient"
+    icon_gradient.Rotation=90
+    icon_gradient.Color=ColorSequence.new({
+        ColorSequenceKeypoint.new(0,Color3.fromRGB(255,255,255)),
+        ColorSequenceKeypoint.new(1,Color3.fromRGB(109,109,109))
+    })
+    icon_gradient.Parent=icon
     
     local window=utility.createFrame({
         Name="ColorPickerWindow",
@@ -1474,6 +1483,15 @@ function library:new_window(cfg)
         Position=UDim2.new(0,1,0,1),
         BorderSizePixel=0
     })
+
+    local window_gradient=Instance.new("UIGradient")
+    window_gradient.Name="WindowGradient"
+    window_gradient.Rotation=90
+    window_gradient.Color=ColorSequence.new({
+        ColorSequenceKeypoint.new(0,library.theme["Accent"]),
+        ColorSequenceKeypoint.new(1,Color3.fromRGB(109,109,109))
+    })
+    window_gradient.Parent=window_accent
     
     local window_holder=utility.createFrame({
         Name="WindowHolder",
@@ -1724,7 +1742,14 @@ function library:new_window(cfg)
                     Position=UDim2.new(0,0,0,3)
                 })
 
-                
+                local toggle_gradient=Instance.new("UIGradient")
+                toggle_gradient.Name="ToggleGradient"
+                toggle_gradient.Rotation=90
+                toggle_gradient.Color=ColorSequence.new({
+                    ColorSequenceKeypoint.new(0,Color3.fromRGB(255,255,255)),
+                    ColorSequenceKeypoint.new(1,Color3.fromRGB(109,109,109))
+                })
+                toggle_gradient.Parent=toggle_frame
                 
                 local toggle_title=utility.create("TextLabel",{
                     Name="ToggleTitle",
@@ -1855,6 +1880,15 @@ function library:new_window(cfg)
                     Size=UDim2.new((default-min)/(max-min),0,1,0),
                     BorderSizePixel=0
                 })
+
+                local slider_gradient=Instance.new("UIGradient")
+                slider_gradient.Name="SliderGradient"
+                slider_gradient.Rotation=90
+                slider_gradient.Color=ColorSequence.new({
+                    ColorSequenceKeypoint.new(0,Color3.fromRGB(255,255,255)),
+                    ColorSequenceKeypoint.new(1,Color3.fromRGB(109,109,109))
+                })
+                slider_gradient.Parent=slider_fill
                 
                 local function set(value)
                     value=math.clamp(utility.round(value,float),min,max)
@@ -1902,7 +1936,6 @@ function library:new_window(cfg)
                 
                 return slider_tbl
             end
-            
             function section_tbl:new_label(cfg)
                 local name=cfg.name or cfg.Name or"new label"
                 local holder=utility.createFrame({
