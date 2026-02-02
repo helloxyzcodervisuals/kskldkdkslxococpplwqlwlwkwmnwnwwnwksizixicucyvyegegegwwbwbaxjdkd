@@ -1876,7 +1876,7 @@ function library:new_window(cfg)
                     TextColor3=library.theme["Text"],
                     TextSize=13,
                     FontFace=UI_FONT,
-                    AnchorPoint=Vector2.new(0,5,0),
+                    AnchorPoint=Vector2.new(0.5,0),
                     Position=UDim2.new(1,0,0,-2),
                     Size=UDim2.new(0,0,0,15),
                     TextXAlignment=Enum.TextXAlignment.Right
