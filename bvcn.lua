@@ -1367,7 +1367,7 @@ end
 local function onPlayerAdded(player)
     if player==LocalPlayer then return end
     task.spawn(function() task.wait(1) createESPBillboards(player) end)
-    if player.Character then characterCache[player]=player.Character end
+    if player and player.Character then characterCache[player]=player.Character end
 end
 
 local function onPlayerRemoving(player)
