@@ -380,32 +380,29 @@ local function loadRagebot()
         return true
     end
     local lastShotTime=0
-    task.spawn(function()
-        while true do
-            if not getgenv().CONFIG.Ragebot.Enabled then task.wait(0.001) else
-                if not LocalPlayer.Character then task.wait(0.001) else
-                    if not LocalPlayer.Character:FindFirstChild("Head") then task.wait(0.001) else
-                        local target=getClosestTarget()
-                        local waitTimeValue=0.01
-                        if target then
-                            local currentTime=tick()
-                            local baseWaitTime=1/(getgenv().CONFIG.Ragebot.FireRate*9999999999999999999999999)
-                            local WaitTime=1/(getgenv().CONFIG.Ragebot.FireRate*1)
-                            if getgenv().CONFIG.Ragebot.RapidFire then
-                                local rapidWaitTime=baseWaitTime*0.000000001
-                                if currentTime-lastShotTime>=rapidWaitTime then shootAtTarget(target) lastShotTime=currentTime end
-                                waitTimeValue=0
-                            else
-                                if currentTime-lastShotTime>=WaitTime then shootAtTarget(target) lastShotTime=currentTime end
-                                waitTimeValue=WaitTime/2
-                            end
+    while true do
+        if not getgenv().CONFIG.Ragebot.Enabled then task.wait(0.001) else
+            if not LocalPlayer.Character then task.wait(0.001) else
+                if not LocalPlayer.Character:FindFirstChild("Head") then task.wait(0.001) else
+                    local target=getClosestTarget()
+                    local waitTimeValue=0.01
+                    if target then
+                        local currentTime=tick()
+                        local WaitTime=1/(getgenv().CONFIG.Ragebot.FireRate*1)
+                        if getgenv().CONFIG.Ragebot.RapidFire then
+                            local rapidWaitTime=0
+                            if currentTime-lastShotTime>=rapidWaitTime then shootAtTarget(target) lastShotTime=currentTime end
+                            waitTimeValue=0
+                        else
+                            if currentTime-lastShotTime>=WaitTime then shootAtTarget(target) lastShotTime=currentTime end
+                            waitTimeValue=WaitTime/2
                         end
-                        task.wait(waitTimeValue)
                     end
+                    task.wait(waitTimeValue)
                 end
             end
         end
-    end)
+    end
     local fovCircle=Drawing.new("Circle")
     fovCircle.Visible=getgenv().CONFIG.Ragebot.ShowFOV
     fovCircle.Radius=getgenv().CONFIG.Ragebot.FOV
