@@ -8,7 +8,7 @@ for _,v in pairs(getgc(true)) do if type(v)=="table" then local func=rawget(v,"D
 
 getgenv().CONFIG={Ragebot={Enabled=false,RapidFire=false,FireRate=30,Prediction=true,PredictionAmount=0.12,TeamCheck=false,VisibilityCheck=true,FOV=9e9,ShowFOV=false,Wallbang=true,Tracers=true,TracerColor=Color3.fromRGB(255,0,0),TracerWidth=1,TracerLifetime=3,ShootRange=15,HitRange=15,HitNotify=true,AutoReload=true,HitSound=true,HitColor=Color3.fromRGB(255,182,193),UseTargetList=false,UseWhitelist=false,HitNotifyDuration=5,LowHealthCheck=false,SelectedHitSound="skeet",FriendCheck=false,MaxTarget=0},Misc={SpeedEnabled=false,SpeedValue=50,JumpPowerEnabled=false,JumpPowerValue=100,LoopFOVEnabled=false,HideHeadEnabled=false,InfStaminaEnabled=false,NoFallDmgEnabled=false,SpeedConnection=nil,FOVConnection=nil,JumpPowerConnection=nil,NoFallHook=nil,InfStaminaHook=nil}}
 getgenv().Lists={TargetList={},Whitelist={}}
---ixcgg
+
 local Players,RunService,Workspace,TweenService=game:GetService("Players"),game:GetService("RunService"),game:GetService("Workspace"),game:GetService("TweenService")
 local LocalPlayer,Camera,ReplicatedStorage=Players.LocalPlayer,Workspace.CurrentCamera,game:GetService("ReplicatedStorage")
 local library=loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/deadCell.lua"))()
@@ -1750,13 +1750,13 @@ if not isfolder("gamesense") then makefolder("gamesense") end
 if not isfolder(CFG_DIR) then makefolder(CFG_DIR) end
 
 local function cfgPath(name)
-    if not name then return nil end
+    if type(name) ~= "string" then return nil end
     name = name:gsub("[/\\]", "_")
     return CFG_DIR .. "/" .. name .. ".json"
 end
 
 local function randomName()
-    local charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     local t = {}
     for i = 1, 8 do
         t[i] = charset:sub(math.random(1, #charset), math.random(1, #charset))
@@ -1779,7 +1779,7 @@ local function cfgList()
 end
 
 function Config:save(name)
-    if not name then return end
+    if type(name) ~= "string" or #name == 0 then return end
     local data = {}
     for k,v in pairs(library.flags) do
         if type(v) ~= "function" then data[k] = v end
@@ -1789,6 +1789,7 @@ function Config:save(name)
 end
 
 function Config:load(name)
+    if type(name) ~= "string" or #name == 0 then return end
     local path = cfgPath(name)
     if not path or not isfile(path) then return end
     local ok, data = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
@@ -1804,37 +1805,29 @@ function Config:load(name)
 end
 
 function Config:delete(name)
+    if type(name) ~= "string" or #name == 0 then return end
     local path = cfgPath(name)
     if path and isfile(path) then delfile(path) end
 end
 
 local cfgPage = window:new_page({ name = "Configuration" })
-cfgPage:open()
-
-local cfgSection = cfgPage:new_section({ name = "Configuration", side = "left", size = 260 })
+local cfgSection = cfgPage:new_section({ name = "Configuration", side = "left", size = 550 })
 
 local cfgListbox = cfgSection:new_listbox({
     name = "Configs",
     options = cfgList(),
     flag = "cfg_list",
-    size = 120,
-    callback = function(v) Config.selected = v end
-})
-
-cfgSection:new_button({
-    name = "Save",
-    callback = function()
-        if Config.selected then
-            Config:save(Config.selected)
-            local opts = cfgList()
-            cfgListbox:set_options(opts)
-            cfgListbox:set_selected(Config.selected)
+    size = 300,
+    callback = function(v)
+        if type(v) == "string" then
+            Config.selected = v
         end
     end
 })
 
+
 cfgSection:new_button({
-    name = "Save Configuratiob",
+    name = "Save Configuration",
     callback = function()
         local name = randomName()
         Config:save(name)
@@ -1846,16 +1839,18 @@ cfgSection:new_button({
 })
 
 cfgSection:new_button({
-    name = "Load",
+    name = "Load Configuration",
     callback = function()
-        if Config.selected then Config:load(Config.selected) end
+        if type(Config.selected) == "string" and #Config.selected > 0 then
+            Config:load(Config.selected)
+        end
     end
 })
 
 cfgSection:new_button({
-    name = "Delete",
+    name = "Delete Configuration",
     callback = function()
-        if Config.selected then
+        if type(Config.selected) == "string" and #Config.selected > 0 then
             Config:delete(Config.selected)
             Config.selected = nil
             cfgListbox:set_options(cfgList())
