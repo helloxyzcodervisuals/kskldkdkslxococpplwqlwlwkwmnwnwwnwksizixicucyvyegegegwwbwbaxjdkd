@@ -1744,82 +1744,102 @@ task.spawn(function()
     if ChamsConfig.ToolChams.Enabled then applyForcefieldToTool() end
 end)
 
-local configPage=window:new_page({name="Configuration"})
-local saveSection=configPage:new_section({name="config",side="left",size=450})
-local Section=configPage:new_section({name="setting",side="right",size=500})
-local configNameTextbox=saveSection:new_textbox({name="Config Name",placeholder="enter config name",default="",flag="config_name",callback=function(text) getgenv().currentConfigName=text end})
-saveSection:new_button({name="Save Config",callback=function()
-    if writefile then
-        local configData={}
-        for flag,value in pairs(library.flags) do if type(value)~="function" then configData[flag]=value end end
-        writefile("aui_config.json",game:GetService("HttpService"):JSONEncode(configData))
-        warn("Configuration saved!")
-    else warn("Writefile not supported") end
-end})
-saveSection:new_button({name="Load Config",callback=function()
-    if isfile("aui_config.json") then
-        local file=readfile("aui_config.json")
-        local config=game:GetService("HttpService"):JSONDecode(file)
-        for flag,value in pairs(config) do
-            if library.flags[flag] then
-                if type(library.flags[flag])=="function" then library.flags[flag](value) else library.flags[flag]=value end
-            end
-        end
-        warn("Configuration loaded!")
-    else warn("Config file not found") end
-end})
-saveSection:new_button({name="Reset to Default",callback=function()
-    local defaultValues={Enabled=false,State=false,Value=0,Amount=0,Range=0,Color=Color3.fromRGB(255,0,0),Text="",Selected=nil}
-    for flag,value in pairs(library.flags) do
-        if type(value)=="function" then
-            for key,defaultValue in pairs(defaultValues) do
-                if flag:find(key) then value(defaultValue) break end
-            end
+local CFG_DIR = settings.folder_name .. "/configs"
+if not isfolder(CFG_DIR) then makefolder(CFG_DIR) end
+
+local function cfgPath(n)
+    return CFG_DIR .. "/" .. n .. ".json"
+end
+
+local Config = { selected = nil }
+
+local function cfgList()
+    local t = {}
+    for _, f in ipairs(listfiles(CFG_DIR)) do
+        if f:sub(-5) == ".json" then
+            t[#t+1] = f:match("([^/]+)%.json$")
         end
     end
-    warn("Configuration reset to default!")
-end})
-saveSection:new_button({name="Save as Preset",callback=function()
-    if writefile and getgenv().currentConfigName then
-        local name=getgenv().currentConfigName
-        if name~="" then
-            local configData={}
-            for flag,value in pairs(library.flags) do if type(value)~="function" then configData[flag]=value end end
-            writefile("aui_preset_"..name..".json",game:GetService("HttpService"):JSONEncode(configData))
-            warn("Preset saved as: "..name)
+    table.sort(t)
+    return t
+end
+
+function Config:save(n)
+    if not n then return end
+    local d = {}
+    for k,v in pairs(library.flags) do
+        if type(v) ~= "function" then
+            d[k] = v
         end
     end
-end})
-saveSection:new_button({name="Delete Preset",callback=function()
-    if delfile and getgenv().currentConfigName then
-        local name=getgenv().currentConfigName
-        if name~="" then
-            local filename="aui_preset_"..name..".json"
-            if isfile(filename) then delfile(filename) warn("Preset deleted: "..name) end
+    writefile(cfgPath(n), HttpService:JSONEncode(d))
+end
+
+function Config:load(n)
+    local p = cfgPath(n)
+    if not isfile(p) then return end
+    local d = HttpService:JSONDecode(readfile(p))
+    for k,v in pairs(d) do
+        local s = library.flags[k]
+        if type(s) == "function" then
+            s(v)
         end
     end
-end})
-saveSection:new_button({name="Refresh Presets",callback=function()
-    local children={}
-    for _,child in pairs(listSection.section_content:GetChildren()) do if child.Name:find("PresetButton_") then table.insert(children,child) end end
-    for _,child in ipairs(children) do child:Destroy() end
-    for _,file in pairs(listfiles("")) do
-        if file:find("aui_preset_") and file:find("%.json$") then
-            local name=file:match("aui_preset_(.+)%.json")
-            local presetButton=listSection:new_button({name="Load: "..name,callback=function()
-                local file=readfile(file)
-                local config=game:GetService("HttpService"):JSONDecode(file)
-                for flag,value in pairs(config) do
-                    if library.flags[flag] then
-                        if type(library.flags[flag])=="function" then library.flags[flag](value) else library.flags[flag]=value end
-                    end
-                end
-                warn("Preset loaded: "..name)
-            end})
-            presetButton.Name="PresetButton_"..name
+end
+
+function Config:delete(n)
+    local p = cfgPath(n)
+    if isfile(p) then delfile(p) end
+end
+
+local cfgPage = window:new_page({ name = "Configuration" })
+
+local cfgSection = cfgPage:new_section({
+    name = "Configuration",
+    side = "left",
+    size = 500
+})
+
+local cfgListbox = cfgSection:new_listbox({
+    name = "Configs",
+    options = cfgList(),
+    flag = "cfg_list",
+    size = 2500,
+    callback = function(v)
+        Config.selected = v
+    end
+})
+
+cfgSection:new_button({
+    name = "Save",
+    callback = function()
+        if Config.selected then
+            Config:save(Config.selected)
+            cfgListbox:set_options(cfgList())
+            cfgListbox:set_selected(Config.selected)
         end
     end
-end})
+})
+
+cfgSection:new_button({
+    name = "Load",
+    callback = function()
+        if Config.selected then
+            Config:load(Config.selected)
+        end
+    end
+})
+
+cfgSection:new_button({
+    name = "Delete",
+    callback = function()
+        if Config.selected then
+            Config:delete(Config.selected)
+            Config.selected = nil
+            cfgListbox:set_options(cfgList())
+        end
+    end
+})
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
