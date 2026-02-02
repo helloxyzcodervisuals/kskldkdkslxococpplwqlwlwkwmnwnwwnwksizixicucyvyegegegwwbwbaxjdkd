@@ -1744,11 +1744,24 @@ task.spawn(function()
     if ChamsConfig.ToolChams.Enabled then applyForcefieldToTool() end
 end)
 
-local CFG_DIR = settings.folder_name .. "/configs"
+local CFG_DIR = "gamesense/configs"
+
+if not isfolder("gamesense") then makefolder("gamesense") end
 if not isfolder(CFG_DIR) then makefolder(CFG_DIR) end
 
-local function cfgPath(n)
-    return CFG_DIR .. "/" .. n .. ".json"
+local function cfgPath(name)
+    if not name then return nil end
+    name = name:gsub("[/\\]", "_")
+    return CFG_DIR .. "/" .. name .. ".json"
+end
+
+local function randomName()
+    local charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local t = {}
+    for i = 1, 8 do
+        t[i] = charset:sub(math.random(1, #charset), math.random(1, #charset))
+    end
+    return table.concat(t)
 end
 
 local Config = { selected = nil }
@@ -1757,57 +1770,55 @@ local function cfgList()
     local t = {}
     for _, f in ipairs(listfiles(CFG_DIR)) do
         if f:sub(-5) == ".json" then
-            t[#t+1] = f:match("([^/]+)%.json$")
+            local name = f:match("([^/\\]+)%.json$")
+            if name then t[#t+1] = name end
         end
     end
     table.sort(t)
     return t
 end
 
-function Config:save(n)
-    if not n then return end
-    local d = {}
+function Config:save(name)
+    if not name then return end
+    local data = {}
     for k,v in pairs(library.flags) do
-        if type(v) ~= "function" then
-            d[k] = v
-        end
+        if type(v) ~= "function" then data[k] = v end
     end
-    writefile(cfgPath(n), HttpService:JSONEncode(d))
+    local path = cfgPath(name)
+    if path then writefile(path, HttpService:JSONEncode(data)) end
 end
 
-function Config:load(n)
-    local p = cfgPath(n)
-    if not isfile(p) then return end
-    local d = HttpService:JSONDecode(readfile(p))
-    for k,v in pairs(d) do
-        local s = library.flags[k]
-        if type(s) == "function" then
-            s(v)
+function Config:load(name)
+    local path = cfgPath(name)
+    if not path or not isfile(path) then return end
+    local ok, data = pcall(function() return HttpService:JSONDecode(readfile(path)) end)
+    if not ok or type(data) ~= "table" then return end
+    for k,v in pairs(data) do
+        local flag = library.flags[k]
+        if type(flag) == "function" then
+            pcall(flag, v)
+        elseif flag ~= nil then
+            library.flags[k] = v
         end
     end
 end
 
-function Config:delete(n)
-    local p = cfgPath(n)
-    if isfile(p) then delfile(p) end
+function Config:delete(name)
+    local path = cfgPath(name)
+    if path and isfile(path) then delfile(path) end
 end
 
 local cfgPage = window:new_page({ name = "Configuration" })
+cfgPage:open()
 
-local cfgSection = cfgPage:new_section({
-    name = "Configuration",
-    side = "left",
-    size = 500
-})
+local cfgSection = cfgPage:new_section({ name = "Configuration", side = "left", size = 260 })
 
 local cfgListbox = cfgSection:new_listbox({
     name = "Configs",
     options = cfgList(),
     flag = "cfg_list",
-    size = 2500,
-    callback = function(v)
-        Config.selected = v
-    end
+    size = 120,
+    callback = function(v) Config.selected = v end
 })
 
 cfgSection:new_button({
@@ -1815,18 +1826,29 @@ cfgSection:new_button({
     callback = function()
         if Config.selected then
             Config:save(Config.selected)
-            cfgListbox:set_options(cfgList())
+            local opts = cfgList()
+            cfgListbox:set_options(opts)
             cfgListbox:set_selected(Config.selected)
         end
     end
 })
 
 cfgSection:new_button({
+    name = "Save Configuratiob",
+    callback = function()
+        local name = randomName()
+        Config:save(name)
+        Config.selected = name
+        local opts = cfgList()
+        cfgListbox:set_options(opts)
+        cfgListbox:set_selected(name)
+    end
+})
+
+cfgSection:new_button({
     name = "Load",
     callback = function()
-        if Config.selected then
-            Config:load(Config.selected)
-        end
+        if Config.selected then Config:load(Config.selected) end
     end
 })
 
