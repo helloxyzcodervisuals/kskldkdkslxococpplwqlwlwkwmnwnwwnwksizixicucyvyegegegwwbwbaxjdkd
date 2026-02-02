@@ -1122,7 +1122,7 @@ local espBillboards={}
 local characterCache={}
 local playerConnections={}
 local visualPage=window:new_page({name="Visual"})
-local espSection=visualPage:new_section({name="ESP Settings",side="left",size=400})
+local espSection=visualPage:new_section({name="ESP Settings",side="left",size=325})
 local espToggle=espSection:new_toggle({name="Enable ESP",state=true,flag="esp_enabled",callback=function(state) library.flags.esp_enabled=state end})
 local espColor=espToggle:new_colorpicker({default=Color3.fromRGB(255,50,50),flag="esp_maincolor",callback=function(color) library.flags.esp_maincolor=color end})
 local maxDistanceSlider=espSection:new_slider({name="Max Distance",min=100,max=5000,default=1000,text="[value] studs",flag="esp_maxdistance",callback=function(value) library.flags.esp_maxdistance=value end})
@@ -1292,27 +1292,9 @@ local function updateESPBillboards(player,character)
         textSize=math.max(8,math.min(20,textSize))
     end
     
-    local headContainer=billboards.head.Container or Instance.new("Frame")
-    headContainer.Name="Container"
-    headContainer.BackgroundTransparency=1
-    headContainer.Size=UDim2.new(1,0,1,0)
-    headContainer.Parent=billboards.head
-    
-    local feetContainer=billboards.feet.Container or Instance.new("Frame")
-    feetContainer.Name="Container"
-    feetContainer.BackgroundTransparency=1
-    feetContainer.Size=UDim2.new(1,0,1,0)
-    feetContainer.Parent=billboards.feet
-    
-    local healthContainer=billboards.health.Container or Instance.new("Frame")
-    healthContainer.Name="Container"
-    healthContainer.BackgroundTransparency=1
-    healthContainer.Size=UDim2.new(1,0,1,0)
-    healthContainer.Parent=billboards.health
-    
-    for _,child in ipairs(headContainer:GetChildren()) do child:Destroy() end
-    for _,child in ipairs(feetContainer:GetChildren()) do child:Destroy() end
-    for _,child in ipairs(healthContainer:GetChildren()) do child:Destroy() end
+    for _,child in ipairs(billboards.head:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
+    for _,child in ipairs(billboards.feet:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
+    for _,child in ipairs(billboards.health:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end
     
     local nameLabel=Instance.new("TextLabel")
     nameLabel.Name="NameLabel"
@@ -1324,7 +1306,7 @@ local function updateESPBillboards(player,character)
     nameLabel.Size=UDim2.new(1,0,1,0)
     nameLabel.TextXAlignment=Enum.TextXAlignment.Center
     nameLabel.TextYAlignment=Enum.TextYAlignment.Center
-    nameLabel.Parent=headContainer
+    nameLabel.Parent=billboards.head
     
     if library.flags.esp_showdistance then
         local distanceLabel=Instance.new("TextLabel")
@@ -1337,7 +1319,7 @@ local function updateESPBillboards(player,character)
         distanceLabel.Size=UDim2.new(1,0,1,0)
         distanceLabel.TextXAlignment=Enum.TextXAlignment.Center
         distanceLabel.TextYAlignment=Enum.TextYAlignment.Center
-        distanceLabel.Parent=feetContainer
+        distanceLabel.Parent=billboards.feet
     end
     
     if library.flags.esp_showhealthbar then
@@ -1361,7 +1343,7 @@ local function updateESPBillboards(player,character)
         healthBarBackground.BorderColor3=Color3.fromRGB(60,60,60)
         healthBarBackground.Size=UDim2.new(1,0,1,0)
         healthBarBackground.Position=UDim2.new(0,0,0,0)
-        healthBarBackground.Parent=healthContainer
+        healthBarBackground.Parent=billboards.health
         
         local healthBarFill=Instance.new("Frame")
         healthBarFill.Name="HealthBarFill"
@@ -1448,6 +1430,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
 local richSection=visualPage:new_section({name="Rich Shader",side="left",size=250})
 local richShaderEnabled=false
 local richColor=Color3.fromRGB(255,200,150)
