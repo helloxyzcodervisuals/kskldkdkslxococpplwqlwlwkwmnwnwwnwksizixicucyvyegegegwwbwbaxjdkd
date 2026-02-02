@@ -1,5 +1,5 @@
 repeat task.wait() until game:IsLoaded()
---sk26/2/2
+--sk26
 do
     local function isAdonisAC(tab) return rawget(tab,"Detected") and typeof(rawget(tab,"Detected"))=="function" and rawget(tab,"RLocked") end
     for _,v in next,getgc(true) do if typeof(v)=="table" and isAdonisAC(v) then for i,f in next,v do if rawequal(i,"Detected") then local old old=hookfunction(f,function(action,info,crash)if rawequal(action,"_") and rawequal(info,"_") and rawequal(crash,false) then return old(action,info,crash) end return task.wait(9e9) end) warn("bypassed") break end end end end
