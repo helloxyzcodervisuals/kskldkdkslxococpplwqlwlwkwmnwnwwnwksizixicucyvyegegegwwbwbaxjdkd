@@ -2337,52 +2337,37 @@ local function updateESPBillboard(player,character)
     local playerColor=getPlayerColor(player)
     local health=math.floor(humanoid.Health)
     local maxHealth=math.floor(humanoid.MaxHealth)
-    local healthPercent=maxHealth>0 and math.floor((health/maxHealth)*100) or 0
-    local healthColor=Color3.fromRGB(255,255,255)
-    if healthPercent>50 then healthColor=Color3.fromRGB(0,255,0) elseif healthPercent>25 then healthColor=Color3.fromRGB(255,255,0) else healthColor=Color3.fromRGB(255,0,0) end
+    local healthPercent=maxHealth>0 and (health/maxHealth) or 0
     local baseSize=13
     local textSize=baseSize
     if library.flags.esp_dynamicscaling then
         local distanceFactor=math.clamp(distance/100,0.5,2.0)
-        textSize=baseSize/distanceFactor
-        textSize=math.max(8,math.min(20,textSize))
+        textSize=math.max(8,math.min(20,baseSize/distanceFactor))
     end
     local container=billboard.Container
     for _,child in ipairs(container:GetChildren()) do child:Destroy() end
-    local labels={}
+
+    local contentText = player.Name
     if library.flags.esp_showdistance then
-        local distanceLabel=Instance.new("TextLabel")
-        distanceLabel.Name="DistanceLabel"
-        distanceLabel.Text="("..math.floor(distance)..")"
-        distanceLabel.TextColor3=playerColor
-        distanceLabel.TextSize=textSize
-        distanceLabel.FontFace=library.font
-        distanceLabel.BackgroundTransparency=1
-        distanceLabel.Size=UDim2.new(0,0,1,0)
-        distanceLabel.AutomaticSize=Enum.AutomaticSize.X
-        distanceLabel.TextXAlignment=Enum.TextXAlignment.Left
-        table.insert(labels,distanceLabel)
+        contentText = math.floor(distance) .. " " .. contentText
     end
-    local usernameLabel=Instance.new("TextLabel")
-    usernameLabel.Name="UsernameLabel"
-    usernameLabel.Text=" "..player.Name.." "
-    usernameLabel.TextColor3=playerColor
-    usernameLabel.TextSize=textSize
-    usernameLabel.FontFace=library.font
-    usernameLabel.BackgroundTransparency=1
-    usernameLabel.Size=UDim2.new(0,0,1,0)
-    usernameLabel.AutomaticSize=Enum.AutomaticSize.X
-    usernameLabel.TextXAlignment=Enum.TextXAlignment.Left
-    table.insert(labels,usernameLabel)
-    local totalWidth=0
-    for i,label in ipairs(labels) do
-        label.Parent=container
-        label.Position=UDim2.new(0,totalWidth,0,0)
-        totalWidth=totalWidth+label.AbsoluteSize.X
-    end
+
+    local mainLabel = Instance.new("TextLabel")
+    mainLabel.Name = "MainLabel"
+    mainLabel.Text = contentText
+    mainLabel.TextColor3 = playerColor
+    mainLabel.TextSize = textSize
+    mainLabel.FontFace = library.font
+    mainLabel.BackgroundTransparency = 1
+    mainLabel.Size = UDim2.new(0, 0, 0, textSize)
+    mainLabel.AutomaticSize = Enum.AutomaticSize.X
+    mainLabel.Position = UDim2.new(0, 0, 0, 0)
+    mainLabel.TextXAlignment = Enum.TextXAlignment.Left
+    mainLabel.Parent = container
+
     if library.flags.esp_showhealth then
         local barThickness = library.flags.esp_healthbar_thickness or 4
-        local barHeight = 22
+        local barHeight = 100
         
         local healthBack = Instance.new("Frame")
         healthBack.Name = "HealthBarBack"
@@ -2390,15 +2375,14 @@ local function updateESPBillboard(player,character)
         healthBack.BackgroundTransparency = 0.5
         healthBack.BorderSizePixel = 0
         healthBack.Size = UDim2.new(0, barThickness, 0, barHeight)
-        healthBack.Position = UDim2.new(0, totalWidth + 8, 0.5, -barHeight/2)
-        healthBack.Parent = container
+        healthBack.Position = UDim2.new(1, 8, 0, 0)
+        healthBack.Parent = mainLabel
 
         local healthFill = Instance.new("Frame")
         healthFill.Name = "Fill"
         healthFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         healthFill.BorderSizePixel = 0
-        local p = math.clamp(health / humanoid.MaxHealth, 0, 1)
-        healthFill.Size = UDim2.new(1, 0, p, 0)
+        healthFill.Size = UDim2.new(1, 0, healthPercent, 0)
         healthFill.Position = UDim2.new(0, 0, 1, 0)
         healthFill.AnchorPoint = Vector2.new(0, 1)
         healthFill.Parent = healthBack
@@ -2424,11 +2408,9 @@ local function updateESPBillboard(player,character)
         healthLabel.Position = UDim2.new(0.5, 0, 0, -12)
         healthLabel.AnchorPoint = Vector2.new(0.5, 0)
         healthLabel.Parent = healthBack
-        
-        totalWidth = totalWidth + barThickness + 15
     end
 
-    billboard.Size = UDim2.new(0, totalWidth + 10, 0, 40)
+    billboard.Size = UDim2.new(0, 200, 0, 120)
 end
 local function onPlayerAdded(player)
     if player==LocalPlayer then return end
