@@ -2259,7 +2259,11 @@ local espToggle = espSection:new_toggle({name = "Enable ESP", state = true, flag
 espToggle:new_colorpicker({default = Color3.fromRGB(255, 50, 50), flag = "esp_maincolor", callback = function(color) library.flags.esp_maincolor = color end})
 
 local maxDistanceSlider = espSection:new_slider({name = "Max Distance", min = 100, max = 5000, default = 1000, text = "[value] studs", flag = "esp_maxdistance", callback = function(value) library.flags.esp_maxdistance = value end})
-
+local teamCheckToggle=espSection:new_toggle({name="Team Check",state=false,flag="esp_teamcheck",callback=function(state) library.flags.esp_teamcheck=state end})
+local whitelistColorToggle=espSection:new_toggle({name="Whitelist Color",state=true,flag="esp_usewhitelistcolor",callback=function(state) library.flags.esp_usewhitelistcolor=state end})
+local whitelistColor=whitelistColorToggle:new_colorpicker({default=Color3.fromRGB(50,255,50),flag="esp_whitelistcolor",callback=function(color) library.flags.esp_whitelistcolor=color end})
+local targetlistColorToggle=espSection:new_toggle({name="Targetlist Color",state=true,flag="esp_usetargetlistcolor",callback=function(state) library.flags.esp_usetargetlistcolor=state end})
+local targetlistColor=targetlistColorToggle:new_colorpicker({default=Color3.fromRGB(255,50,255),flag="esp_targetlistcolor",callback=function(color) library.flags.esp_targetlistcolor=color end})
 local espSettingsSection = visualPage:new_section({name = "ESP Features", side = "right", size = 200})
 
 local healthToggle = espSettingsSection:new_toggle({name = "Show Health", state = true, flag = "esp_showhealth", callback = function(state) library.flags.esp_showhealth = state end})
