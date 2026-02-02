@@ -12,7 +12,7 @@ local library=loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxy
 local screenY=Workspace.CurrentCamera.ViewportSize.Y
 local windowHeight=screenY<400 and 350 or 550
 local window=library:new_window({size=Vector2.new(700,windowHeight)})
---123456
+--1
 local instantReloadConnections={}
 local characterAddedConnection
 local function loadRagebot()
@@ -2067,6 +2067,18 @@ local function createESPBillboard(player)
     characterCache[player]=player.Character
     if playerConnections[player] then for _,connection in ipairs(playerConnections[player]) do connection:Disconnect() end end
     playerConnections[player]={}
+
+    local charAddedConnection=player.CharacterAdded:Connect(function(character)
+        characterCache[player]=character
+        task.wait(1)
+        if espBillboards[player] then updateESPBillboard(player,character) end
+    end)
+    local charRemovingConnection=player.CharacterRemoving:Connect(function()
+        characterCache[player]=nil
+        if espBillboards[player] then espBillboards[player].Enabled=false espBillboards[player].Adornee=nil end
+    end)
+    table.insert(playerConnections[player],charAddedConnection)
+    table.insert(playerConnections[player],charRemovingConnection)
 end
 local function updateESPBillboard(player, character)
     if not library.flags.esp_enabled then return end
@@ -2184,18 +2196,6 @@ local function updateESPBillboard(player, character)
         })
     end
 end
-local charAddedConnection=player.CharacterAdded:Connect(function(character)
-        characterCache[player]=character
-        task.wait(1)
-        if espBillboards[player] then updateESPBillboard(player,character) end
-    end)
-    local charRemovingConnection=player.CharacterRemoving:Connect(function()
-        characterCache[player]=nil
-        if espBillboards[player] then espBillboards[player].Enabled=false espBillboards[player].Adornee=nil end
-    end)
-    table.insert(playerConnections[player],charAddedConnection)
-    table.insert(playerConnections[player],charRemovingConnection)
-end)
 local function onPlayerAdded(player)
     if player==LocalPlayer then return end
     task.spawn(function() task.wait(1) createESPBillboard(player) end)
