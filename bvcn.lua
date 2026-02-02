@@ -7,7 +7,7 @@ for _,v in pairs(getgc(true)) do if type(v)=="table" then local func=rawget(v,"D
 
 getgenv().CONFIG={Ragebot={Enabled=false,RapidFire=false,FireRate=30,Prediction=true,PredictionAmount=0.12,TeamCheck=false,VisibilityCheck=true,FOV=9e9,ShowFOV=false,Wallbang=true,Tracers=true,TracerColor=Color3.fromRGB(255,0,0),TracerWidth=1,TracerLifetime=3,ShootRange=15,HitRange=15,HitNotify=true,AutoReload=true,HitSound=true,HitColor=Color3.fromRGB(255,182,193),UseTargetList=false,UseWhitelist=false,HitNotifyDuration=5,LowHealthCheck=false,SelectedHitSound="skeet",FriendCheck=false,MaxTarget=0},Misc={SpeedEnabled=false,SpeedValue=50,JumpPowerEnabled=false,JumpPowerValue=100,LoopFOVEnabled=false,HideHeadEnabled=false,InfStaminaEnabled=false,NoFallDmgEnabled=false,SpeedConnection=nil,FOVConnection=nil,JumpPowerConnection=nil,NoFallHook=nil,InfStaminaHook=nil}}
 getgenv().Lists={TargetList={},Whitelist={}}
---gghg
+--ggfffqwr
 local Players,RunService,Workspace,TweenService=game:GetService("Players"),game:GetService("RunService"),game:GetService("Workspace"),game:GetService("TweenService")
 local LocalPlayer,Camera,ReplicatedStorage=Players.LocalPlayer,Workspace.CurrentCamera,game:GetService("ReplicatedStorage")
 local library=loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/deadCell.lua"))()
@@ -1796,7 +1796,7 @@ local espSettingsSection=visualPage:new_section({name="ESP Features",side="right
 espSettingsSection:new_toggle({name="Show Distance",state=true,flag="esp_showdistance",callback=function(state) library.flags.esp_showdistance=state end})
 local showHealthToggle=espSettingsSection:new_toggle({name="Show Health",state=true,flag="esp_showhealth",callback=function(state) library.flags.esp_showhealth=state end})
 espSettingsSection:new_toggle({name="Dynamic Scaling",state=true,flag="esp_dynamicscaling",callback=function(state) library.flags.esp_dynamicscaling=state end})
-local healthbarThicknessSlider=showHealthToggle:new_slider({name="HealthBar Thickness",min=1,max=10,default=3,text="[value]px",flag="esp_healthbarthickness",callback=function(value) library.flags.esp_healthbarthickness=value end})
+local healthbarThicknessSlider=espSettingsSection:new_slider({name="HealthBar Thickness",min=1,max=10,default=3,text="[value]px",flag="esp_healthbarthickness",callback=function(value) library.flags.esp_healthbarthickness=value end})
 local greenColor=showHealthToggle:new_colorpicker({name="Green Color",default=Color3.fromRGB(0,255,0),flag="esp_healthbar_green",callback=function(color) library.flags.esp_healthbar_green=color end})
 local yellowColor=showHealthToggle:new_colorpicker({name="Yellow Color",default=Color3.fromRGB(255,255,0),flag="esp_healthbar_yellow",callback=function(color) library.flags.esp_healthbar_yellow=color end})
 local redColor=showHealthToggle:new_colorpicker({name="Red Color",default=Color3.fromRGB(255,0,0),flag="esp_healthbar_red",callback=function(color) library.flags.esp_healthbar_red=color end})
