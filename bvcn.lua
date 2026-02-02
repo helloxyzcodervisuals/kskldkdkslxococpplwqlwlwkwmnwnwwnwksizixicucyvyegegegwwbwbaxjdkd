@@ -12,7 +12,7 @@ local library=loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxy
 local screenY=Workspace.CurrentCamera.ViewportSize.Y
 local windowHeight=screenY<400 and 350 or 550
 local window=library:new_window({size=Vector2.new(700,windowHeight)})
---4
+--1000
 local instantReloadConnections={}
 local characterAddedConnection
 local function loadRagebot()
@@ -2380,23 +2380,25 @@ local function updateESPBillboard(player,character)
         label.Position=UDim2.new(0,totalWidth,0,0)
         totalWidth=totalWidth+label.AbsoluteSize.X
     end
-    billboard.Size=UDim2.new(0,totalWidth+10,0,40)
     if library.flags.esp_showhealth then
         local barThickness = library.flags.esp_healthbar_thickness or 4
+        local barHeight = 22
+        
         local healthBack = Instance.new("Frame")
         healthBack.Name = "HealthBarBack"
         healthBack.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
         healthBack.BackgroundTransparency = 0.5
         healthBack.BorderSizePixel = 0
-        healthBack.Size = UDim2.new(0, barThickness, 1, 0)
-        healthBack.Position = UDim2.new(0, totalWidth + 5, 0, 0)
+        healthBack.Size = UDim2.new(0, barThickness, 0, barHeight)
+        healthBack.Position = UDim2.new(0, totalWidth + 8, 0.5, -barHeight/2)
         healthBack.Parent = container
 
         local healthFill = Instance.new("Frame")
         healthFill.Name = "Fill"
         healthFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         healthFill.BorderSizePixel = 0
-        healthFill.Size = UDim2.new(1, 0, healthPercent, 0)
+        local p = math.clamp(health / humanoid.MaxHealth, 0, 1)
+        healthFill.Size = UDim2.new(1, 0, p, 0)
         healthFill.Position = UDim2.new(0, 0, 1, 0)
         healthFill.AnchorPoint = Vector2.new(0, 1)
         healthFill.Parent = healthBack
@@ -2414,15 +2416,19 @@ local function updateESPBillboard(player,character)
         healthLabel.Name = "HealthLabel"
         healthLabel.Text = tostring(health)
         healthLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        healthLabel.TextSize = math.max(textSize - 4, 8)
+        healthLabel.TextSize = math.max(textSize - 5, 8)
         healthLabel.FontFace = library.font
         healthLabel.BackgroundTransparency = 1
-        healthLabel.Size = UDim2.new(1, 0, 0, 10)
-        healthLabel.Position = UDim2.new(0, 0, 0, -12)
+        healthLabel.Size = UDim2.new(0, 0, 0, 10)
+        healthLabel.AutomaticSize = Enum.AutomaticSize.X
+        healthLabel.Position = UDim2.new(0.5, 0, 0, -12)
+        healthLabel.AnchorPoint = Vector2.new(0.5, 0)
         healthLabel.Parent = healthBack
         
-        totalWidth = totalWidth + barThickness + 10
+        totalWidth = totalWidth + barThickness + 15
     end
+
+    billboard.Size = UDim2.new(0, totalWidth + 10, 0, 40)
 end
 local function onPlayerAdded(player)
     if player==LocalPlayer then return end
