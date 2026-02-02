@@ -1860,25 +1860,26 @@ function library:new_window(cfg)
                     TextXAlignment=Enum.TextXAlignment.Left
                 })
                 
-                local slider_value=utility.create("TextLabel",{
-                    Name="SliderValue",
-                    Parent=slider_frame,
-                    Text=text:gsub("%[value%]",string.format("%.14g",default)),
-                    BackgroundTransparency=1,
-                    TextColor3=library.theme["Text"],
-                    TextSize=13,
-                    FontFace=UI_FONT,
-                    Position=UDim2.new(0.5,0,0,-4),
-                    Size=UDim2.new(1,0,1,0),
-                    TextXAlignment=Enum.TextXAlignment.Center
-                })
-                
                 local slider_fill=utility.createFrame({
                     Name="SliderFill",
                     Parent=slider_frame,
                     BackgroundColor3=library.theme["Accent"],
                     Size=UDim2.new((default-min)/(max-min),0,1,0),
                     BorderSizePixel=0
+                })
+
+                local slider_value=utility.create("TextLabel",{
+                    Name="SliderValue",
+                    Parent=slider_fill,
+                    Text=text:gsub("%[value%]",tostring(default)),
+                    BackgroundTransparency=1,
+                    TextColor3=library.theme["Text"],
+                    TextSize=13,
+                    FontFace=UI_FONT,
+                    AnchorPoint=Vector2.new(1,1),
+                    Position=UDim2.new(1,0,0,-2),
+                    Size=UDim2.new(0,0,0,15),
+                    TextXAlignment=Enum.TextXAlignment.Right
                 })
 
                 local slider_gradient=Instance.new("UIGradient")
@@ -1895,7 +1896,7 @@ function library:new_window(cfg)
                     local sizeX=(value-min)/(max-min)
                     
                     slider_fill.Size=UDim2.new(sizeX,0,1,0)
-                    slider_value.Text=text:gsub("%[value%]",string.format("%.14g",value))
+                    slider_value.Text=text:gsub("%[value%]",tostring(value))
                     
                     library.flags[flag]=value
                     callback(value)
