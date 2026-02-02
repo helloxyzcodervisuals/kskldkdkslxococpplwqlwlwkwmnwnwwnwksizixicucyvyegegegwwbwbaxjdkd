@@ -4,10 +4,8 @@ do
     for _,v in next,getgc(true) do if typeof(v)=="table" and isAdonisAC(v) then for i,f in next,v do if rawequal(i,"Detected") then local old old=hookfunction(f,function(action,info,crash)if rawequal(action,"_") and rawequal(info,"_") and rawequal(crash,false) then return old(action,info,crash) end return task.wait(9e9) end) warn("bypassed") break end end end end
 end
 for _,v in pairs(getgc(true)) do if type(v)=="table" then local func=rawget(v,"DTXC1") if type(func)=="function" then hookfunction(func,function() return end) break end end end
-
 getgenv().CONFIG={Ragebot={Enabled=false,RapidFire=false,FireRate=30,Prediction=true,PredictionAmount=0.12,TeamCheck=false,VisibilityCheck=true,FOV=9e9,ShowFOV=false,Wallbang=true,Tracers=true,TracerColor=Color3.fromRGB(255,0,0),TracerWidth=1,TracerLifetime=3,ShootRange=15,HitRange=15,HitNotify=true,AutoReload=true,HitSound=true,HitColor=Color3.fromRGB(255,182,193),UseTargetList=false,UseWhitelist=false,HitNotifyDuration=5,LowHealthCheck=false,SelectedHitSound="skeet",FriendCheck=false,MaxTarget=0},Misc={SpeedEnabled=false,SpeedValue=50,JumpPowerEnabled=false,JumpPowerValue=100,LoopFOVEnabled=false,HideHeadEnabled=false,InfStaminaEnabled=false,NoFallDmgEnabled=false,SpeedConnection=nil,FOVConnection=nil,JumpPowerConnection=nil,NoFallHook=nil,InfStaminaHook=nil}}
 getgenv().Lists={TargetList={},Whitelist={}}
---ggfffqwr
 local Players,RunService,Workspace,TweenService=game:GetService("Players"),game:GetService("RunService"),game:GetService("Workspace"),game:GetService("TweenService")
 local LocalPlayer,Camera,ReplicatedStorage=Players.LocalPlayer,Workspace.CurrentCamera,game:GetService("ReplicatedStorage")
 local library=loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/deadCell.lua"))()
@@ -1888,66 +1886,72 @@ local function updateESPBillboard(player,character)
         textSize=baseSize/distanceFactor
         textSize=math.max(8,math.min(20,textSize))
     end
-    local usernameContainer=billboard.UsernameFrame
-    for _,child in ipairs(usernameContainer:GetChildren()) do child:Destroy() end
-    local usernameLabel=Instance.new("TextLabel")
-    usernameLabel.Name="UsernameLabel"
-    usernameLabel.Text=player.Name
-    usernameLabel.TextColor3=playerColor
-    usernameLabel.TextSize=textSize
-    usernameLabel.FontFace=library.font
-    usernameLabel.BackgroundTransparency=1
-    usernameLabel.Size=UDim2.new(1,0,1,0)
-    usernameLabel.TextXAlignment=Enum.TextXAlignment.Center
-    usernameLabel.Parent=usernameContainer
-    local distanceContainer=billboard.DistanceFrame
-    for _,child in ipairs(distanceContainer:GetChildren()) do child:Destroy() end
-    if library.flags.esp_showdistance then
-        local distanceLabel=Instance.new("TextLabel")
-        distanceLabel.Name="DistanceLabel"
-        distanceLabel.Text="("..math.floor(distance)..")"
-        distanceLabel.TextColor3=playerColor
-        distanceLabel.TextSize=textSize
-        distanceLabel.FontFace=library.font
-        distanceLabel.BackgroundTransparency=1
-        distanceLabel.Size=UDim2.new(1,0,1,0)
-        distanceLabel.TextXAlignment=Enum.TextXAlignment.Center
-        distanceLabel.Parent=distanceContainer
+    local usernameContainer=billboard:FindFirstChild("MainContainer") and billboard.MainContainer:FindFirstChild("UsernameFrame")
+    if usernameContainer then
+        for _,child in ipairs(usernameContainer:GetChildren()) do child:Destroy() end
+        local usernameLabel=Instance.new("TextLabel")
+        usernameLabel.Name="UsernameLabel"
+        usernameLabel.Text=player.Name
+        usernameLabel.TextColor3=playerColor
+        usernameLabel.TextSize=textSize
+        usernameLabel.FontFace=library.font
+        usernameLabel.BackgroundTransparency=1
+        usernameLabel.Size=UDim2.new(1,0,1,0)
+        usernameLabel.TextXAlignment=Enum.TextXAlignment.Center
+        usernameLabel.Parent=usernameContainer
     end
-    local healthbarContainer=billboard.HealthbarFrame
-    for _,child in ipairs(healthbarContainer:GetChildren()) do child:Destroy() end
-    if library.flags.esp_showhealth then
-        local healthbarBackground=Instance.new("Frame")
-        healthbarBackground.Name="HealthbarBackground"
-        healthbarBackground.BackgroundColor3=Color3.fromRGB(50,50,50)
-        healthbarBackground.Size=UDim2.new(1,0,0,library.flags.esp_healthbarthickness or 3)
-        healthbarBackground.Position=UDim2.new(0,0,0,0)
-        healthbarBackground.Parent=healthbarContainer
-        local healthbarFill=Instance.new("Frame")
-        healthbarFill.Name="HealthbarFill"
-        healthbarFill.BackgroundColor3=library.flags.esp_healthbar_green
-        healthbarFill.Size=UDim2.new(healthPercent/100,0,1,0)
-        healthbarFill.Position=UDim2.new(0,0,0,0)
-        healthbarFill.Parent=healthbarBackground
-        local uiGradient=Instance.new("UIGradient")
-        uiGradient.Color=ColorSequence.new{
-            ColorSequenceKeypoint.new(0,library.flags.esp_healthbar_green),
-            ColorSequenceKeypoint.new(0.5,library.flags.esp_healthbar_yellow),
-            ColorSequenceKeypoint.new(1,library.flags.esp_healthbar_red)
-        }
-        uiGradient.Rotation=0
-        uiGradient.Parent=healthbarFill
-        local healthText=Instance.new("TextLabel")
-        healthText.Name="HealthText"
-        healthText.Text=tostring(health)
-        healthText.TextColor3=Color3.fromRGB(255,255,255)
-        healthText.TextSize=textSize-2
-        healthText.FontFace=library.font
-        healthText.BackgroundTransparency=1
-        healthText.Size=UDim2.new(1,0,1,0)
-        healthText.Position=UDim2.new(0,0,0,0)
-        healthText.TextXAlignment=Enum.TextXAlignment.Center
-        healthText.Parent=healthbarBackground
+    local distanceContainer=billboard:FindFirstChild("MainContainer") and billboard.MainContainer:FindFirstChild("DistanceFrame")
+    if distanceContainer then
+        for _,child in ipairs(distanceContainer:GetChildren()) do child:Destroy() end
+        if library.flags.esp_showdistance then
+            local distanceLabel=Instance.new("TextLabel")
+            distanceLabel.Name="DistanceLabel"
+            distanceLabel.Text="("..math.floor(distance)..")"
+            distanceLabel.TextColor3=playerColor
+            distanceLabel.TextSize=textSize
+            distanceLabel.FontFace=library.font
+            distanceLabel.BackgroundTransparency=1
+            distanceLabel.Size=UDim2.new(1,0,1,0)
+            distanceLabel.TextXAlignment=Enum.TextXAlignment.Center
+            distanceLabel.Parent=distanceContainer
+        end
+    end
+    local healthbarContainer=billboard:FindFirstChild("MainContainer") and billboard.MainContainer:FindFirstChild("HealthbarFrame")
+    if healthbarContainer then
+        for _,child in ipairs(healthbarContainer:GetChildren()) do child:Destroy() end
+        if library.flags.esp_showhealth then
+            local healthbarBackground=Instance.new("Frame")
+            healthbarBackground.Name="HealthbarBackground"
+            healthbarBackground.BackgroundColor3=Color3.fromRGB(50,50,50)
+            healthbarBackground.Size=UDim2.new(1,0,0,library.flags.esp_healthbarthickness or 3)
+            healthbarBackground.Position=UDim2.new(0,0,0,0)
+            healthbarBackground.Parent=healthbarContainer
+            local healthbarFill=Instance.new("Frame")
+            healthbarFill.Name="HealthbarFill"
+            healthbarFill.BackgroundColor3=library.flags.esp_healthbar_green
+            healthbarFill.Size=UDim2.new(healthPercent/100,0,1,0)
+            healthbarFill.Position=UDim2.new(0,0,0,0)
+            healthbarFill.Parent=healthbarBackground
+            local uiGradient=Instance.new("UIGradient")
+            uiGradient.Color=ColorSequence.new{
+                ColorSequenceKeypoint.new(0,library.flags.esp_healthbar_green),
+                ColorSequenceKeypoint.new(0.5,library.flags.esp_healthbar_yellow),
+                ColorSequenceKeypoint.new(1,library.flags.esp_healthbar_red)
+            }
+            uiGradient.Rotation=0
+            uiGradient.Parent=healthbarFill
+            local healthText=Instance.new("TextLabel")
+            healthText.Name="HealthText"
+            healthText.Text=tostring(health)
+            healthText.TextColor3=Color3.fromRGB(255,255,255)
+            healthText.TextSize=textSize-2
+            healthText.FontFace=library.font
+            healthText.BackgroundTransparency=1
+            healthText.Size=UDim2.new(1,0,1,0)
+            healthText.Position=UDim2.new(0,0,0,0)
+            healthText.TextXAlignment=Enum.TextXAlignment.Center
+            healthText.Parent=healthbarBackground
+        end
     end
 end
 local function onPlayerAdded(player)
