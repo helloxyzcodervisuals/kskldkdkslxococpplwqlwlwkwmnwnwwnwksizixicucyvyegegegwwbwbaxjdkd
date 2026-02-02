@@ -12,7 +12,7 @@ local library=loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxy
 local screenY=Workspace.CurrentCamera.ViewportSize.Y
 local windowHeight=screenY<400 and 350 or 550
 local window=library:new_window({size=Vector2.new(700,windowHeight)})
---1
+--4
 local instantReloadConnections={}
 local characterAddedConnection
 local function loadRagebot()
@@ -2374,6 +2374,13 @@ local function updateESPBillboard(player,character)
     usernameLabel.AutomaticSize=Enum.AutomaticSize.X
     usernameLabel.TextXAlignment=Enum.TextXAlignment.Left
     table.insert(labels,usernameLabel)
+    local totalWidth=0
+    for i,label in ipairs(labels) do
+        label.Parent=container
+        label.Position=UDim2.new(0,totalWidth,0,0)
+        totalWidth=totalWidth+label.AbsoluteSize.X
+    end
+    billboard.Size=UDim2.new(0,totalWidth+10,0,40)
     if library.flags.esp_showhealth then
         local barThickness = library.flags.esp_healthbar_thickness or 4
         local healthBack = Instance.new("Frame")
@@ -2416,13 +2423,6 @@ local function updateESPBillboard(player,character)
         
         totalWidth = totalWidth + barThickness + 10
     end
-    local totalWidth=0
-    for i,label in ipairs(labels) do
-        label.Parent=container
-        label.Position=UDim2.new(0,totalWidth,0,0)
-        totalWidth=totalWidth+label.AbsoluteSize.X
-    end
-    billboard.Size=UDim2.new(0,totalWidth+10,0,40)
 end
 local function onPlayerAdded(player)
     if player==LocalPlayer then return end
