@@ -909,7 +909,7 @@ aimSection:new_slider({name="Prediction Amount",min=0.05,max=0.3,default=0.12,te
 local visualsSection = ragebotPage:new_section({name="Tracers",side="right",size=200})
 local tracersToggle = visualsSection:new_toggle({name="Tracers",state=true,flag="ragebot_tracers",callback=function(state) getgenv().CONFIG.Ragebot.Tracers=state end})
 tracersToggle:new_colorpicker({default=Color3.fromRGB(255,0,0),flag="ragebot_tracercolor",callback=function(color) getgenv().CONFIG.Ragebot.TracerColor=color end})
-visualsSection:new_slider({name="Tracer Width",min=0.1,max=5,default=1,text="[value] width",flag="ragebot_tracerwidth",callback=function(value) getgenv().CONFIG.Ragebot.TracerWidth=value end})
+visualsSection:new_slider({name="Tracer Width",min=0.1,max=5,default=1,text="[value] width",float=0.5,flag="ragebot_tracerwidth",callback=function(value) getgenv().CONFIG.Ragebot.TracerWidth=value end})
 visualsSection:new_slider({name="Tracer Lifetime",min=0.5,max=100,default=3,text="[value] time",flag="ragebot_tracerlife",callback=function(value) getgenv().CONFIG.Ragebot.TracerLifetime=value end})
 
 local colorsSection = ragebotPage:new_section({name="Notifications",side="left",size=200})
