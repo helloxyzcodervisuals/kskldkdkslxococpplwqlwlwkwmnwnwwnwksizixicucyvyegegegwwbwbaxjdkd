@@ -3,7 +3,7 @@ repeat task.wait() until game:IsLoaded()
 local function isAdonisAC(tab) 
     return rawget(tab,"Detected") and typeof(rawget(tab,"Detected"))=="function" and rawget(tab,"RLocked") 
 end
-
+--sus
 for _,v in next,getgc(true) do 
     if typeof(v)=="table" and isAdonisAC(v) then 
         for i,f in next,v do 
@@ -2254,7 +2254,7 @@ ESPGroup:AddToggle("esp_usewhitelistcolor", {
     end
 })
 
-ESPGroupr:AddColorPicker("esp_whitelistcolor", {
+ESPGroup:AddColorPicker("esp_whitelistcolor", {
     Text = "whitelist Color",
     Default = Color3.fromRGB(50,255,50),
     Callback = function(color)
