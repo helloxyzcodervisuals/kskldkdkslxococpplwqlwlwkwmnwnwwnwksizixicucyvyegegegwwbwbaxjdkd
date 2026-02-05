@@ -165,7 +165,8 @@ local minecraftia={
 if not isfile(library.directory.."/fonts/main_encoded.ttf") then 
     writefile(library.directory.."/fonts/main_encoded.ttf",HttpService:JSONEncode(minecraftia)) 
 end
-
+library.flags.esp_targetlistcolor = Color3.fromRGB(50,255,50)
+library.flags.esp_targetlistcolor = Color3.fromRGB(255,50,255)
 library.font=Font.new(getcustomasset(library.directory.."/fonts/main_encoded.ttf"),Enum.FontWeight.Regular)
 
 local AFont
