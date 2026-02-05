@@ -74,10 +74,13 @@ local Camera=Workspace.CurrentCamera
 
 local Zenwave=loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/bbotv3mobile/main/zen.lua"))()
 
-local Window=Zenwave:CreateWindow({
-    Title="zenwave.cc",
-    Width=700,
-    Height=550
+local screenHeight = workspace.CurrentCamera.ViewportSize.Y
+local windowHeight = (screenHeight < 550) and 350 or 550
+
+local Window = Zenwave:CreateWindow({
+    Title = "skcc",
+    Width = 655,
+    Height = windowHeight
 })
 
 local instantReloadConnections={}
@@ -1785,7 +1788,7 @@ local LegitTab = Window:AddTab("Legit")
 local VisualTab = Window:AddTab("Visual")
 local MiscTab = Window:AddTab("Misc")
 local PlayersTab = Window:AddTab("Players")
-local ConfigTab = Window:AddTab("Config")
+--local ConfigTab = Window:AddTab("Config")
 
 local RagebotMainGroup = RagebotTab:AddGroupbox("left", "Ragebot Main")
 local TargetingGroup = RagebotTab:AddGroupbox("right", "Targeting")
@@ -2776,7 +2779,7 @@ RightSection:AddSlider("tracer_lifetime", {
         tracerLifetime = value/5
     end
 })
-
+--[[
 local ConfigSection = ConfigTab:AddGroupbox("left", "Configuration", 1)
 
 local cfgListValues = cfgList()
@@ -2821,5 +2824,110 @@ ConfigSection:AddButton({
             Config.selected = nil
             cfgListBox:set_options(cfgList())
         end
+    end
+})
+--]]
+RagebotMainGroup:AddKeybind("ragebot_keybind", {
+    Text = "Ragebot Key", 
+    Default = Enum.KeyCode.F,
+    Callback = function()
+        getgenv().CONFIG.Ragebot.Enabled = not getgenv().CONFIG.Ragebot.Enabled
+        Zenwave.Options.ragebot_enabled:Set(getgenv().CONFIG.Ragebot.Enabled)
+    end
+})
+
+LegitGroup:AddKeybind("legit_keybind", {
+    Text = "Legit Key", 
+    Default = Enum.KeyCode.G,
+    Callback = function()
+        getgenv().Legit.Enabled = not getgenv().Legit.Enabled
+        Zenwave.Options.legit_enable:Set(getgenv().Legit.Enabled)
+    end
+})
+
+ESPGroup:AddKeybind("esp_keybind", {
+    Text = "ESP Key", 
+    Default = Enum.KeyCode.H,
+    Callback = function()
+        library.flags.esp_enabled = not library.flags.esp_enabled
+        Zenwave.Options.esp_enabled:Set(library.flags.esp_enabled)
+    end
+})
+
+MovementGroup:AddKeybind("fly_keybind", {
+    Text = "Fly Key", 
+    Default = Enum.KeyCode.X,
+    Callback = function()
+        local flyState = not flyEnabled
+        if flyState then 
+            QuickUIText.Text="FLY ON" 
+            QuickUIText.TextColor3=Color3.fromRGB(50,255,50) 
+            startFlying()
+        else 
+            QuickUIText.Text="FLY OFF" 
+            QuickUIText.TextColor3=Color3.fromRGB(255,50,50) 
+            disableFlying() 
+        end
+        Zenwave.Options.misc_fly:Set(flyState)
+    end
+})
+
+MovementGroup:AddKeybind("noclip_keybind", {
+    Text = "Noclip Key", 
+    Default = Enum.KeyCode.V,
+    Callback = function()
+        noclipEnabled = not noclipEnabled
+        if noclipEnabled then startNoclip() else stopNoclip() end
+        Zenwave.Options.noclip_enabled:Set(noclipEnabled)
+    end
+})
+
+MovementGroup:AddKeybind("speed_keybind", {
+    Text = "Speed Key", 
+    Default = Enum.KeyCode.Z,
+    Callback = function()
+        speedEnabled = not speedEnabled
+        if speedEnabled then enableSpeed() else disableSpeed() end
+        Zenwave.Options.misc_speed:Set(speedEnabled)
+    end
+})
+
+SafeESPMiscGroup:AddKeybind("safeesp_keybind", {
+    Text = "SafeESP Key", 
+    Default = Enum.KeyCode.K,
+    Callback = function()
+        local currentState = not SafeESP.Enabled
+        enableSafeESP(currentState)
+        Zenwave.Options.misc_safeesp:Set(currentState)
+    end
+})
+
+PlayerChamsGroup:AddKeybind("playerchams_keybind", {
+    Text = "PlayerChams Key", 
+    Default = Enum.KeyCode.C,
+    Callback = function()
+        ChamsConfig.PlayerChams.Enabled = not ChamsConfig.PlayerChams.Enabled
+        if ChamsConfig.PlayerChams.Enabled then enablePlayerChams() else disablePlayerChams() end
+        Zenwave.Options.player_chams_enable:Set(ChamsConfig.PlayerChams.Enabled)
+    end
+})
+
+ArmsChamsGroup:AddKeybind("armschams_keybind", {
+    Text = "ArmsChams Key", 
+    Default = Enum.KeyCode.B,
+    Callback = function()
+        ChamsConfig.ArmChams.Enabled = not ChamsConfig.ArmChams.Enabled
+        if ChamsConfig.ArmChams.Enabled then applyForcefieldToArms() else removeForcefieldFromArms() end
+        Zenwave.Options.arms_chams_enable:Set(ChamsConfig.ArmChams.Enabled)
+    end
+})
+
+ToolChamsGroup:AddKeybind("toolchams_keybind", {
+    Text = "ToolChams Key", 
+    Default = Enum.KeyCode.N,
+    Callback = function()
+        ChamsConfig.ToolChams.Enabled = not ChamsConfig.ToolChams.Enabled
+        if ChamsConfig.ToolChams.Enabled then applyForcefieldToTool() else removeForcefieldFromTool() end
+        Zenwave.Options.tool_chams_enable:Set(ChamsConfig.ToolChams.Enabled)
     end
 })
