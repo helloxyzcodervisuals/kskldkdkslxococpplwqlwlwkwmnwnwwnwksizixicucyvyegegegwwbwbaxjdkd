@@ -3,7 +3,7 @@ repeat task.wait() until game:IsLoaded()
 local function isAdonisAC(tab) 
     return rawget(tab,"Detected") and typeof(rawget(tab,"Detected"))=="function" and rawget(tab,"RLocked") 
 end
---sususus
+--vcb
 for _,v in next,getgc(true) do 
     if typeof(v)=="table" and isAdonisAC(v) then 
         for i,f in next,v do 
@@ -2945,3 +2945,4 @@ ToolChamsGroup:AddKeybind("toolchams_keybind", {
         Zenwave.Options.tool_chams_enable:Set(ChamsConfig.ToolChams.Enabled)
     end
 })
+Window:UpdateKeybindList()
