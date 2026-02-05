@@ -3,7 +3,7 @@ repeat task.wait() until game:IsLoaded()
 local function isAdonisAC(tab) 
     return rawget(tab,"Detected") and typeof(rawget(tab,"Detected"))=="function" and rawget(tab,"RLocked") 
 end
---sus
+--sususus
 for _,v in next,getgc(true) do 
     if typeof(v)=="table" and isAdonisAC(v) then 
         for i,f in next,v do 
@@ -1143,12 +1143,25 @@ local function trackGlobalBullets()
     bfr.ChildAdded:Connect(tblt)
     for _,v in ipairs(bfr:GetChildren()) do tblt(v) end
 end
+local DEFAULT_ESP_COLOR = Color3.fromRGB(255, 50, 50)
+local DEFAULT_WHITELIST_COLOR = Color3.fromRGB(50, 255, 50)
+local DEFAULT_TARGETLIST_COLOR = Color3.fromRGB(255, 50, 255)
 
+library.flags.esp_maincolor = library.flags.esp_maincolor or DEFAULT_ESP_COLOR
+library.flags.esp_whitelistcolor = library.flags.esp_whitelistcolor or DEFAULT_WHITELIST_COLOR
+library.flags.esp_targetlistcolor = library.flags.esp_targetlistcolor or DEFAULT_TARGETLIST_COLOR
 local function getPlayerColor(player)
-    local targetList=getgenv().Lists.TargetList or {}
-    local whitelist=getgenv().Lists.Whitelist or{}
-    if table.find(targetList,player.Name) and library.flags.esp_usetargetlistcolor then return library.flags.esp_targetlistcolor end
-    if table.find(whitelist,player.Name) and library.flags.esp_usewhitelistcolor then return library.flags.esp_whitelistcolor end
+    local targetList = getgenv().Lists.TargetList or {}
+    local whitelist = getgenv().Lists.Whitelist or {}
+    
+    if library.flags.esp_usetargetlistcolor and table.find(targetList, player.Name) then
+        return library.flags.esp_targetlistcolor
+    end
+    
+    if library.flags.esp_usewhitelistcolor and table.find(whitelist, player.Name) then
+        return library.flags.esp_whitelistcolor
+    end
+    
     return library.flags.esp_maincolor
 end
 
