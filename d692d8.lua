@@ -1787,11 +1787,11 @@ local MiscTab = Window:AddTab("Misc")
 local PlayersTab = Window:AddTab("Players")
 local ConfigTab = Window:AddTab("Config")
 
-local RagebotMainGroup = RagebotTab:AddGroupbox("left", "Ragebot Main", 1)
-local TargetingGroup = RagebotTab:AddGroupbox("right", "Targeting", 1)
-local AimGroup = RagebotTab:AddGroupbox("left", "Aim Settings", 2)
-local VisualsGroup = RagebotTab:AddGroupbox("right", "Tracers", 2)
-local ColorsGroup = RagebotTab:AddGroupbox("left", "Notifications", 3)
+local RagebotMainGroup = RagebotTab:AddGroupbox("left", "Ragebot Main")
+local TargetingGroup = RagebotTab:AddGroupbox("right", "Targeting")
+local AimGroup = RagebotTab:AddGroupbox("left", "Aim Settings")
+local VisualsGroup = RagebotTab:AddGroupbox("right", "Tracers")
+local ColorsGroup = RagebotTab:AddGroupbox("left", "Notifications")
 
 RagebotMainGroup:AddToggle("ragebot_enabled", {
     Text = "Enable Ragebot",
@@ -1930,7 +1930,8 @@ VisualsGroup:AddToggle("ragebot_tracers", {
     end
 })
 
-Zenwave.Options.ragebot_tracers:AddColorPicker("ragebot_tracercolor", {
+VisualsGroup:AddColorPicker("ragebot_tracercolor", {
+    Text = "Tracer Color",
     Default = Color3.fromRGB(255,0,0),
     Callback = function(color)
         getgenv().CONFIG.Ragebot.TracerColor = color
@@ -1965,7 +1966,8 @@ ColorsGroup:AddToggle("ragebot_hitnotify", {
     end
 })
 
-Zenwave.Options.ragebot_hitnotify:AddColorPicker("ragebot_hitcolor", {
+ColorsGroup:AddColorPicker("ragebot_hitcolor", {
+    Text = "hit notification color",
     Default = Color3.fromRGB(255,182,193),
     Callback = function(color)
         getgenv().CONFIG.Ragebot.HitColor = color
@@ -2048,10 +2050,10 @@ LegitGroup:AddSlider("legit_smoothing", {
     end
 })
 
-local MovementGroup = MiscTab:AddGroupbox("left", "Movement", 1)
-local VisualMiscGroup = MiscTab:AddGroupbox("right", "Visual", 1)
-local OtherGroup = MiscTab:AddGroupbox("left", "Other", 2)
-local SafeESPMiscGroup = MiscTab:AddGroupbox("right", "Safe ESP", 2)
+local MovementGroup = MiscTab:AddGroupbox("left", "Movement")
+local VisualMiscGroup = MiscTab:AddGroupbox("right", "Visual")
+local OtherGroup = MiscTab:AddGroupbox("left", "Other")
+local SafeESPMiscGroup = MiscTab:AddGroupbox("right", "Safe ESP")
 
 MovementGroup:AddToggle("misc_speed", {
     Text = "Speed",
@@ -2194,20 +2196,21 @@ SafeESPMiscGroup:AddToggle("misc_safeesp", {
     end
 })
 
-Zenwave.Options.misc_safeesp:AddColorPicker("misc_safecolor", {
+SafeESPMiscGroup:AddColorPicker("misc_safecolor", {
+    Text = "safe color",
     Default = Color3.fromRGB(255,215,0),
     Callback = function(color)
         updateSafeColor(color)
     end
 })
 
-local ESPGroup = VisualTab:AddGroupbox("left", "ESP Settings", 1)
-local ESPSettingsGroup = VisualTab:AddGroupbox("right", "ESP Features", 1)
-local RichShaderGroup = VisualTab:AddGroupbox("left", "Rich Shader", 2)
-local RichPlayerGroup = VisualTab:AddGroupbox("right", "Rich Player", 2)
-local PlayerChamsGroup = VisualTab:AddGroupbox("left", "Player Chams", 3)
-local ArmsChamsGroup = VisualTab:AddGroupbox("right", "Arms Chams", 3)
-local ToolChamsGroup = VisualTab:AddGroupbox("left", "Tool Chams", 4)
+local ESPGroup = VisualTab:AddGroupbox("left", "ESP Settings")
+local ESPSettingsGroup = VisualTab:AddGroupbox("right", "ESP Features")
+local RichShaderGroup = VisualTab:AddGroupbox("left", "Rich Shader")
+local RichPlayerGroup = VisualTab:AddGroupbox("right", "Rich Player")
+local PlayerChamsGroup = VisualTab:AddGroupbox("left", "Player Chams")
+local ArmsChamsGroup = VisualTab:AddGroupbox("right", "Arms Chams")
+local ToolChamsGroup = VisualTab:AddGroupbox("left", "Tool Chams")
 
 ESPGroup:AddToggle("esp_enabled", {
     Text = "Enable ESP",
@@ -2217,7 +2220,8 @@ ESPGroup:AddToggle("esp_enabled", {
     end
 })
 
-Zenwave.Options.esp_enabled:AddColorPicker("esp_maincolor", {
+ESPGroup:AddColorPicker("esp_maincolor", {
+    Text = "esp Color",
     Default = Color3.fromRGB(255,50,50),
     Callback = function(color)
         library.flags.esp_maincolor = color
@@ -2250,7 +2254,8 @@ ESPGroup:AddToggle("esp_usewhitelistcolor", {
     end
 })
 
-Zenwave.Options.esp_usewhitelistcolor:AddColorPicker("esp_whitelistcolor", {
+ESPGroupr:AddColorPicker("esp_whitelistcolor", {
+    Text = "whitelist Color",
     Default = Color3.fromRGB(50,255,50),
     Callback = function(color)
         library.flags.esp_whitelistcolor = color
@@ -2265,7 +2270,8 @@ ESPGroup:AddToggle("esp_usetargetlistcolor", {
     end
 })
 
-Zenwave.Options.esp_usetargetlistcolor:AddColorPicker("esp_targetlistcolor", {
+ESPGroup:AddColorPicker("esp_targetlistcolor", {
+    Text = "Targetlist Color",
     Default = Color3.fromRGB(255,50,255),
     Callback = function(color)
         library.flags.esp_targetlistcolor = color
@@ -2317,7 +2323,8 @@ RichShaderGroup:AddToggle("rich_shader", {
     end
 })
 
-Zenwave.Options.rich_shader:AddColorPicker("rich_shader_color", {
+RichShaderGroup:AddColorPicker("rich_shader_color", {
+    Text = "Ambient Color",
     Default = Color3.fromRGB(255,200,150),
     Callback = function(color)
         richColor = color
@@ -2399,7 +2406,8 @@ RichPlayerGroup:AddToggle("rich_player", {
     end
 })
 
-Zenwave.Options.rich_player:AddColorPicker("rich_player_color", {
+RichPlayerGroup:AddColorPicker("rich_player_color", {
+    Text = "Player Color",
     Default = Color3.fromRGB(255,255,255),
     Callback = function(color)
         richPlayerColor = color
@@ -2431,7 +2439,8 @@ PlayerChamsGroup:AddToggle("player_chams_enable", {
     end
 })
 
-Zenwave.Options.player_chams_enable:AddColorPicker("player_chams_outercolor", {
+PlayerChamsGroup:AddColorPicker("player_chams_outercolor", {
+    Text = "outer Color",
     Default = Color3.fromRGB(255,255,255),
     Callback = function(color)
         ChamsConfig.PlayerChams.OuterColor = color
@@ -2439,7 +2448,8 @@ Zenwave.Options.player_chams_enable:AddColorPicker("player_chams_outercolor", {
     end
 })
 
-Zenwave.Options.player_chams_enable:AddColorPicker("player_chams_innercolor", {
+PlayerChamsGroup:AddColorPicker("player_chams_innercolor", {
+    Text = "Inner Color",
     Default = Color3.fromRGB(0,0,0),
     Callback = function(color)
         ChamsConfig.PlayerChams.InnerColor = color
@@ -2465,7 +2475,8 @@ PlayerChamsGroup:AddToggle("chams_whitelist_toggle", {
     end
 })
 
-Zenwave.Options.chams_whitelist_toggle:AddColorPicker("chams_whitelist_color", {
+PlayerChamsGroup:AddColorPicker("chams_whitelist_color", {
+    Text = "whitelist color",
     Default = Color3.fromRGB(50,255,50),
     Callback = function(color)
         ChamsConfig.PlayerChams.WhitelistColor = color
@@ -2482,7 +2493,8 @@ PlayerChamsGroup:AddToggle("chams_targetlist_toggle", {
     end
 })
 
-Zenwave.Options.chams_targetlist_toggle:AddColorPicker("chams_targetlist_color", {
+PlayerChamsGroup:AddColorPicker("chams_targetlist_color", {
+    Text = "targetlist Color",
     Default = Color3.fromRGB(255,50,255),
     Callback = function(color)
         ChamsConfig.PlayerChams.TargetlistColor = color
@@ -2510,7 +2522,8 @@ ArmsChamsGroup:AddSlider("arms_chams_transparency", {
     end
 })
 
-Zenwave.Options.arms_chams_enable:AddColorPicker("arms_chams_color", {
+ArmsChamsGroup:AddColorPicker("arms_chams_color", {
+    Text = "Arms Color",
     Default = Color3.fromRGB(255,255,255),
     Callback = function(color)
         ChamsConfig.ArmChams.Color = color
@@ -2538,7 +2551,8 @@ ToolChamsGroup:AddSlider("tool_chams_transparency", {
     end
 })
 
-Zenwave.Options.tool_chams_enable:AddColorPicker("tool_chams_color", {
+ArmsChamsGroup:AddColorPicker("tool_chams_color", {
+    Text = "tool Color",
     Default = Color3.fromRGB(255,255,255),
     Callback = function(color)
         ChamsConfig.ToolChams.Color = color
@@ -2546,9 +2560,9 @@ Zenwave.Options.tool_chams_enable:AddColorPicker("tool_chams_color", {
     end
 })
 
-local LeftSection = PlayersTab:AddGroupbox("left", "Players", 1)
-local ControlSection = PlayersTab:AddGroupbox("left", "Controls", 2)
-local RightSection = PlayersTab:AddGroupbox("right", "Misc", 1)
+local LeftSection = PlayersTab:AddGroupbox("left", "Players")
+local ControlSection = PlayersTab:AddGroupbox("left", "Controls")
+local RightSection = PlayersTab:AddGroupbox("right", "Misc")
 
 local playersList = {}
 for _,player in ipairs(Players:GetPlayers()) do 
@@ -2735,7 +2749,8 @@ RightSection:AddToggle("bullet_tracers_enabled", {
     end
 })
 
-Zenwave.Options.bullet_tracers_enabled:AddColorPicker("tracer_color", {
+RightSection:AddColorPicker("tracer_color", {
+    Text = "tracer Color",
     Default = Color3.fromRGB(255,50,50),
     Callback = function(color)
         tracerColor = color
