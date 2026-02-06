@@ -20,7 +20,7 @@ for _,v in next,getgc(true) do
         end 
     end 
 end
---999999
+--999939293848283848484838383
 for _,v in pairs(getgc(true)) do 
     if type(v)=="table" then 
         local func=rawget(v,"DTXC1") 
@@ -2884,6 +2884,17 @@ Players.PlayerRemoving:Connect(removeESP)
 LocalPlayer.CharacterRemoving:Connect(function()
     for player in pairs(espDrawings) do
         removeESP(player)
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    if library.flags.esp_enabled then
+        task.wait(1)
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and not espDrawings[player] then
+                createESP(player)
+            end
+        end
     end
 end)
 
