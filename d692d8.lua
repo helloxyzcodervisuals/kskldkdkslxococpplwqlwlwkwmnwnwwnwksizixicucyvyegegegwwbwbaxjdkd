@@ -3,7 +3,7 @@ repeat task.wait() until game:IsLoaded()
 local function isAdonisAC(tab) 
     return rawget(tab,"Detected") and typeof(rawget(tab,"Detected"))=="function" and rawget(tab,"RLocked") 
 end
---vcb
+--der
 for _,v in next,getgc(true) do 
     if typeof(v)=="table" and isAdonisAC(v) then 
         for i,f in next,v do 
@@ -1143,6 +1143,7 @@ local function trackGlobalBullets()
     bfr.ChildAdded:Connect(tblt)
     for _,v in ipairs(bfr:GetChildren()) do tblt(v) end
 end
+--[[
 local DEFAULT_ESP_COLOR = Color3.fromRGB(255, 50, 50)
 local DEFAULT_WHITELIST_COLOR = Color3.fromRGB(50, 255, 50)
 local DEFAULT_TARGETLIST_COLOR = Color3.fromRGB(255, 50, 255)
@@ -1331,7 +1332,7 @@ RunService.RenderStepped:Connect(function()
         if character and billboard and billboard.Parent then updateESPBillboard(player,character) elseif billboard and billboard.Parent then billboard.Enabled=false billboard.Adornee=nil else createESPBillboard(player) end
     end
 end)
-
+--]]
 local function applyRichPlayer()
     local char=LocalPlayer.Character
     if not char then return end
@@ -2220,14 +2221,290 @@ SafeESPMiscGroup:AddColorPicker("misc_safecolor", {
         updateSafeColor(color)
     end
 })
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local CoreGui = game:GetService("CoreGui")
 
-local ESPGroup = VisualTab:AddGroupbox("left", "ESP Settings")
-local ESPSettingsGroup = VisualTab:AddGroupbox("right", "ESP Features")
-local RichShaderGroup = VisualTab:AddGroupbox("left", "Rich Shader")
-local RichPlayerGroup = VisualTab:AddGroupbox("right", "Rich Player")
-local PlayerChamsGroup = VisualTab:AddGroupbox("left", "Player Chams")
-local ArmsChamsGroup = VisualTab:AddGroupbox("right", "Arms Chams")
-local ToolChamsGroup = VisualTab:AddGroupbox("left", "Tool Chams")
+local library = {
+    flags = {
+        esp_enabled = true,
+        esp_maincolor = Color3.fromRGB(255, 50, 50),
+        esp_usewhitelistcolor = true,
+        esp_usetargetlistcolor = true,
+        esp_whitelistcolor = Color3.fromRGB(50, 255, 50),
+        esp_targetlistcolor = Color3.fromRGB(255, 50, 255),
+        esp_teamcheck = false,
+        esp_showhealth = true,
+        esp_showdistance = true,
+        esp_boxfilled = true,
+        esp_boxoutline = true,
+        esp_boxalpha = 0.3
+    }
+}
+
+local fonts = {}
+do
+    local HttpService = game:GetService("HttpService")
+    
+    function Register_Font(Name, Weight, Style, Asset)
+        if not isfile(Asset.Id) then
+            writefile(Asset.Id, Asset.Font)
+        end
+        if isfile(Name .. ".font") then
+            delfile(Name .. ".font")
+        end
+        local Data = {
+            name = Name,
+            faces = {
+                {
+                    name = "Normal",
+                    weight = Weight,
+                    style = Style,
+                    assetId = getcustomasset(Asset.Id),
+                },
+            },
+        }
+        writefile(Name .. ".font", HttpService:JSONEncode(Data))
+        return getcustomasset(Name .. ".font")
+    end
+    
+    local ProggyTiny = Register_Font("adwdawdwadadwadawdawdawdawd", 100, "Normal", {
+        Id = "ProggyTinyyyy.ttf",
+        Font = game:HttpGet("https://raw.githubusercontent.com/i77lhm/storage/refs/heads/main/fonts/ProggyClean.ttf"),
+    })
+
+    fonts.main = Font.new(ProggyTiny, Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+end
+
+local function getPlayerColor(player)
+    local targetList = getgenv().Lists.TargetList or {}
+    local whitelist = getgenv().Lists.Whitelist or {}
+    
+    if library.flags.esp_usetargetlistcolor and table.find(targetList, player.Name) then
+        return library.flags.esp_targetlistcolor
+    end
+    
+    if library.flags.esp_usewhitelistcolor and table.find(whitelist, player.Name) then
+        return library.flags.esp_whitelistcolor
+    end
+    
+    return library.flags.esp_maincolor
+end
+
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "Skeet_2D_ESP"
+ScreenGui.IgnoreGuiInset = true
+
+local espDrawings = {}
+local espUIs = {}
+local playerConnections = {}
+
+local function createESP(player)
+    if player == LocalPlayer then return end
+    
+    local drawings = {
+        box_out = Drawing.new("Square"),
+        box = Drawing.new("Square"),
+        box_fill = Drawing.new("Square")
+    }
+    
+    local uis = {
+        health_bg = Instance.new("Frame", ScreenGui),
+        health_fill = Instance.new("Frame"),
+        name_text = Instance.new("TextLabel", ScreenGui),
+        info_text = Instance.new("TextLabel", ScreenGui)
+    }
+
+    uis.health_fill.Parent = uis.health_bg
+    uis.health_fill.BorderSizePixel = 0
+    uis.health_bg.BorderSizePixel = 0
+    uis.health_bg.BackgroundColor3 = Color3.new(0, 0, 0)
+    
+    local gradient = Instance.new("UIGradient", uis.health_fill)
+    gradient.Rotation = 90
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.new(0, 1, 0)),
+        ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 0)),
+        ColorSequenceKeypoint.new(1, Color3.new(1, 0, 0))
+    })
+
+    drawings.box_out.Transparency = 1
+    drawings.box_out.Filled = false
+    drawings.box_out.Thickness = 3
+    
+    drawings.box.Transparency = 1
+    drawings.box.Filled = false
+    drawings.box.Thickness = 1
+    
+    drawings.box_fill.Transparency = 1
+    drawings.box_fill.Filled = true
+    drawings.box_fill.Thickness = 0
+
+    local function setupText(textLabel)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextColor3 = Color3.new(1, 1, 1)
+        textLabel.FontFace = fonts.main
+        textLabel.TextSize = 10
+        textLabel.TextStrokeTransparency = 0
+        textLabel.TextXAlignment = Enum.TextXAlignment.Center
+    end
+    
+    setupText(uis.name_text)
+    setupText(uis.info_text)
+    uis.info_text.TextXAlignment = Enum.TextXAlignment.Left
+    uis.info_text.TextYAlignment = Enum.TextYAlignment.Top
+    
+    espDrawings[player] = drawings
+    espUIs[player] = uis
+
+    playerConnections[player] = RunService.RenderStepped:Connect(function()
+        if not library.flags.esp_enabled then
+            drawings.box_out.Visible = false
+            drawings.box.Visible = false
+            drawings.box_fill.Visible = false
+            uis.health_bg.Visible = false
+            uis.name_text.Visible = false
+            uis.info_text.Visible = false
+            return
+        end
+        
+        if library.flags.esp_teamcheck and LocalPlayer.Team and player.Team and LocalPlayer.Team == player.Team then
+            drawings.box_out.Visible = false
+            drawings.box.Visible = false
+            drawings.box_fill.Visible = false
+            uis.health_bg.Visible = false
+            uis.name_text.Visible = false
+            uis.info_text.Visible = false
+            return
+        end
+        
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
+            local hrp = player.Character.HumanoidRootPart
+            local humanoid = player.Character.Humanoid
+            local vec, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            
+            if onScreen then
+                local playerColor = getPlayerColor(player)
+                
+                local size_x = 2200 / vec.Z
+                local size_y = 3200 / vec.Z
+                local x = vec.X - size_x / 2
+                local y = vec.Y - size_y / 2
+
+                local boxAlpha = library.flags.esp_boxalpha or 0.3
+                
+                if library.flags.esp_boxoutline then
+                    drawings.box_out.Visible = true
+                    drawings.box_out.Position = Vector2.new(x, y)
+                    drawings.box_out.Size = Vector2.new(size_x, size_y)
+                    drawings.box_out.Color = Color3.new(0, 0, 0)
+                    drawings.box_out.Transparency = 1 - boxAlpha
+                else
+                    drawings.box_out.Visible = false
+                end
+                
+                if library.flags.esp_boxfilled then
+                    drawings.box_fill.Visible = true
+                    drawings.box_fill.Position = Vector2.new(x, y)
+                    drawings.box_fill.Size = Vector2.new(size_x, size_y)
+                    drawings.box_fill.Color = playerColor
+                    drawings.box_fill.Transparency = 1 - boxAlpha
+                else
+                    drawings.box_fill.Visible = false
+                end
+                
+                drawings.box.Visible = true
+                drawings.box.Position = Vector2.new(x, y)
+                drawings.box.Size = Vector2.new(size_x, size_y)
+                drawings.box.Color = playerColor
+                drawings.box.Transparency = 1 - boxAlpha
+
+                if library.flags.esp_showhealth then
+                    local healthPercent = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
+                    uis.health_bg.Visible = true
+                    uis.health_bg.Position = UDim2.new(0, x - 6, 0, y)
+                    uis.health_bg.Size = UDim2.new(0, 4, 0, size_y)
+                    uis.health_fill.Position = UDim2.new(0, 1, 1 - healthPercent, 0)
+                    uis.health_fill.Size = UDim2.new(0, 2, healthPercent, 0)
+                else
+                    uis.health_bg.Visible = false
+                end
+
+                uis.name_text.Visible = true
+                uis.name_text.TextSize = 10
+                uis.name_text.Position = UDim2.new(0, x, 0, y - 15)
+                uis.name_text.Size = UDim2.new(0, size_x, 0, 10)
+                uis.name_text.Text = player.Name
+                uis.name_text.TextColor3 = playerColor
+
+                if library.flags.esp_showdistance then
+                    uis.info_text.Visible = true
+                    uis.info_text.TextSize = 10
+                    uis.info_text.Position = UDim2.new(0, x + size_x + 4, 0, y)
+                    uis.info_text.Size = UDim2.new(0, 100, 0, 100)
+                    uis.info_text.Text = string.format("hp: %d\ndist: %dm", math.floor(humanoid.Health), math.floor(vec.Z))
+                    uis.info_text.TextColor3 = playerColor
+                else
+                    uis.info_text.Visible = false
+                end
+            else
+                drawings.box_out.Visible = false
+                drawings.box.Visible = false
+                drawings.box_fill.Visible = false
+                uis.health_bg.Visible = false
+                uis.name_text.Visible = false
+                uis.info_text.Visible = false
+            end
+        else
+            drawings.box_out.Visible = false
+            drawings.box.Visible = false
+            drawings.box_fill.Visible = false
+            uis.health_bg.Visible = false
+            uis.name_text.Visible = false
+            uis.info_text.Visible = false
+        end
+    end)
+end
+
+local function removeESP(player)
+    if espDrawings[player] then
+        espDrawings[player].box_out:Remove()
+        espDrawings[player].box:Remove()
+        espDrawings[player].box_fill:Remove()
+    end
+    
+    if espUIs[player] then
+        espUIs[player].health_bg:Destroy()
+        espUIs[player].name_text:Destroy()
+        espUIs[player].info_text:Destroy()
+    end
+    
+    if playerConnections[player] then
+        playerConnections[player]:Disconnect()
+    end
+    
+    espDrawings[player] = nil
+    espUIs[player] = nil
+    playerConnections[player] = nil
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+    createESP(player)
+end
+
+Players.PlayerAdded:Connect(createESP)
+Players.PlayerRemoving:Connect(removeESP)
+
+LocalPlayer.CharacterRemoving:Connect(function()
+    for player in pairs(espDrawings) do
+        removeESP(player)
+    end
+end)
+
+local ESPGroup = VisualTab:AddGroupbox("left", "ESP Settings", 1)
+local ESPSettingsGroup = VisualTab:AddGroupbox("right", "ESP Features", 1)
 
 ESPGroup:AddToggle("esp_enabled", {
     Text = "Enable ESP",
@@ -2237,21 +2514,20 @@ ESPGroup:AddToggle("esp_enabled", {
     end
 })
 
-ESPGroup:AddColorPicker("esp_maincolor", {
-    Text = "esp Color",
-    Default = Color3.fromRGB(255,50,50),
-    Callback = function(color)
-        library.flags.esp_maincolor = color
+ESPGroup:AddKeybind("esp_keybind", {
+    Text = "ESP Key",
+    Default = Enum.KeyCode.H,
+    Callback = function()
+        library.flags.esp_enabled = not library.flags.esp_enabled
+        Zenwave.Options.esp_enabled:Set(library.flags.esp_enabled)
     end
 })
 
-ESPGroup:AddSlider("esp_maxdistance", {
-    Text = "Max Distance",
-    Default = 1000,
-    Min = 100,
-    Max = 5000,
-    Callback = function(value)
-        library.flags.esp_maxdistance = value
+ESPGroup:AddColorPicker("esp_maincolor", {
+    Text = "ESP Color",
+    Default = Color3.fromRGB(255, 50, 50),
+    Callback = function(color)
+        library.flags.esp_maincolor = color
     end
 })
 
@@ -2264,7 +2540,7 @@ ESPGroup:AddToggle("esp_teamcheck", {
 })
 
 ESPGroup:AddToggle("esp_usewhitelistcolor", {
-    Text = "Whitelist Color",
+    Text = "Use Whitelist Color",
     Default = true,
     Callback = function(value)
         library.flags.esp_usewhitelistcolor = value
@@ -2272,15 +2548,15 @@ ESPGroup:AddToggle("esp_usewhitelistcolor", {
 })
 
 ESPGroup:AddColorPicker("esp_whitelistcolor", {
-    Text = "whitelist Color",
-    Default = Color3.fromRGB(50,255,50),
+    Text = "Whitelist Color",
+    Default = Color3.fromRGB(50, 255, 50),
     Callback = function(color)
         library.flags.esp_whitelistcolor = color
     end
 })
 
 ESPGroup:AddToggle("esp_usetargetlistcolor", {
-    Text = "Targetlist Color",
+    Text = "Use Targetlist Color",
     Default = true,
     Callback = function(value)
         library.flags.esp_usetargetlistcolor = value
@@ -2289,17 +2565,9 @@ ESPGroup:AddToggle("esp_usetargetlistcolor", {
 
 ESPGroup:AddColorPicker("esp_targetlistcolor", {
     Text = "Targetlist Color",
-    Default = Color3.fromRGB(255,50,255),
+    Default = Color3.fromRGB(255, 50, 255),
     Callback = function(color)
         library.flags.esp_targetlistcolor = color
-    end
-})
-
-ESPSettingsGroup:AddToggle("esp_showdistance", {
-    Text = "Show Distance",
-    Default = true,
-    Callback = function(value)
-        library.flags.esp_showdistance = value
     end
 })
 
@@ -2311,13 +2579,44 @@ ESPSettingsGroup:AddToggle("esp_showhealth", {
     end
 })
 
-ESPSettingsGroup:AddToggle("esp_dynamicscaling", {
-    Text = "Dynamic Scaling",
+ESPSettingsGroup:AddToggle("esp_showdistance", {
+    Text = "Show Distance",
     Default = true,
     Callback = function(value)
-        library.flags.esp_dynamicscaling = value
+        library.flags.esp_showdistance = value
     end
 })
+
+ESPSettingsGroup:AddToggle("esp_boxfilled", {
+    Text = "Box Filled",
+    Default = true,
+    Callback = function(value)
+        library.flags.esp_boxfilled = value
+    end
+})
+
+ESPSettingsGroup:AddToggle("esp_boxoutline", {
+    Text = "Box Outline",
+    Default = true,
+    Callback = function(value)
+        library.flags.esp_boxoutline = value
+    end
+})
+
+ESPSettingsGroup:AddSlider("esp_boxalpha", {
+    Text = "Box Alpha",
+    Default = 0.3,
+    Min = 0,
+    Max = 1,
+    Callback = function(value)
+        library.flags.esp_boxalpha = value
+    end
+})
+local RichShaderGroup = VisualTab:AddGroupbox("left", "Rich Shader")
+local RichPlayerGroup = VisualTab:AddGroupbox("right", "Rich Player")
+local PlayerChamsGroup = VisualTab:AddGroupbox("left", "Player Chams")
+local ArmsChamsGroup = VisualTab:AddGroupbox("right", "Arms Chams")
+local ToolChamsGroup = VisualTab:AddGroupbox("left", "Tool Chams")
 
 RichShaderGroup:AddToggle("rich_shader", {
     Text = "Rich Shader",
