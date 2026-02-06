@@ -3,7 +3,6 @@ repeat task.wait() until game:IsLoaded()
 local function isAdonisAC(tab) 
     return rawget(tab,"Detected") and typeof(rawget(tab,"Detected"))=="function" and rawget(tab,"RLocked") 
 end
---d
 for _,v in next,getgc(true) do 
     if typeof(v)=="table" and isAdonisAC(v) then 
         for i,f in next,v do 
@@ -2330,9 +2329,9 @@ local function createESP(player)
         ColorSequenceKeypoint.new(1, Color3.new(1, 0, 0))
     })
 
-    drawings.box_out.Transparency = 1
-    drawings.box_out.Filled = false
-    drawings.box_out.Thickness = 3
+--    drawings.box_out.Transparency = 1
+--    drawings.box_out.Filled = false
+--    drawings.box_out.Thickness = 3
     
     drawings.box.Transparency = 1
     drawings.box.Filled = false
