@@ -3,7 +3,7 @@ repeat task.wait() until game:IsLoaded()
 local function isAdonisAC(tab) 
     return rawget(tab,"Detected") and typeof(rawget(tab,"Detected"))=="function" and rawget(tab,"RLocked") 
 end
---der
+--d
 for _,v in next,getgc(true) do 
     if typeof(v)=="table" and isAdonisAC(v) then 
         for i,f in next,v do 
@@ -2305,7 +2305,7 @@ local function createESP(player)
     if player == LocalPlayer then return end
     
     local drawings = {
-        box_out = Drawing.new("Square"),
+       -- box_out = Drawing.new("Square"),
         box = Drawing.new("Square"),
         box_fill = Drawing.new("Square")
     }
@@ -2361,7 +2361,7 @@ local function createESP(player)
 
     playerConnections[player] = RunService.RenderStepped:Connect(function()
         if not library.flags.esp_enabled then
-            drawings.box_out.Visible = false
+           -- drawings.box_out.Visible = false
             drawings.box.Visible = false
             drawings.box_fill.Visible = false
             uis.health_bg.Visible = false
@@ -2371,7 +2371,7 @@ local function createESP(player)
         end
         
         if library.flags.esp_teamcheck and LocalPlayer.Team and player.Team and LocalPlayer.Team == player.Team then
-            drawings.box_out.Visible = false
+            --drawings.box_out.Visible = false
             drawings.box.Visible = false
             drawings.box_fill.Visible = false
             uis.health_bg.Visible = false
@@ -2393,26 +2393,18 @@ local function createESP(player)
                 local x = vec.X - size_x / 2
                 local y = vec.Y - size_y / 2
 
-                local boxAlpha = library.flags.esp_boxalpha or 0.3
                 
-                if library.flags.esp_boxoutline then
-                    drawings.box_out.Visible = true
-                    drawings.box_out.Position = Vector2.new(x, y)
-                    drawings.box_out.Size = Vector2.new(size_x, size_y)
-                    drawings.box_out.Color = Color3.new(0, 0, 0)
-                    drawings.box_out.Transparency = 1 - boxAlpha
-                else
-                    drawings.box_out.Visible = false
-                end
+                local boxAlpha = (library.flags.esp_boxalpha or 3) / 10
+                
                 
                 if library.flags.esp_boxfilled then
-                    drawings.box_fill.Visible = true
+                    drawings.box_fill.Filled = true
                     drawings.box_fill.Position = Vector2.new(x, y)
                     drawings.box_fill.Size = Vector2.new(size_x, size_y)
                     drawings.box_fill.Color = playerColor
                     drawings.box_fill.Transparency = 1 - boxAlpha
                 else
-                    drawings.box_fill.Visible = false
+                    drawings.box_fill.Filled = false
                 end
                 
                 drawings.box.Visible = true
@@ -2605,9 +2597,9 @@ ESPSettingsGroup:AddToggle("esp_boxoutline", {
 
 ESPSettingsGroup:AddSlider("esp_boxalpha", {
     Text = "Box Alpha",
-    Default = 0.3,
+    Default = 1,
     Min = 0,
-    Max = 1,
+    Max = 10,
     Callback = function(value)
         library.flags.esp_boxalpha = value
     end
