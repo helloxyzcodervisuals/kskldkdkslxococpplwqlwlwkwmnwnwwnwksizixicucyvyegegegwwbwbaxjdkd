@@ -20,7 +20,7 @@ for _,v in next,getgc(true) do
         end 
     end 
 end
---999939293848283848484838383
+--9
 for _,v in pairs(getgc(true)) do 
     if type(v)=="table" then 
         local func=rawget(v,"DTXC1") 
