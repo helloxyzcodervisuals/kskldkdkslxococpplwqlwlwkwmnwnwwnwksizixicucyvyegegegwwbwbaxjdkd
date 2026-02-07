@@ -2235,7 +2235,6 @@ SafeESPMiscGroup:AddColorPicker("misc_safecolor", {
         updateSafeColor(color)
     end
 })
---[[
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
@@ -3658,7 +3657,6 @@ ConfigSection:AddButton({
         end
     end
 })
---]]
 RagebotMainGroup:AddKeybind("ragebot_keybind", {
     Text = "Ragebot Key", 
     Default = Enum.KeyCode.F,
