@@ -1557,103 +1557,321 @@ LocalPlayer.CharacterAdded:Connect(OnCharacterAdded)
 if CurrentCharacter then
     OnCharacterAdded(CurrentCharacter)
 end
-
 local RagebotTab1, RagebotTab2, RagebotTab3 = Tabs.Combat:MultiSection({Tabs = {"Ragebot Main", "Targeting", "Aim Settings"}, Side = "Left", Size = 1})
 local VisualsTab1, VisualsTab2 = Tabs.Combat:MultiSection({Tabs = {"Tracers", "Notifications"}, Side = "Right", Size = 1})
 
-RagebotTab1:Toggle({Name = "Enable Ragebot", Default = false, Callback = function(value) getgenv().CONFIG.Ragebot.Enabled = value end})
-RagebotTab1:Toggle({Name = "Rapid Fire", Default = false, Callback = function(value) getgenv().CONFIG.Ragebot.RapidFire = value end})
-RagebotTab1:Toggle({Name = "Hit Sound", Default = true, Callback = function(value) getgenv().CONFIG.Ragebot.HitSound = value end})
-RagebotTab1:Toggle({Name = "Auto Reload", Default = true, Callback = function(value) getgenv().CONFIG.Ragebot.AutoReload = value end})
-RagebotTab1:Slider({Name = "Fire Rate", Default = 30, Min = 1, Max = 1000, Callback = function(value) getgenv().CONFIG.Ragebot.FireRate = value end})
-RagebotTab1:Slider({Name = "Shoot Range", Default = 15, Min = 1, Max = 30, Callback = function(value) getgenv().CONFIG.Ragebot.ShootRange = value end})
-RagebotTab1:Slider({Name = "Hit Range", Default = 15, Min = 1, Max = 30, Callback = function(value) getgenv().CONFIG.Ragebot.HitRange = value end})
-RagebotTab1:Dropdown({Name = "Hit Sound", Options = {"Bameware","Bell","Bubble","Pick","Pop","Rust","Sans","Fart","Big","Vine","Bruh","Skeet","Neverlose","Fatality","Bonk","Minecraft"}, Default = "Skeet", Callback = function(value) getgenv().CONFIG.Ragebot.SelectedHitSound = value end})
+local RageToggle1 = RagebotTab1:Toggle({Name = "Enable Ragebot", Default = false, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.Enabled = value 
+end})
+RageToggle1:Keybind({Name = "Ragebot Key", Default = Enum.KeyCode.F, Callback = function(bool) 
+    getgenv().CONFIG.Ragebot.Enabled = not getgenv().CONFIG.Ragebot.Enabled
+    RageToggle1:Set(getgenv().CONFIG.Ragebot.Enabled)
+end, ShowInList = true})
 
-RagebotTab2:Toggle({Name = "Team Check", Default = false, Callback = function(value) getgenv().CONFIG.Ragebot.TeamCheck = value end})
-RagebotTab2:Toggle({Name = "Visibility Check", Default = true, Callback = function(value) getgenv().CONFIG.Ragebot.VisibilityCheck = value end})
-RagebotTab2:Toggle({Name = "Wallbang", Default = true, Callback = function(value) getgenv().CONFIG.Ragebot.Wallbang = value end})
-RagebotTab2:Toggle({Name = "Downed Check", Default = false, Callback = function(value) getgenv().CONFIG.Ragebot.LowHealthCheck = value end})
-RagebotTab2:Toggle({Name = "Friend Check", Default = false, Callback = function(value) getgenv().CONFIG.Ragebot.FriendCheck = value end})
-RagebotTab2:Toggle({Name = "Use Target List", Default = false, Callback = function(value) getgenv().CONFIG.Ragebot.UseTargetList = value end})
-RagebotTab2:Toggle({Name = "Use Whitelist", Default = false, Callback = function(value) getgenv().CONFIG.Ragebot.UseWhitelist = value end})
+local RageToggle2 = RagebotTab1:Toggle({Name = "Rapid Fire", Default = false, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.RapidFire = value 
+end})
 
-RagebotTab3:Toggle({Name = "Prediction", Default = true, Callback = function(value) getgenv().CONFIG.Ragebot.Prediction = value end})
-RagebotTab3:Slider({Name = "Prediction Amount", Default = 0.12, Min = 0.05, Max = 0.3, Callback = function(value) getgenv().CONFIG.Ragebot.PredictionAmount = value end})
+local RageToggle3 = RagebotTab1:Toggle({Name = "Hit Sound", Default = true, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.HitSound = value 
+end})
 
-VisualsTab1:Toggle({Name = "Tracers", Default = true, Callback = function(value) getgenv().CONFIG.Ragebot.Tracers = value end})
-VisualsTab1:Colorpicker({Name = "Tracer Color", Default = Color3.fromRGB(255,0,0), Callback = function(color) getgenv().CONFIG.Ragebot.TracerColor = color end})
-VisualsTab1:Slider({Name = "Tracer Width", Default = 1, Min = 0.1, Max = 5, Callback = function(value) getgenv().CONFIG.Ragebot.TracerWidth = value end})
-VisualsTab1:Slider({Name = "Tracer Lifetime", Default = 3, Min = 0.5, Max = 100, Callback = function(value) getgenv().CONFIG.Ragebot.TracerLifetime = value end})
+local RageToggle4 = RagebotTab1:Toggle({Name = "Auto Reload", Default = true, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.AutoReload = value 
+end})
 
-VisualsTab2:Toggle({Name = "Hit Notify", Default = true, Callback = function(value) getgenv().CONFIG.Ragebot.HitNotify = value end})
-VisualsTab2:Colorpicker({Name = "hit notification color", Default = Color3.fromRGB(255,182,193), Callback = function(color) getgenv().CONFIG.Ragebot.HitColor = color end})
-VisualsTab2:Slider({Name = "Hit Notify Duration", Default = 5, Min = 1, Max = 10, Callback = function(value) getgenv().CONFIG.Ragebot.HitNotifyDuration = value end})
+local RageSlider1 = RagebotTab1:Slider({Name = "Fire Rate", Default = 30, Min = 1, Max = 1000, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.FireRate = value 
+end})
 
-RagebotTab1:Keybind({Name = "Ragebot Key", Default = Enum.KeyCode.F, Callback = function() getgenv().CONFIG.Ragebot.Enabled = not getgenv().CONFIG.Ragebot.Enabled end})
+local RageSlider2 = RagebotTab1:Slider({Name = "Shoot Range", Default = 15, Min = 1, Max = 30, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.ShootRange = value 
+end})
+
+local RageSlider3 = RagebotTab1:Slider({Name = "Hit Range", Default = 15, Min = 1, Max = 30, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.HitRange = value 
+end})
+
+local RageDropdown1 = RagebotTab1:Dropdown({Name = "Hit Sound", Options = {"Bameware","Bell","Bubble","Pick","Pop","Rust","Sans","Fart","Big","Vine","Bruh","Skeet","Neverlose","Fatality","Bonk","Minecraft"}, Default = "Skeet", Callback = function(value) 
+    getgenv().CONFIG.Ragebot.SelectedHitSound = value 
+end})
+
+local TargetToggle1 = RagebotTab2:Toggle({Name = "Team Check", Default = false, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.TeamCheck = value 
+end})
+
+local TargetToggle2 = RagebotTab2:Toggle({Name = "Visibility Check", Default = true, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.VisibilityCheck = value 
+end})
+
+local TargetToggle3 = RagebotTab2:Toggle({Name = "Wallbang", Default = true, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.Wallbang = value 
+end})
+
+local TargetToggle4 = RagebotTab2:Toggle({Name = "Downed Check", Default = false, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.LowHealthCheck = value 
+end})
+
+local TargetToggle5 = RagebotTab2:Toggle({Name = "Friend Check", Default = false, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.FriendCheck = value 
+end})
+
+local TargetToggle6 = RagebotTab2:Toggle({Name = "Use Target List", Default = false, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.UseTargetList = value 
+end})
+
+local TargetToggle7 = RagebotTab2:Toggle({Name = "Use Whitelist", Default = false, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.UseWhitelist = value 
+end})
+
+local AimToggle1 = RagebotTab3:Toggle({Name = "Prediction", Default = true, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.Prediction = value 
+end})
+
+local AimSlider1 = RagebotTab3:Slider({Name = "Prediction Amount", Default = 0.12, Min = 0.05, Max = 0.3, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.PredictionAmount = value 
+end})
+
+local TracerToggle1 = VisualsTab1:Toggle({Name = "Tracers", Default = true, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.Tracers = value 
+end})
+TracerToggle1:Colorpicker({Name = "Tracer Color", Default = Color3.fromRGB(255,0,0), Callback = function(color) 
+    getgenv().CONFIG.Ragebot.TracerColor = color 
+end})
+
+local TracerSlider1 = VisualsTab1:Slider({Name = "Tracer Width", Default = 1, Min = 0.1, Max = 5, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.TracerWidth = value 
+end})
+
+local TracerSlider2 = VisualsTab1:Slider({Name = "Tracer Lifetime", Default = 3, Min = 0.5, Max = 100, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.TracerLifetime = value 
+end})
+
+local NotifyToggle1 = VisualsTab2:Toggle({Name = "Hit Notify", Default = true, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.HitNotify = value 
+end})
+NotifyToggle1:Colorpicker({Name = "hit notification color", Default = Color3.fromRGB(255,182,193), Callback = function(color) 
+    getgenv().CONFIG.Ragebot.HitColor = color 
+end})
+
+local NotifySlider1 = VisualsTab2:Slider({Name = "Hit Notify Duration", Default = 5, Min = 1, Max = 10, Callback = function(value) 
+    getgenv().CONFIG.Ragebot.HitNotifyDuration = value 
+end})
 
 local LegitSection = Tabs.Combat:Section({Name = "Legit Settings", Side = "Left"})
 
-LegitSection:Toggle({Name = "Enable", Default = false, Callback = function(value) getgenv().Legit.Enabled = value end})
-LegitSection:Slider({Name = "Head Chance", Default = 30, Min = 0, Max = 100, Callback = function(value) getgenv().Legit.HeadChance = value end})
-LegitSection:Dropdown({Name = "Hit Part", Options = {"Head","Torso","Neck","Random"}, Default = "Torso", Callback = function(value) getgenv().Legit.HitPart = value end})
-LegitSection:Toggle({Name = "No Recoil", Default = true, Callback = function(value) getgenv().Legit.NoRecoil = value apply_no_recoil() end})
-LegitSection:Toggle({Name = "Aim Assist", Default = false, Callback = function(value) getgenv().Legit.AimAssist = value end})
-LegitSection:Slider({Name = "Assist Strength", Default = 0.3, Min = 0.1, Max = 1.0, Callback = function(value) getgenv().Legit.AimAssistStrength = value end})
-LegitSection:Slider({Name = "Smoothing", Default = 0.2, Min = 0.1, Max = 0.8, Callback = function(value) getgenv().Legit.Smoothing = value end})
+local LegitToggle1 = LegitSection:Toggle({Name = "Enable", Default = false, Callback = function(value) 
+    getgenv().Legit.Enabled = value 
+end})
+LegitToggle1:Keybind({Name = "Legit Key", Default = Enum.KeyCode.G, Callback = function(bool) 
+    getgenv().Legit.Enabled = not getgenv().Legit.Enabled
+    LegitToggle1:Set(getgenv().Legit.Enabled)
+end, ShowInList = true})
 
-LegitSection:Keybind({Name = "Legit Key", Default = Enum.KeyCode.G, Callback = function() getgenv().Legit.Enabled = not getgenv().Legit.Enabled end})
+local LegitSlider1 = LegitSection:Slider({Name = "Head Chance", Default = 30, Min = 0, Max = 100, Callback = function(value) 
+    getgenv().Legit.HeadChance = value 
+end})
+
+local LegitDropdown1 = LegitSection:Dropdown({Name = "Hit Part", Options = {"Head","Torso","Neck","Random"}, Default = "Torso", Callback = function(value) 
+    getgenv().Legit.HitPart = value 
+end})
+
+local LegitToggle2 = LegitSection:Toggle({Name = "No Recoil", Default = true, Callback = function(value) 
+    getgenv().Legit.NoRecoil = value 
+    if value then apply_no_recoil() end
+end})
+
+local LegitToggle3 = LegitSection:Toggle({Name = "Aim Assist", Default = false, Callback = function(value) 
+    getgenv().Legit.AimAssist = value 
+end})
+
+local LegitSlider2 = LegitSection:Slider({Name = "Assist Strength", Default = 0.3, Min = 0.1, Max = 1.0, Callback = function(value) 
+    getgenv().Legit.AimAssistStrength = value 
+end})
+
+local LegitSlider3 = LegitSection:Slider({Name = "Smoothing", Default = 0.2, Min = 0.1, Max = 0.8, Callback = function(value) 
+    getgenv().Legit.Smoothing = value 
+end})
+
+local BulletTracerToggle = LegitSection:Toggle({Name = "Bullet Tracers", Folding = true, Default = false, Callback = function(value) 
+    bulletTracersEnabled = value 
+    if value then trackGlobalBullets() end
+end})
+BulletTracerToggle:Colorpicker({Name = "tracer Color", Default = Color3.fromRGB(255,50,50), Callback = function(color) 
+    tracerColor = color 
+end})
+BulletTracerToggle:Slider({Name = "Tracer Width", Default = 2, Min = 1, Max = 5, Callback = function(value) 
+    tracerWidth = value/1 
+end})
+BulletTracerToggle:Slider({Name = "Tracer Lifetime", Default = 10, Min = 1, Max = 100, Callback = function(value) 
+    tracerLifetime = value/5 
+end})
 
 local MovementTab1, MovementTab2 = Tabs.Combat:MultiSection({Tabs = {"Movement", "Visual"}, Side = "Right", Size = 1})
+
+local MoveToggle1 = MovementTab1:Toggle({Name = "Speed", Default = false, Callback = function(value) 
+    speedEnabled = value 
+    if value then enableSpeed() else disableSpeed() end
+end})
+MoveToggle1:Keybind({Name = "Speed Key", Default = Enum.KeyCode.Z, Callback = function(bool) 
+    speedEnabled = not speedEnabled
+    if speedEnabled then enableSpeed() else disableSpeed() end
+    MoveToggle1:Set(speedEnabled)
+end, ShowInList = true})
+
+local MoveSlider1 = MovementTab1:Slider({Name = "Speed Value", Default = 50, Min = 10, Max = 200, Callback = function(value) 
+    getgenv().CONFIG.Misc.SpeedValue = value 
+end})
+
+local MoveToggle2 = MovementTab1:Toggle({Name = "Jump Power", Default = false, Callback = function(value) 
+    jumpPowerEnabled = value 
+    if value then enableJumpPower() else disableJumpPower() end
+end})
+
+local MoveSlider2 = MovementTab1:Slider({Name = "Jump Power Value", Default = 100, Min = 50, Max = 300, Callback = function(value) 
+    getgenv().CONFIG.Misc.JumpPowerValue = value 
+end})
+
+local MoveToggle3 = MovementTab1:Toggle({Name = "Fly", Default = false, Callback = function(value) 
+    if value then 
+        QuickUIText.Text="FLY ON" 
+        QuickUIText.TextColor3=Color3.fromRGB(50,255,50) 
+        startFlying()
+    else 
+        QuickUIText.Text="FLY OFF" 
+        QuickUIText.TextColor3=Color3.fromRGB(255,50,50) 
+        disableFlying() 
+    end
+end})
+MoveToggle3:Keybind({Name = "Fly Key", Default = Enum.KeyCode.X, Callback = function(bool) 
+    local flyState = not flyEnabled
+    if flyState then 
+        QuickUIText.Text="FLY ON" 
+        QuickUIText.TextColor3=Color3.fromRGB(50,255,50) 
+        startFlying()
+    else 
+        QuickUIText.Text="FLY OFF" 
+        QuickUIText.TextColor3=Color3.fromRGB(255,50,50) 
+        disableFlying() 
+    end
+    MoveToggle3:Set(flyState)
+end, ShowInList = true})
+
+local MoveSlider3 = MovementTab1:Slider({Name = "Fly Speed", Default = 50, Min = 10, Max = 200, Callback = function(value) 
+    flySpeed = value 
+end})
+
+local MoveToggle4 = MovementTab1:Toggle({Name = "Noclip", Default = false, Callback = function(value) 
+    noclipEnabled = value 
+    if value then startNoclip() else stopNoclip() end
+end})
+MoveToggle4:Keybind({Name = "Noclip Key", Default = Enum.KeyCode.V, Callback = function(bool) 
+    noclipEnabled = not noclipEnabled
+    if noclipEnabled then startNoclip() else stopNoclip() end
+    MoveToggle4:Set(noclipEnabled)
+end, ShowInList = true})
+
+local VisualToggle1 = MovementTab2:Toggle({Name = "Loop FOV", Default = false, Callback = function(value) 
+    loopFOVEnabled = value 
+    if value then enableLoopFOV() else disableLoopFOV() end
+end})
+
+local VisualToggle2 = MovementTab2:Toggle({Name = "Hide Head", Default = false, Callback = function(value) 
+    getgenv().CONFIG.Misc.HideHeadEnabled = value 
+    if value then hideHead() end
+end})
+
 local OtherTab1, OtherTab2 = Tabs.Combat:MultiSection({Tabs = {"Other", "Safe ESP"}, Side = "Left", Size = 1})
 
-MovementTab1:Toggle({Name = "Speed", Default = false, Callback = function(value) speedEnabled = value if value then enableSpeed() else disableSpeed() end end})
-MovementTab1:Slider({Name = "Speed Value", Default = 50, Min = 10, Max = 200, Callback = function(value) getgenv().CONFIG.Misc.SpeedValue = value end})
-MovementTab1:Toggle({Name = "Jump Power", Default = false, Callback = function(value) jumpPowerEnabled = value if value then enableJumpPower() else disableJumpPower() end end})
-MovementTab1:Slider({Name = "Jump Power Value", Default = 100, Min = 50, Max = 300, Callback = function(value) getgenv().CONFIG.Misc.JumpPowerValue = value end})
-MovementTab1:Toggle({Name = "Fly", Default = false, Callback = function(value) if value then QuickUIText.Text="FLY ON" QuickUIText.TextColor3=Color3.fromRGB(50,255,50) startFlying() else QuickUIText.Text="FLY OFF" QuickUIText.TextColor3=Color3.fromRGB(255,50,50) disableFlying() end end})
-MovementTab1:Slider({Name = "Fly Speed", Default = 50, Min = 10, Max = 200, Callback = function(value) flySpeed = value end})
-MovementTab1:Toggle({Name = "Noclip", Default = false, Callback = function(value) noclipEnabled = value if value then startNoclip() else stopNoclip() end end})
+local OtherToggle1 = OtherTab1:Toggle({Name = "Inf Stamina", Default = false, Callback = function(value) 
+    getgenv().CONFIG.Misc.InfStaminaEnabled = value 
+    if value then enableInfStamina() else disableInfStamina() end
+end})
 
-MovementTab1:Keybind({Name = "Fly Key", Default = Enum.KeyCode.X, Callback = function() local flyState = not flyEnabled if flyState then QuickUIText.Text="FLY ON" QuickUIText.TextColor3=Color3.fromRGB(50,255,50) startFlying() else QuickUIText.Text="FLY OFF" QuickUIText.TextColor3=Color3.fromRGB(255,50,50) disableFlying() end end})
-MovementTab1:Keybind({Name = "Noclip Key", Default = Enum.KeyCode.V, Callback = function() noclipEnabled = not noclipEnabled if noclipEnabled then startNoclip() else stopNoclip() end end})
-MovementTab1:Keybind({Name = "Speed Key", Default = Enum.KeyCode.Z, Callback = function() speedEnabled = not speedEnabled if speedEnabled then enableSpeed() else disableSpeed() end end})
+local OtherToggle2 = OtherTab1:Toggle({Name = "No Fall Damage", Default = false, Callback = function(value) 
+    getgenv().CONFIG.Misc.NoFallDmgEnabled = value 
+    if value then enableNoFallDmg() else disableNoFallDmg() end
+end})
 
-MovementTab2:Toggle({Name = "Loop FOV", Default = false, Callback = function(value) loopFOVEnabled = value if value then enableLoopFOV() else disableLoopFOV() end end})
-MovementTab2:Toggle({Name = "Hide Head", Default = false, Callback = function(value) getgenv().CONFIG.Misc.HideHeadEnabled = value if value then hideHead() end end})
+local OtherToggle3 = OtherTab1:Toggle({Name = "No Fail Lockpick", Default = false, Callback = function(value) 
+    if value then enableLockpick() else disableLockpick() end
+end})
 
-OtherTab1:Toggle({Name = "Inf Stamina", Default = false, Callback = function(value) getgenv().CONFIG.Misc.InfStaminaEnabled = value if value then enableInfStamina() else disableInfStamina() end end})
-OtherTab1:Toggle({Name = "No Fall Damage", Default = false, Callback = function(value) getgenv().CONFIG.Misc.NoFallDmgEnabled = value if value then enableNoFallDmg() else disableNoFallDmg() end end})
-OtherTab1:Toggle({Name = "No Fail Lockpick", Default = false, Callback = function(value) if value then enableLockpick() else disableLockpick() end end})
-OtherTab1:Toggle({Name = "Instant Prompt", Default = false, Callback = function(value) if value then enableInstantPrompt() else disableInstantPrompt() end end})
-OtherTab1:Toggle({Name = "Auto Door", Default = false, Callback = function(value) if value then enableAutoDoor() else disableAutoDoor() end end})
+local OtherToggle4 = OtherTab1:Toggle({Name = "Instant Prompt", Default = false, Callback = function(value) 
+    if value then enableInstantPrompt() else disableInstantPrompt() end
+end})
 
-OtherTab2:Toggle({Name = "Enable Safe ESP", Default = false, Callback = function(value) enableSafeESP(value) end})
-OtherTab2:Colorpicker({Name = "safe color", Default = Color3.fromRGB(255,215,0), Callback = function(color) updateSafeColor(color) end})
+local OtherToggle5 = OtherTab1:Toggle({Name = "Auto Door", Default = false, Callback = function(value) 
+    if value then enableAutoDoor() else disableAutoDoor() end
+end})
 
-OtherTab2:Keybind({Name = "SafeESP Key", Default = Enum.KeyCode.K, Callback = function() local currentState = not SafeESP.Enabled enableSafeESP(currentState) end})
+local SafeToggle1 = OtherTab2:Toggle({Name = "Enable Safe ESP", Default = false, Callback = function(value) 
+    enableSafeESP(value)
+end})
+SafeToggle1:Colorpicker({Name = "safe color", Default = Color3.fromRGB(255,215,0), Callback = function(color) 
+    updateSafeColor(color)
+end})
+SafeToggle1:Keybind({Name = "SafeESP Key", Default = Enum.KeyCode.K, Callback = function(bool) 
+    local currentState = not SafeESP.Enabled
+    enableSafeESP(currentState)
+    SafeToggle1:Set(currentState)
+end, ShowInList = true})
 
 local VisualTab1, VisualTab2, VisualTab3 = Tabs.Visuals:MultiSection({Tabs = {"ESP Settings", "ESP Features", "Colors"}, Side = "Left", Size = 1})
 local VisualTab4, VisualTab5 = Tabs.Visuals:MultiSection({Tabs = {"Rich Shader", "Rich Player"}, Side = "Right", Size = 1})
 local VisualTab6, VisualTab7, VisualTab8 = Tabs.Visuals:MultiSection({Tabs = {"Player Chams", "Arms Chams", "Tool Chams"}, Side = "Right", Size = 1})
 
-VisualTab1:Toggle({Name = "Enable ESP", Default = false, Callback = function(value) library.flags.esp_enabled = value end})
-VisualTab1:Keybind({Name = "ESP Key", Default = Enum.KeyCode.H, Callback = function() library.flags.esp_enabled = not library.flags.esp_enabled end})
-VisualTab1:Toggle({Name = "Team Check", Default = false, Callback = function(value) library.flags.esp_teamcheck = value end})
+local EspToggle1 = VisualTab1:Toggle({Name = "Enable ESP", Default = false, Callback = function(value) 
+    library.flags.esp_enabled = value 
+end})
+EspToggle1:Keybind({Name = "ESP Key", Default = Enum.KeyCode.H, Callback = function(bool) 
+    library.flags.esp_enabled = not library.flags.esp_enabled
+    EspToggle1:Set(library.flags.esp_enabled)
+end, ShowInList = true})
 
-VisualTab2:Toggle({Name = "Show Health", Default = true, Callback = function(value) library.flags.esp_showhealth = value end})
-VisualTab2:Toggle({Name = "Show Distance", Default = true, Callback = function(value) library.flags.esp_showdistance = value end})
-VisualTab2:Toggle({Name = "Box Filled", Default = true, Callback = function(value) library.flags.esp_boxfilled = value end})
-VisualTab2:Toggle({Name = "Box Outline", Default = true, Callback = function(value) library.flags.esp_boxoutline = value end})
-VisualTab2:Slider({Name = "Box Alpha", Default = 3, Min = 0, Max = 10, Callback = function(value) library.flags.esp_boxalpha = value end})
+local EspToggle2 = VisualTab1:Toggle({Name = "Team Check", Default = false, Callback = function(value) 
+    library.flags.esp_teamcheck = value 
+end})
 
-VisualTab3:Colorpicker({Name = "ESP Color", Default = Color3.fromRGB(255, 50, 50), Callback = function(color) library.flags.esp_maincolor = color end})
-VisualTab3:Toggle({Name = "Use Whitelist Color", Default = true, Callback = function(value) library.flags.esp_usewhitelistcolor = value end})
-VisualTab3:Colorpicker({Name = "Whitelist Color", Default = Color3.fromRGB(50, 255, 50), Callback = function(color) library.flags.esp_whitelistcolor = color end})
-VisualTab3:Toggle({Name = "Use Targetlist Color", Default = true, Callback = function(value) library.flags.esp_usetargetlistcolor = value end})
-VisualTab3:Colorpicker({Name = "Targetlist Color", Default = Color3.fromRGB(255, 50, 255), Callback = function(color) library.flags.esp_targetlistcolor = color end})
+local EspToggle3 = VisualTab2:Toggle({Name = "Show Health", Default = true, Callback = function(value) 
+    library.flags.esp_showhealth = value 
+end})
 
-VisualTab4:Toggle({Name = "Rich Shader", Default = false, Callback = function(value)
+local EspToggle4 = VisualTab2:Toggle({Name = "Show Distance", Default = true, Callback = function(value) 
+    library.flags.esp_showdistance = value 
+end})
+
+local EspToggle5 = VisualTab2:Toggle({Name = "Box Filled", Default = true, Callback = function(value) 
+    library.flags.esp_boxfilled = value 
+end})
+
+local EspToggle6 = VisualTab2:Toggle({Name = "Box Outline", Default = true, Callback = function(value) 
+    library.flags.esp_boxoutline = value 
+end})
+
+local EspSlider1 = VisualTab2:Slider({Name = "Box Alpha", Default = 3, Min = 0, Max = 10, Callback = function(value) 
+    library.flags.esp_boxalpha = value 
+end})
+
+local EspColor1 = VisualTab3:Colorpicker({Name = "ESP Color", Default = Color3.fromRGB(255, 50, 50), Callback = function(color) 
+    library.flags.esp_maincolor = color 
+end})
+
+local EspToggle7 = VisualTab3:Toggle({Name = "Use Whitelist Color", Default = true, Callback = function(value) 
+    library.flags.esp_usewhitelistcolor = value 
+end})
+EspToggle7:Colorpicker({Name = "Whitelist Color", Default = Color3.fromRGB(50, 255, 50), Callback = function(color) 
+    library.flags.esp_whitelistcolor = color 
+end})
+
+local EspToggle8 = VisualTab3:Toggle({Name = "Use Targetlist Color", Default = true, Callback = function(value) 
+    library.flags.esp_usetargetlistcolor = value 
+end})
+EspToggle8:Colorpicker({Name = "Targetlist Color", Default = Color3.fromRGB(255, 50, 255), Callback = function(color) 
+    library.flags.esp_targetlistcolor = color 
+end})
+
+local RichToggle1 = VisualTab4:Toggle({Name = "Rich Shader", Default = false, Callback = function(value)
     richShaderEnabled = value
     if value then
         local colorCorrection=Instance.new("ColorCorrectionEffect")
@@ -1669,40 +1887,85 @@ VisualTab4:Toggle({Name = "Rich Shader", Default = false, Callback = function(va
         if effect then effect:Destroy() end
     end
 end})
-VisualTab4:Colorpicker({Name = "Ambient Color", Default = Color3.fromRGB(255,200,150), Callback = function(color) richColor = color end})
-VisualTab4:Slider({Name = "Brightness", Default = 20, Min = 0, Max = 100, Callback = function(value) richBrightness = value end})
-VisualTab4:Slider({Name = "Contrast", Default = 50, Min = 0, Max = 100, Callback = function(value) richContrast = value end})
-VisualTab4:Slider({Name = "Saturation", Default = 150, Min = 0, Max = 200, Callback = function(value) richSaturation = value end})
+RichToggle1:Colorpicker({Name = "Ambient Color", Default = Color3.fromRGB(255,200,150), Callback = function(color) 
+    richColor = color 
+end})
 
-VisualTab5:Toggle({Name = "Rich Player", Default = false, Callback = function(value) richPlayerEnabled = value if value and LocalPlayer.Character then applyRichPlayer() elseif LocalPlayer.Character then resetRichPlayer() end end})
-VisualTab5:Colorpicker({Name = "Player Color", Default = Color3.fromRGB(255,255,255), Callback = function(color) richPlayerColor = color end})
-VisualTab5:Slider({Name = "Transparency", Default = 0, Min = 0, Max = 100, Callback = function(value) richPlayerTransparency = value end})
+local RichSlider1 = VisualTab4:Slider({Name = "Brightness", Default = 20, Min = 0, Max = 100, Callback = function(value) 
+    richBrightness = value 
+end})
 
-VisualTab6:Toggle({Name = "Enable Player Chams", Default = false, Callback = function(value) ChamsConfig.PlayerChams.Enabled = value if value then enablePlayerChams() else disablePlayerChams() end end})
-VisualTab6:Colorpicker({Name = "outer Color", Default = Color3.fromRGB(255,255,255), Callback = function(color) ChamsConfig.PlayerChams.OuterColor = color end})
-VisualTab6:Colorpicker({Name = "Inner Color", Default = Color3.fromRGB(0,0,0), Callback = function(color) ChamsConfig.PlayerChams.InnerColor = color end})
-VisualTab6:Toggle({Name = "Team Check", Default = false, Callback = function(value) ChamsConfig.PlayerChams.TeamCheck = value end})
+local RichSlider2 = VisualTab4:Slider({Name = "Contrast", Default = 50, Min = 0, Max = 100, Callback = function(value) 
+    richContrast = value 
+end})
 
-VisualTab6:Keybind({Name = "PlayerChams Key", Default = Enum.KeyCode.C, Callback = function() ChamsConfig.PlayerChams.Enabled = not ChamsConfig.PlayerChams.Enabled if ChamsConfig.PlayerChams.Enabled then enablePlayerChams() else disablePlayerChams() end end})
+local RichSlider3 = VisualTab4:Slider({Name = "Saturation", Default = 150, Min = 0, Max = 200, Callback = function(value) 
+    richSaturation = value 
+end})
 
-VisualTab7:Toggle({Name = "Enable Arms Chams", Default = false, Callback = function(value) ChamsConfig.ArmChams.Enabled = value if value then applyForcefieldToArms() else removeForcefieldFromArms() end end})
-VisualTab7:Slider({Name = "Arms Transparency", Default = 0.5, Min = 0, Max = 1, Callback = function(value) ChamsConfig.ArmChams.Transparency = value end})
-VisualTab7:Colorpicker({Name = "Arms Color", Default = Color3.fromRGB(255,255,255), Callback = function(color) ChamsConfig.ArmChams.Color = color end})
+local PlayerToggle1 = VisualTab5:Toggle({Name = "Rich Player", Default = false, Callback = function(value) 
+    richPlayerEnabled = value 
+    if value and LocalPlayer.Character then applyRichPlayer() elseif LocalPlayer.Character then resetRichPlayer() end
+end})
+PlayerToggle1:Colorpicker({Name = "Player Color", Default = Color3.fromRGB(255,255,255), Callback = function(color) 
+    richPlayerColor = color 
+end})
 
-VisualTab7:Keybind({Name = "ArmsChams Key", Default = Enum.KeyCode.B, Callback = function() ChamsConfig.ArmChams.Enabled = not ChamsConfig.ArmChams.Enabled if ChamsConfig.ArmChams.Enabled then applyForcefieldToArms() else removeForcefieldFromArms() end end})
+local PlayerSlider1 = VisualTab5:Slider({Name = "Transparency", Default = 0, Min = 0, Max = 100, Callback = function(value) 
+    richPlayerTransparency = value 
+end})
 
-VisualTab8:Toggle({Name = "Enable Tool Chams", Default = false, Callback = function(value) ChamsConfig.ToolChams.Enabled = value if value then applyForcefieldToTool() else removeForcefieldFromTool() end end})
-VisualTab8:Slider({Name = "Tool Transparency", Default = 0.5, Min = 0, Max = 1, Callback = function(value) ChamsConfig.ToolChams.Transparency = value end})
-VisualTab8:Colorpicker({Name = "tool Color", Default = Color3.fromRGB(255,255,255), Callback = function(color) ChamsConfig.ToolChams.Color = color end})
+local ChamToggle1 = VisualTab6:Toggle({Name = "Enable Player Chams", Default = false, Callback = function(value) 
+    ChamsConfig.PlayerChams.Enabled = value 
+    if value then enablePlayerChams() else disablePlayerChams() end
+end})
+ChamToggle1:Colorpicker({Name = "outer Color", Default = Color3.fromRGB(255,255,255), Callback = function(color) 
+    ChamsConfig.PlayerChams.OuterColor = color 
+end})
+ChamToggle1:Colorpicker({Name = "Inner Color", Default = Color3.fromRGB(0,0,0), Callback = function(color) 
+    ChamsConfig.PlayerChams.InnerColor = color 
+end})
+ChamToggle1:Keybind({Name = "PlayerChams Key", Default = Enum.KeyCode.C, Callback = function(bool) 
+    ChamsConfig.PlayerChams.Enabled = not ChamsConfig.PlayerChams.Enabled
+    if ChamsConfig.PlayerChams.Enabled then enablePlayerChams() else disablePlayerChams() end
+    ChamToggle1:Set(ChamsConfig.PlayerChams.Enabled)
+end, ShowInList = true})
 
-VisualTab8:Keybind({Name = "ToolChams Key", Default = Enum.KeyCode.N, Callback = function() ChamsConfig.ToolChams.Enabled = not ChamsConfig.ToolChams.Enabled if ChamsConfig.ToolChams.Enabled then applyForcefieldToTool() else removeForcefieldFromTool() end end})
+local ChamToggle2 = VisualTab6:Toggle({Name = "Team Check", Default = false, Callback = function(value) 
+    ChamsConfig.PlayerChams.TeamCheck = value 
+end})
 
-local TracerSection = Tabs.Players:Section({Name = "Bullet Tracers", Side = "Right"})
+local ArmToggle1 = VisualTab7:Toggle({Name = "Enable Arms Chams", Default = false, Callback = function(value) 
+    ChamsConfig.ArmChams.Enabled = value 
+    if value then applyForcefieldToArms() else removeForcefieldFromArms() end
+end})
+ArmToggle1:Colorpicker({Name = "Arms Color", Default = Color3.fromRGB(255,255,255), Callback = function(color) 
+    ChamsConfig.ArmChams.Color = color 
+end})
+ArmToggle1:Slider({Name = "Arms Transparency", Default = 0.5, Min = 0, Max = 1, Callback = function(value) 
+    ChamsConfig.ArmChams.Transparency = value 
+end})
+ArmToggle1:Keybind({Name = "ArmsChams Key", Default = Enum.KeyCode.B, Callback = function(bool) 
+    ChamsConfig.ArmChams.Enabled = not ChamsConfig.ArmChams.Enabled
+    if ChamsConfig.ArmChams.Enabled then applyForcefieldToArms() else removeForcefieldFromArms() end
+    ArmToggle1:Set(ChamsConfig.ArmChams.Enabled)
+end, ShowInList = true})
 
-TracerSection:Toggle({Name = "Players bullet Tracers", Default = false, Callback = function(value) bulletTracersEnabled = value if value then trackGlobalBullets() end end})
-TracerSection:Colorpicker({Name = "tracer Color", Default = Color3.fromRGB(255,50,50), Callback = function(color) tracerColor = color end})
-TracerSection:Slider({Name = "Tracer Width", Default = 2, Min = 1, Max = 5, Callback = function(value) tracerWidth = value/1 end})
-TracerSection:Slider({Name = "Tracer Lifetime", Default = 10, Min = 1, Max = 100, Callback = function(value) tracerLifetime = value/5 end})
+local ToolToggle1 = VisualTab8:Toggle({Name = "Enable Tool Chams", Default = false, Callback = function(value) 
+    ChamsConfig.ToolChams.Enabled = value 
+    if value then applyForcefieldToTool() else removeForcefieldFromTool() end
+end})
+ToolToggle1:Colorpicker({Name = "tool Color", Default = Color3.fromRGB(255,255,255), Callback = function(color) 
+    ChamsConfig.ToolChams.Color = color 
+end})
+ToolToggle1:Slider({Name = "Tool Transparency", Default = 0.5, Min = 0, Max = 1, Callback = function(value) 
+    ChamsConfig.ToolChams.Transparency = value 
+end})
+ToolToggle1:Keybind({Name = "ToolChams Key", Default = Enum.KeyCode.N, Callback = function(bool) 
+    ChamsConfig.ToolChams.Enabled = not ChamsConfig.ToolChams.Enabled
+    if ChamsConfig.ToolChams.Enabled then applyForcefieldToTool() else removeForcefieldFromTool() end
+    ToolToggle1:Set(ChamsConfig.ToolChams.Enabled)
+end, ShowInList = true})
 
 Library:Configs(Window)
 
