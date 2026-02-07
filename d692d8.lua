@@ -176,79 +176,106 @@ else
     AFont=Enum.Font.Gotham
 end
 
-local function createHitNotification(toolName,offsetValue,playerName)
+local function createHitNotification(toolName, offsetValue, playerName)
     if not getgenv().CONFIG.Ragebot.HitNotify then return end
-    local ScreenGui=game:GetService("CoreGui"):FindFirstChild("HitNotifications")or Instance.new("ScreenGui")
-    ScreenGui.Name="HitNotifications"
-    ScreenGui.Parent=game:GetService("CoreGui")
-    local scrollFrame=ScreenGui:FindFirstChild("NotificationScroll")or Instance.new("ScrollingFrame")
-    scrollFrame.Name="NotificationScroll"
-    scrollFrame.Parent=ScreenGui
-    scrollFrame.BackgroundTransparency=1
-    scrollFrame.Size=UDim2.new(0,600,0,400)
-    scrollFrame.Position=UDim2.new(0,30,0,10)
-    scrollFrame.ScrollingEnabled=false
-    scrollFrame.CanvasSize=UDim2.new(0,400,0,0)
-    scrollFrame.ScrollBarThickness=0
-    scrollFrame.ClipsDescendants=false
-    local THEME_COLOR=Color3.fromRGB(40,40,40)
-    local THEME_TRANSPARENCY=0.5
-    local box=Instance.new("Frame")
-    box.Parent=scrollFrame
-    box.BackgroundColor3=THEME_COLOR
-    box.BackgroundTransparency=THEME_TRANSPARENCY
-    box.BorderSizePixel=0
-    box.AnchorPoint=Vector2.new(0,0)
-    box.ClipsDescendants=false
+    
+    local targetPlayer = game:GetService("Players"):FindFirstChild(playerName)
+    local health = targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") and math.floor(targetPlayer.Character.Humanoid.Health) or 0
+
+    local ScreenGui = game:GetService("CoreGui"):FindFirstChild("HitNotifications") or Instance.new("ScreenGui")
+    ScreenGui.Name = "HitNotifications"
+    ScreenGui.Parent = game:GetService("CoreGui")
+    
+    local scrollFrame = ScreenGui:FindFirstChild("NotificationScroll") or Instance.new("ScrollingFrame")
+    scrollFrame.Name = "NotificationScroll"
+    scrollFrame.Parent = ScreenGui
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.Size = UDim2.new(0, 600, 0, 400)
+    scrollFrame.Position = UDim2.new(0, 30, 0, 10)
+    scrollFrame.ScrollingEnabled = false
+    scrollFrame.ScrollBarThickness = 0
+    scrollFrame.ClipsDescendants = false
+
+    local THEME_COLOR = Color3.fromRGB(30, 30, 30)
+    local THEME_TRANSPARENCY = 0.5
+    local GLOW_WIDTH = 20
+    local HIT_COLOR = getgenv().CONFIG.Ragebot.HitColor
+
+    local box = Instance.new("Frame")
+    box.Parent = scrollFrame
+    box.BackgroundColor3 = THEME_COLOR
+    box.BackgroundTransparency = THEME_TRANSPARENCY
+    box.BorderSizePixel = 0
+    
     local function createGlow(side)
-        local glow=Instance.new("Frame")
-        glow.Size=UDim2.new(0,80,1,0)
-        glow.Position=(side=="Left")and UDim2.new(0,-80,0,0)or UDim2.new(1,0,0,0)
-        glow.BackgroundColor3=THEME_COLOR
-        glow.BackgroundTransparency=THEME_TRANSPARENCY
-        glow.BorderSizePixel=0
-        glow.Parent=box
-        local grad=Instance.new("UIGradient")
-        grad.Transparency=NumberSequence.new({NumberSequenceKeypoint.new(0,(side=="Left"and 1 or 0)),NumberSequenceKeypoint.new(1,(side=="Left"and 0 or 1))})
-        grad.Parent=glow
+        local glow = Instance.new("Frame")
+        glow.Size = UDim2.new(0, GLOW_WIDTH, 1, 0)
+        glow.Position = (side == "Left") and UDim2.new(0, -GLOW_WIDTH, 0, 0) or UDim2.new(1, 0, 0, 0)
+        glow.BackgroundColor3 = THEME_COLOR
+        glow.BackgroundTransparency = THEME_TRANSPARENCY
+        glow.BorderSizePixel = 0
+        glow.Parent = box
+        local grad = Instance.new("UIGradient")
+        grad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, (side == "Left" and 1 or 0)), NumberSequenceKeypoint.new(1, (side == "Left" and 0 or 1))})
+        grad.Parent = glow
     end
     createGlow("Left")
     createGlow("Right")
-    local parts={{"Using ",Color3.fromRGB(255,255,255)},{toolName.." ",getgenv().CONFIG.Ragebot.HitColor},{"On ",Color3.fromRGB(255,255,255)},{string.format("%.2f",offsetValue).." ",getgenv().CONFIG.Ragebot.HitColor},{"in the ",Color3.fromRGB(255,255,255)},{"head ",getgenv().CONFIG.Ragebot.HitColor},{"to hit ",Color3.fromRGB(255,255,255)},{playerName,getgenv().CONFIG.Ragebot.HitColor},{"on via cache",Color3.fromRGB(255,255,255)},}
-    local offsetX=8
-    local totalW,maxH=0,0
-    for _,seg in ipairs(parts) do
-        local txt,col=seg[1],seg[2]
-        local label=Instance.new("TextLabel")
-        label.Parent=box
-        label.BackgroundTransparency=1
-        label.BorderSizePixel=0
-        label.TextColor3=col
-        label.FontFace=AFont
-        label.TextSize=10
-        label.Text=txt
-        label.AutomaticSize=Enum.AutomaticSize.XY
-        label.Position=UDim2.new(0,offsetX,0,0)
-        offsetX=offsetX+label.TextBounds.X
-        totalW=offsetX
-        maxH=math.max(maxH,label.TextBounds.Y)
+
+    local parts = {
+        {"hit ", Color3.fromRGB(255, 255, 255)},
+        {playerName .. " ", HIT_COLOR},
+        {"on head ", Color3.fromRGB(255, 255, 255)},
+        {"Health at ", Color3.fromRGB(200, 200, 200)},
+        {tostring(health) .. " ", Color3.fromRGB(0, 255, 120)},
+        {"in ", Color3.fromRGB(200, 200, 200)},
+        {string.format("%.2f", offsetValue) .. " ", HIT_COLOR},
+        {"via cache", Color3.fromRGB(150, 150, 150)}
+    }
+
+    local offsetX = 8
+    local totalW, maxH = 0, 0
+    for _, seg in ipairs(parts) do
+        local label = Instance.new("TextLabel")
+        label.Parent = box
+        label.BackgroundTransparency = 1
+        label.BorderSizePixel = 0
+        label.TextColor3 = seg[2]
+        label.FontFace = AFont
+        label.TextSize = 10
+        label.Text = seg[1]
+        label.AutomaticSize = Enum.AutomaticSize.XY
+        
+        label.Position = UDim2.new(0, offsetX, 0, 0)
+        local xSize = label.TextBounds.X
+        offsetX = offsetX + xSize
+        totalW = offsetX
+        maxH = math.max(maxH, label.TextBounds.Y)
     end
-    box.Size=UDim2.new(0,totalW+16,0,maxH+8)
-    table.insert(hitNotifications,{box=box,createTime=tick()})
+
+    box.Size = UDim2.new(0, totalW + 8, 0, maxH + 4)
+    table.insert(hitNotifications, {box = box, createTime = tick()})
+
     local function updateScrollFrame()
-        local allFrames={}
-        for _,notif in ipairs(hitNotifications) do if notif.box and notif.box.Parent then table.insert(allFrames,notif) end end
-        hitNotifications=allFrames
-        local currentY=0
-        for i,notif in ipairs(hitNotifications) do
-            notif.box.Position=UDim2.new(0,80,0,currentY)
-            if i<=MAX_VISIBLE_NOTIFICATIONS then notif.box.Visible=true currentY=currentY+notif.box.AbsoluteSize.Y+notificationYOffset else notif.box.Visible=false end
+        local currentY = 0
+        for i, notif in ipairs(hitNotifications) do
+            if notif.box and notif.box.Parent then
+                notif.box.Position = UDim2.new(0, GLOW_WIDTH, 0, currentY)
+                currentY = currentY + notif.box.AbsoluteSize.Y + 4
+            end
         end
-        scrollFrame.CanvasSize=UDim2.new(0,600,0,currentY)
     end
+
     updateScrollFrame()
-    task.delay(getgenv().CONFIG.Ragebot.HitNotifyDuration,function()
-        for i,notif in ipairs(hitNotifications) do if notif.box==box then table.remove(hitNotifications,i) box:Destroy() break end end
+
+    task.delay(getgenv().CONFIG.Ragebot.HitNotifyDuration, function()
+        for i, notif in ipairs(hitNotifications) do 
+            if notif.box == box then 
+                table.remove(hitNotifications, i) 
+                box:Destroy() 
+                break 
+            end 
+        end
         updateScrollFrame()
     end)
 end
