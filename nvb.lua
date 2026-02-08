@@ -26,7 +26,7 @@ local dim2 = UDim2.new
 local hex = Color3.fromHex
 local screenY=Workspace.CurrentCamera.ViewportSize.Y
 local Y=screenY<400 and 350 or 550
--- gggg
+-- ggggggg
     local window = library:window({
         name = os.date('<font color="rgb(170,85,235)">gamesense</font>.cc'),
         size = dim2(0, 600, 0, Y)
@@ -1587,7 +1587,7 @@ local left = Misc:column({fill = true})
 local right = Misc:column({fill = true})
 
 local playersSection = left:section({name = "Online Players"})
-local toolSection = right:section({name = "Tools"})
+local toolSection = right:section({name = "management"})
 
 local playerItems = {}
 for _, player in pairs(Players:GetPlayers()) do
@@ -1665,7 +1665,7 @@ toolSection:addButton({name = "Clear Whitelist", callback = function()
     getgenv().Lists.Whitelist = {}
 end})
 --local MiscMainSection = leftColumnMisc:section({name = "Target Lists"})
---local MiscToolsSection = rightColumnMisc:section({name = "Tools"})
+local MiscToolsSection = right:section({name = "Tools"})
 local MiscMovementSection = left:section({name = "Movement"})
 local MiscVisualsSection = right:section({name = "Visuals"})
 
