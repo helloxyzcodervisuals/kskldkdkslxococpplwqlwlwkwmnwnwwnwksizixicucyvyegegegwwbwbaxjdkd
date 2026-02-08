@@ -26,7 +26,7 @@ local dim2 = UDim2.new
 local hex = Color3.fromHex
 local screenY=Workspace.CurrentCamera.ViewportSize.Y
 local Y=screenY<400 and 350 or 550
--- documentation 
+-- ggg
     local window = library:window({
         name = os.date('<font color="rgb(170,85,235)">gamesense</font>.cc'),
         size = dim2(0, 600, 0, Y)
@@ -1504,7 +1504,7 @@ end})
 TargetSection:addToggle({name = "Use Whitelist", flag = "rage_use_whitelist", callback = function(value)
     getgenv().CONFIG.Ragebot.UseWhitelist = value
 end})
-
+--[[
 local Misc = window:tab({name = "Misc"})
 local leftColumnMisc = Misc:column({fill = true})
 local rightColumnMisc = Misc:column({fill = true})
@@ -1594,7 +1594,92 @@ for _, player in pairs(Players:GetPlayers()) do
 end
 refreshTargetList()
 refreshWhitelist()
+--]]
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
+local Misc = window:tab({name = "Misc"})
+local left = Misc:column({fill = true})
+local right = Misc:column({fill = true})
+
+local playersSection = left:section({name = "Online Players"})
+local toolSection = right:section({name = "Tools"})
+
+local playerItems = {}
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        table.insert(playerItems, player.Name)
+    end
+end
+
+local playersListBox = playersSection:addList({
+    name = "Players", 
+    flag = "players_list_box", 
+    scale = 200,
+    items = playerItems
+})
+
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        playersListBox.addItem(player.Name)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if player ~= LocalPlayer then
+        playersListBox.removeItem(player.Name)
+    end
+end)
+
+toolSection:addButton({name = "Add to Targetlist", callback = function()
+    local selected = playersListBox.flags["players_list_box"]
+    if selected and selected ~= "" then
+        local inTarget = false
+        for _, name in ipairs(getgenv().Lists.TargetList) do
+            if name == selected then inTarget = true break end
+        end
+        
+        if not inTarget then
+            table.insert(getgenv().Lists.TargetList, selected)
+        end
+        
+        for i, name in ipairs(getgenv().Lists.Whitelist) do
+            if name == selected then
+                table.remove(getgenv().Lists.Whitelist, i)
+                break
+            end
+        end
+    end
+end})
+
+toolSection:addButton({name = "Add to Whitelist", callback = function()
+    local selected = playersListBox.flags["players_list_box"]
+    if selected and selected ~= "" then
+        local inWhitelist = false
+        for _, name in ipairs(getgenv().Lists.Whitelist) do
+            if name == selected then inWhitelist = true break end
+        end
+        
+        if not inWhitelist then
+            table.insert(getgenv().Lists.Whitelist, selected)
+        end
+        
+        for i, name in ipairs(getgenv().Lists.TargetList) do
+            if name == selected then
+                table.remove(getgenv().Lists.TargetList, i)
+                break
+            end
+        end
+    end
+end})
+
+toolSection:addButton({name = "Clear Target", callback = function()
+    getgenv().Lists.TargetList = {}
+end})
+
+toolSection:addButton({name = "Clear Whitelist", callback = function()
+    getgenv().Lists.Whitelist = {}
+end})
 --local MiscMainSection = leftColumnMisc:section({name = "Target Lists"})
 --local MiscToolsSection = rightColumnMisc:section({name = "Tools"})
 local MiscMovementSection = leftColumnMisc:section({name = "Movement"})
