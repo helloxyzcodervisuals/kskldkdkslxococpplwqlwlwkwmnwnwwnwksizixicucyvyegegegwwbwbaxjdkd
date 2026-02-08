@@ -21,44 +21,28 @@ getgenv().CONFIG = getgenv().CONFIG or {
     }
 }
 local library, notifications, themes = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/ggc.lua"))()
-local library={
-    directory="a/",
-    folders={"fonts","configs","logs"},
-    flags={},
-    config_flags={},
-    notifications={}
-}
-library.__index=library
-setmetatable(library,library)
-
-for _,path in next,library.folders do 
-    makefolder(library.directory..path) 
+local function Register_Font()
+    local HttpService = game:GetService("HttpService")
+    
+    if not isfile("ProggyTiny.ttf") then
+        writefile("ProggyTiny.ttf", game:HttpGet("https://raw.githubusercontent.com/i77lhm/storage/refs/heads/main/fonts/ProggyClean.ttf"))
+    end
+    
+    local fontData = {
+        name = "ProggyTinyFont",
+        faces = {{
+            name = "Normal",
+            weight = 400,
+            style = "normal",
+            assetId = getcustomasset("ProggyTiny.ttf")
+        }}
+    }
+    
+    writefile("ProggyTiny.font", HttpService:JSONEncode(fontData))
+    return getcustomasset("ProggyTiny.font")
 end
 
-if isfile(library.directory.."/fonts/main.ttf") then 
-    delfile(library.directory.."/fonts/main.ttf") 
-end
-
-writefile(library.directory.."/fonts/main.ttf",game:HttpGet("https://github.com/f1nobe7650/Nebula/raw/refs/heads/main/Minecraftia-Regular.ttf"))
-
-local minecraftia={
-    name="Minecraftia",
-    faces={{name="Regular",weight=400,style="normal",assetId=getcustomasset(library.directory.."/fonts/main.ttf")}}
-}
-
-if not isfile(library.directory.."/fonts/main_encoded.ttf") then 
-    writefile(library.directory.."/fonts/main_encoded.ttf",HttpService:JSONEncode(minecraftia)) 
-end
-
-library.font=Font.new(getcustomasset(library.directory.."/fonts/main_encoded.ttf"),Enum.FontWeight.Regular)
-
-local AFont
-if getcustomasset then
-    local font_data={name="AFont",faces={{name="Regular",weight=400,style="normal",assetId=getcustomasset("a/fonts/main.ttf")or""}}}
-    AFont=Font.new(getcustomasset("a/fonts/main_encoded.ttf")or Enum.Font.Gotham,Enum.FontWeight.Regular)
-else
-    AFont=Enum.Font.Gotham
-end
+local AFont = Font.new(Register_Font(), Enum.FontWeight.Regular, Enum.FontStyle.Normal)
 local dim2 = UDim2.new 
 local hex = Color3.fromHex
 local screenY=Workspace.CurrentCamera.ViewportSize.Y
