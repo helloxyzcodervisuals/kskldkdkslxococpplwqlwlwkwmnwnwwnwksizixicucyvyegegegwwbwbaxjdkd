@@ -2206,7 +2206,7 @@ local leftColumnLegit = Legit:column({fill = true})
 local rightColumnLegit = Legit:column({fill = true})
 
 local MainSection = leftColumnLegit:section({name = "Main"})
-local SettingsSection = leftColumnLegit:section({name = "Settings"})
+local SettingsSection = rightColumnLegit:section({name = "Settings"})
 --local VisualSection = rightColumnLegit:section({name = "Visuals"})
 --local TargetSection = rightColumnLegit:section({name = "Target"})
 
@@ -2222,16 +2222,13 @@ local EnableToggle = MainSection:addToggle({name = "Enabled", flag = "legit_enab
     end
 end})
 
-EnableToggle:addKeyBind({name = "Keybind", flag = "legit_enabled_bind"})
-
 MainSection:addToggle({name = "Silent Aim", flag = "legit_silent_aim", callback = function(value)
     LegitAim:set_silent_aim(value)
 end})
 
 local a = MainSection:addToggle({name = "Aim Assist", flag = "legit_aim_assist", callback = function(value)
     LegitAim:set_aim_assist(value)
-end})
-a:addKeyBind({name = "Aim Key", flag = "legit_aim_key", callback = function(value)
+end}):addKeyBind({name = "Aim Key", flag = "legit_aim_key", callback = function(value)
     LegitAim:toggle_aiming(value)
 end})
 
@@ -2276,7 +2273,6 @@ end})
 --TracerToggle:addColorPicker({name = "Tracer Color", flag = "legit_tracer_color", color = Color3.fromRGB(255, 0, 0)})
 
 --TracerToggle:addSlider({name = "Tracer Thickness", flag = "legit_tracer_thickness", min = 1, max = 5, default = 1})
-return LegitAim
 local Settings = window:tab({name = "Settings"})
 
     -- -- Configs 
