@@ -1586,7 +1586,12 @@ MiscToolsSection:addButton({name = "Clear Whitelist", callback = function()
     getgenv().Lists.Whitelist = {}
     whitelistBox.refresh_options({})
 end})
-
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        targetListBox.addItem(player.Name)
+        whitelistBox.addItem(player.Name)
+    end
+end
 refreshTargetList()
 refreshWhitelist()
 
@@ -1808,5 +1813,3 @@ end})
 
 targetListBox.refresh_options(getgenv().Lists.TargetList)
 whitelistBox.refresh_options(getgenv().Lists.Whitelist)
-
-notifications:create_notification({name = "Hi! loaded btw"})
