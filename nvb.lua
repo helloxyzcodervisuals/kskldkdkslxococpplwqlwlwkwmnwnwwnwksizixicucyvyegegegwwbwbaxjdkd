@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
---ytb
+
 getgenv().CONFIG = getgenv().CONFIG or {
     Ragebot = {
         Enabled = false, RapidFire = false, FireRate = 30, Prediction = true,
@@ -1989,6 +1989,7 @@ end})
 local alphaSlider = VisualESPSection:addSlider({name = "Box Alpha", flag = "visual_esp_box_alpha", min = 0, max = 10, default = 3, callback = function(value)
     espBoxAlpha = value
 end})
+--[[
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
@@ -2273,6 +2274,279 @@ end})
 --TracerToggle:addColorPicker({name = "Tracer Color", flag = "legit_tracer_color", color = Color3.fromRGB(255, 0, 0)})
 
 --TracerToggle:addSlider({name = "Tracer Thickness", flag = "legit_tracer_thickness", min = 1, max = 5, default = 1})
+--]]
+local Legit = window:tab({name = "Legit"})
+local leftColumnLegit = Legit:column({fill = true})
+local rightColumnLegit = Legit:column({fill = true})
+
+local LegitMainSection = leftColumnLegit:section({name = "Main"})
+local LegitSettingsSection = leftColumnLegit:section({name = "Settings"})
+
+local legitEnabled = false
+local legitSilentAim = false
+local legitAimAssist = false
+local legitFov = 100
+local legitSmoothness = 0.1
+local legitAimMethod = "mouse"
+local legitIgnoreWalls = true
+local legitIgnoreForcefield = true
+local legitIgnoreFriendlies = true
+local legitAiming = false
+local legitSilentTarget = nil
+local legitSilentTargeting = false
+
+local legitRenderConnection = nil
+local legitSilentHook = nil
+
+local function calculateDirection(origin, destination)
+    return ((destination - origin).Unit * 1000)
+end
+
+local function getClosestPlayerByMouse()
+    local mousePos = UserInputService:GetMouseLocation()
+    local closestPlayer = nil
+    local closestDist = math.huge
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        if not player.Character then continue end
+        if not player.Character:FindFirstChild("Humanoid") then continue end
+        if player.Character.Humanoid.Health <= 0 then continue end
+        
+        if legitIgnoreFriendlies and LocalPlayer:IsFriendsWith(player.UserId) then continue end
+        
+        local hasForcefield = false
+        for _, obj in pairs(player.Character:GetChildren()) do
+            if obj:IsA("ForceField") then
+                hasForcefield = true
+                break
+            end
+        end
+        if legitIgnoreForcefield and hasForcefield then continue end
+        
+        if legitIgnoreWalls then
+            local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
+            local targetHead = player.Character:FindFirstChild("Head")
+            if localHead and targetHead then
+                local startPos = localHead.Position
+                local endPos = targetHead.Position
+                local direction = (endPos - startPos)
+                local distance = direction.Magnitude
+                
+                local ray = Ray.new(startPos, direction.Unit * distance)
+                local part, position = Workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character})
+                
+                if part then
+                    local model = part:FindFirstAncestorWhichIsA("Model")
+                    if model then
+                        local humanoid = model:FindFirstChildWhichIsA("Humanoid")
+                        if humanoid then
+                            local targetPlayer = Players:GetPlayerFromCharacter(model)
+                            if targetPlayer and targetPlayer == player then
+                            else
+                                continue
+                            end
+                        else
+                            continue
+                        end
+                    else
+                        continue
+                    end
+                end
+            end
+        end
+        
+        local screenPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+        if not onScreen then continue end
+        
+        local distance = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+        if distance < legitFov and distance < closestDist then
+            closestDist = distance
+            closestPlayer = player
+        end
+    end
+    
+    return closestPlayer
+end
+
+local function getClosestPlayerByDistance()
+    local cameraPos = Camera.CFrame.Position
+    local closestPlayer = nil
+    local closestDist = math.huge
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        if not player.Character then continue end
+        if not player.Character:FindFirstChild("Humanoid") then continue end
+        if player.Character.Humanoid.Health <= 0 then continue end
+        
+        if legitIgnoreFriendlies and LocalPlayer:IsFriendsWith(player.UserId) then continue end
+        
+        local hasForcefield = false
+        for _, obj in pairs(player.Character:GetChildren()) do
+            if obj:IsA("ForceField") then
+                hasForcefield = true
+                break
+            end
+        end
+        if legitIgnoreForcefield and hasForcefield then continue end
+        
+        if legitIgnoreWalls then
+            local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
+            local targetHead = player.Character:FindFirstChild("Head")
+            if localHead and targetHead then
+                local startPos = localHead.Position
+                local endPos = targetHead.Position
+                local direction = (endPos - startPos)
+                local distance = direction.Magnitude
+                
+                local ray = Ray.new(startPos, direction.Unit * distance)
+                local part, position = Workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character})
+                
+                if part then
+                    local model = part:FindFirstAncestorWhichIsA("Model")
+                    if model then
+                        local humanoid = model:FindFirstChildWhichIsA("Humanoid")
+                        if humanoid then
+                            local targetPlayer = Players:GetPlayerFromCharacter(model)
+                            if targetPlayer and targetPlayer == player then
+                            else
+                                continue
+                            end
+                        else
+                            continue
+                        end
+                    else
+                        continue
+                    end
+                end
+            end
+        end
+        
+        local charPos = player.Character.HumanoidRootPart.Position
+        local distance = (charPos - cameraPos).Magnitude
+        
+        if distance < closestDist then
+            closestDist = distance
+            closestPlayer = player
+        end
+    end
+    
+    return closestPlayer
+end
+
+LegitMainSection:addToggle({name = "Enabled", flag = "legit_enabled", callback = function(value)
+    legitEnabled = value
+    if value then
+        if legitRenderConnection then
+            legitRenderConnection:Disconnect()
+        end
+        
+        legitRenderConnection = RunService.RenderStepped:Connect(function()
+            if not legitEnabled then return end
+            
+            if legitSilentAim then
+                local closestPlayer
+                if legitAimMethod == "mouse" then
+                    closestPlayer = getClosestPlayerByMouse()
+                else
+                    closestPlayer = getClosestPlayerByDistance()
+                end
+                
+                if closestPlayer then
+                    legitSilentTarget = closestPlayer
+                    legitSilentTargeting = true
+                else
+                    legitSilentTarget = nil
+                    legitSilentTargeting = false
+                end
+            end
+            
+            if legitAimAssist and legitAiming then
+                local target
+                if legitAimMethod == "mouse" then
+                    target = getClosestPlayerByMouse()
+                else
+                    target = getClosestPlayerByDistance()
+                end
+                
+                if target and target.Character then
+                    local currentCF = Camera.CFrame
+                    local targetPos = target.Character.Head.Position
+                    local camPos = currentCF.Position
+                    
+                    if legitSmoothness > 0 then
+                        local targetDir = (targetPos - camPos).Unit
+                        local currentDir = currentCF.LookVector
+                        local newDir = currentDir:Lerp(targetDir, legitSmoothness)
+                        Camera.CFrame = CFrame.new(camPos, camPos + newDir)
+                    else
+                        Camera.CFrame = CFrame.new(camPos, targetPos)
+                    end
+                end
+            end
+        end)
+        
+        if not legitSilentHook then
+            local __namecall
+            __namecall = hookmetamethod(game, "__namecall", function(self, ...)
+                local args, method = {...}, getnamecallmethod()
+                
+                if not checkcaller() and tostring(method) == "Raycast" and self == Workspace then
+                    if legitSilentAim and legitSilentTargeting and legitSilentTarget and legitSilentTarget.Character then
+                        local origin = args[1]
+                        args[2] = calculateDirection(origin, legitSilentTarget.Character.Head.Position)
+                        return __namecall(self, unpack(args))
+                    end
+                end
+                
+                return __namecall(self, ...)
+            end)
+            legitSilentHook = true
+        end
+    else
+        if legitRenderConnection then
+            legitRenderConnection:Disconnect()
+            legitRenderConnection = nil
+        end
+    end
+end})
+
+LegitMainSection:addToggle({name = "Silent Aim", flag = "legit_silent_aim", callback = function(value)
+    legitSilentAim = value
+end})
+
+LegitMainSection:addToggle({name = "Aim Assist", flag = "legit_aim_assist", callback = function(value)
+    legitAimAssist = value
+end})
+
+LegitMainSection:addKeyBind({name = "Aim Key", flag = "legit_aim_key", callback = function(value)
+    legitAiming = value
+end})
+
+LegitSettingsSection:addDropdown({name = "Aim Method", flag = "legit_aim_method", items = {"mouse", "distance"}, default = "mouse", callback = function(value)
+    legitAimMethod = value
+end})
+
+LegitSettingsSection:addSlider({name = "FOV", flag = "legit_fov", min = 0, max = 500, default = 100, callback = function(value)
+    legitFov = value
+end})
+
+LegitSettingsSection:addSlider({name = "Smoothness", flag = "legit_smoothness", min = 0, max = 1, default = 0.1, callback = function(value)
+    legitSmoothness = value
+end})
+
+LegitSettingsSection:addToggle({name = "Ignore Walls", flag = "legit_ignore_walls", callback = function(value)
+    legitIgnoreWalls = value
+end})
+
+LegitSettingsSection:addToggle({name = "Ignore ForceField", flag = "legit_ignore_forcefield", callback = function(value)
+    legitIgnoreForcefield = value
+end})
+
+LegitSettingsSection:addToggle({name = "Ignore Friendlies", flag = "legit_ignore_friendlies", callback = function(value)
+    legitIgnoreFriendlies = value
+end})
 local Settings = window:tab({name = "Settings"})
 
     -- -- Configs 
