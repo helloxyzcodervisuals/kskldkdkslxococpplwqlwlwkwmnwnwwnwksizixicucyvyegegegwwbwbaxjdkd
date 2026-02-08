@@ -56,7 +56,7 @@ local Y=screenY<400 and 350 or 550
         name = os.date('<font color="rgb(170,85,235)">gamesense</font>.cc'),
         size = dim2(0, 600, 0, Y)
     })
-
+--[[
 local Legit = window:tab({name = "Legitbot"})
 local leftColumnLegit = Legit:column({fill = true})
 local rightColumnLegit = Legit:column({fill = true})
@@ -329,7 +329,7 @@ end})
 LegitSettingsSection:addToggle({name = "Ignore Friendlies", flag = "legit_ignore_friendlies", callback = function(value)
     legitIgnoreFriendlies = value
 end})
-
+--]]
 --[[
 local dim2 = UDim2.new 
 local hex = Color3.fromHex 
