@@ -6,7 +6,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
-
+repeat task.wait() until game:IsLoaded()
+do
+    local function isAdonisAC(tab) return rawget(tab,"Detected") and typeof(rawget(tab,"Detected"))=="function" and rawget(tab,"RLocked") end
+    for _,v in next,getgc(true) do if typeof(v)=="table" and isAdonisAC(v) then for i,f in next,v do if rawequal(i,"Detected") then local old old=hookfunction(f,function(action,info,crash)if rawequal(action,"_") and rawequal(info,"_") and rawequal(crash,false) then return old(action,info,crash) end return task.wait(9e9) end) warn("bypassed") break end end end end
+end
+for _,v in pairs(getgc(true)) do if type(v)=="table" then local func=rawget(v,"DTXC1") if type(func)=="function" then hookfunction(func,function() return end) break end end end
 getgenv().CONFIG = getgenv().CONFIG or {
     Ragebot = {
         Enabled = false, RapidFire = false, FireRate = 30, Prediction = true,
@@ -51,6 +56,7 @@ local Y=screenY<400 and 350 or 550
         name = os.date('<font color="rgb(170,85,235)">gamesense</font>.cc'),
         size = dim2(0, 600, 0, Y)
     })
+--[[
 local Legit = window:tab({name = "Legitbot"})
 local leftColumnLegit = Legit:column({fill = true})
 local rightColumnLegit = Legit:column({fill = true})
@@ -323,6 +329,7 @@ end})
 LegitSettingsSection:addToggle({name = "Ignore Friendlies", flag = "legit_ignore_friendlies", callback = function(value)
     legitIgnoreFriendlies = value
 end})
+--]]
 --[[
 local dim2 = UDim2.new 
 local hex = Color3.fromHex 
