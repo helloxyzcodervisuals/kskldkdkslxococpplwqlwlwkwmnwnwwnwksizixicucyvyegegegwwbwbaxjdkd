@@ -56,7 +56,7 @@ local Y=screenY<400 and 350 or 550
         name = os.date('<font color="rgb(170,85,235)">gamesense</font>.cc'),
         size = dim2(0, 600, 0, Y)
     })
---[[
+
 local Legit = window:tab({name = "Legitbot"})
 local leftColumnLegit = Legit:column({fill = true})
 local rightColumnLegit = Legit:column({fill = true})
@@ -329,7 +329,7 @@ end})
 LegitSettingsSection:addToggle({name = "Ignore Friendlies", flag = "legit_ignore_friendlies", callback = function(value)
     legitIgnoreFriendlies = value
 end})
---]]
+
 --[[
 local dim2 = UDim2.new 
 local hex = Color3.fromHex 
@@ -860,70 +860,128 @@ local function checkClearPath(startPos, endPos)
     end
     return true
 end
+local cachedBestPositions = {
+    shootPos = nil,
+    hitPos = nil,
+    target = nil
+}
 
 local function wallbang()
     local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
     if not localHead then return nil end
+    
     local target = getClosestTarget()
-    if not target then cachedBestPositions.history = {} cachedBestPositions.target = nil return nil,nil end
+    if not target then 
+        cachedBestPositions.shootPos = nil
+        cachedBestPositions.hitPos = nil
+        cachedBestPositions.target = nil
+        return nil, nil
+    end
+    
     local startPos = localHead.Position
     local targetPos = target.Position
-    if not getgenv().CONFIG.Ragebot.Wallbang then return startPos,targetPos end
+    
+    if not getgenv().CONFIG.Ragebot.Wallbang then
+        cachedBestPositions.shootPos = startPos
+        cachedBestPositions.hitPos = targetPos
+        cachedBestPositions.target = target
+        return startPos, targetPos
+    end
+
     local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
     raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    
     local direction = targetPos - startPos
     local distance = direction.Magnitude
     local directRay = Workspace:Raycast(startPos, direction.Unit * distance, raycastParams)
-    if not directRay then return startPos,targetPos end
-    if cachedBestPositions.target ~= target then cachedBestPositions.history = {} cachedBestPositions.target = target end
-    if #cachedBestPositions.history > 0 then
-        local stillValid = {}
-        for i = 1, #cachedBestPositions.history do
-            local cache = cachedBestPositions.history[i]
-            local cachedShootDistance = (cache.shootPos - startPos).Magnitude
-            local cachedHitDistance = (cache.hitPos - targetPos).Magnitude
-            local midpoint = (cache.shootPos + cache.hitPos) * 0.5
-            local midpointToHeadDistance = (midpoint - startPos).Magnitude
-            if cachedShootDistance <= getgenv().CONFIG.Ragebot.ShootRange and cachedHitDistance <= getgenv().CONFIG.Ragebot.HitRange and midpointToHeadDistance <= (getgenv().CONFIG.Ragebot.ShootRange * 0.5) then
-                if checkClearPath(startPos, cache.shootPos) and checkClearPath(cache.shootPos, cache.hitPos) then
-                    local shootToHitRay = Workspace:Raycast(cache.shootPos, (cache.hitPos - cache.shootPos).Unit * (cache.hitPos - cache.shootPos).Magnitude, raycastParams)
-                    if not shootToHitRay then table.insert(stillValid, cache) end
+    
+    if not directRay then
+        cachedBestPositions.shootPos = startPos
+        cachedBestPositions.hitPos = targetPos
+        cachedBestPositions.target = target
+        return startPos, targetPos
+    end
+    
+    if cachedBestPositions.shootPos and cachedBestPositions.target == target then
+        local cachedShootDistance = (cachedBestPositions.shootPos - startPos).Magnitude
+        local cachedHitDistance = (cachedBestPositions.hitPos - targetPos).Magnitude
+        
+        if cachedShootDistance <= getgenv().CONFIG.Ragebot.ShootRange and 
+           cachedHitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+            
+            local pathToShoot = checkClearPath(startPos, cachedBestPositions.shootPos)
+            local pathToTarget = checkClearPath(cachedBestPositions.shootPos, cachedBestPositions.hitPos)
+            
+            if pathToShoot and pathToTarget then
+                local shootToHitRay = Workspace:Raycast(cachedBestPositions.shootPos, (cachedBestPositions.hitPos - cachedBestPositions.shootPos).Unit * (cachedBestPositions.hitPos - cachedBestPositions.shootPos).Magnitude, raycastParams)
+                if not shootToHitRay then
+                    return cachedBestPositions.shootPos, cachedBestPositions.hitPos
                 end
             end
         end
-        cachedBestPositions.history = stillValid
-        if #cachedBestPositions.history > 0 then local selected = cachedBestPositions.history[math.random(1, #cachedBestPositions.history)] return selected.shootPos, selected.hitPos end
+        cachedBestPositions.shootPos = nil
+        cachedBestPositions.hitPos = nil
     end
-    local validPoints = {}
-    for i = 1, 75 do
-        local shootRadius = math.random() * getgenv().CONFIG.Ragebot.ShootRange
-        local shootAngle = math.random() * 2 * math.pi
-        local shootHeight = math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange)
-        local shootPos = startPos + Vector3.new(math.cos(shootAngle) * shootRadius, shootHeight, math.sin(shootAngle) * shootRadius)
-        local hitRadius = math.random() * getgenv().CONFIG.Ragebot.HitRange
-        local hitAngle = math.random() * 2 * math.pi
-        local hitHeight = math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange)
-        local hitPos = targetPos + Vector3.new(math.cos(hitAngle) * hitRadius, hitHeight, math.sin(hitAngle) * hitRadius)
-        local midpoint = (shootPos + hitPos) * 0.5
-        local midpointToHeadDistance = (midpoint - startPos).Magnitude
-        if (shootPos - startPos).Magnitude <= getgenv().CONFIG.Ragebot.ShootRange and (hitPos - targetPos).Magnitude <= getgenv().CONFIG.Ragebot.HitRange and midpointToHeadDistance <= (getgenv().CONFIG.Ragebot.ShootRange * 0.5) then
-            if checkClearPath(startPos, shootPos) and checkClearPath(shootPos, hitPos) then
+    
+    local bestShootPos = nil
+    local bestHitPos = nil
+    local bestScore = math.huge
+    
+    for i = 1, 110 do
+        local shootOffset = Vector3.new(
+            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange),
+            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange),
+            math.random(-getgenv().CONFIG.Ragebot.ShootRange, getgenv().CONFIG.Ragebot.ShootRange)
+        )
+        local shootPos = startPos + shootOffset
+        
+        local hitOffset = Vector3.new(
+            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange),
+            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange),
+            math.random(-getgenv().CONFIG.Ragebot.HitRange, getgenv().CONFIG.Ragebot.HitRange)
+        )
+        local hitPos = targetPos + hitOffset
+        
+        local shootDistance = (shootPos - startPos).Magnitude
+        local hitDistance = (hitPos - targetPos).Magnitude
+        
+        if shootDistance <= getgenv().CONFIG.Ragebot.ShootRange or hitDistance <= getgenv().CONFIG.Ragebot.HitRange then
+            local pathToShoot = checkClearPath(startPos, shootPos)
+            local pathToTarget = checkClearPath(shootPos, hitPos)
+            
+            if pathToShoot and pathToTarget then
                 local shootToHitRay = Workspace:Raycast(shootPos, (hitPos - shootPos).Unit * (hitPos - shootPos).Magnitude, raycastParams)
-                if not shootToHitRay then table.insert(validPoints, {shootPos = shootPos, hitPos = hitPos, score = (shootPos - startPos).Magnitude + (hitPos - targetPos).Magnitude + midpointToHeadDistance}) end
+                if not shootToHitRay then
+                    local totalScore = shootDistance + hitDistance
+                    
+                    if totalScore < bestScore then
+                        bestScore = totalScore
+                        bestShootPos = shootPos
+                        bestHitPos = hitPos
+                    end
+                end
             end
         end
     end
-    if #validPoints > 0 then
-        table.sort(validPoints, function(a,b) return a.score < b.score end)
-        local maxCache = math.random(90, 100)
-        for i = 1, math.min(#validPoints, maxCache) do table.insert(cachedBestPositions.history, validPoints[i]) end
-        return validPoints[1].shootPos, validPoints[1].hitPos
+    
+    if not bestShootPos or not bestHitPos then
+        local randomY = math.random(-16, -14)
+        local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
+        local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
+        
+        cachedBestPositions.shootPos = fallbackShootPos
+        cachedBestPositions.hitPos = fallbackHitPos
+        cachedBestPositions.target = target
+        
+        return fallbackShootPos, fallbackHitPos
     end
-    local randomY = math.random(-16, -14)
-    local fallbackShootPos = Vector3.new(startPos.X, randomY, startPos.Z)
-    local fallbackHitPos = Vector3.new(targetPos.X, randomY, targetPos.Z)
-    return fallbackShootPos, fallbackHitPos
+    
+    cachedBestPositions.shootPos = bestShootPos
+    cachedBestPositions.hitPos = bestHitPos
+    cachedBestPositions.target = target
+    
+    return bestShootPos, bestHitPos
 end
 
 local function createTracer(startPos, endPos)
