@@ -2006,6 +2006,68 @@ end})
 local alphaSlider = VisualESPSection:addSlider({name = "Box Alpha", flag = "visual_esp_box_alpha", min = 0, max = 10, default = 3, callback = function(value)
     espBoxAlpha = value
 end})
+local Settings = window:tab({name = "Settings"})
 
+    -- -- Configs 
+        local column = Settings:column({fill = true})
+        local general = column:section({name = "Configs"})
+
+        config_holder = general:addList({name = "Configs", flag = "config_name_list", scale = 100})
+        
+        general:addTextBox({name = "Config Name", default = "", flag = "config_name_text_box"})
+
+        general:addButton({name = "Create", callback = function()
+            if flags["config_name_text_box"] == "" then 
+                return 
+            end 
+
+            writefile(library.directory .. "/configs/" .. flags["config_name_text_box"] .. ".cfg", library:getConfig())
+
+            library:configListUpdate()
+        end})
+
+        general:addButton({name = "Delete", callback = function()
+            delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
+            library:configListUpdate()
+        end})
+
+        general:addButton({name = "Load", callback = function()
+            print(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
+            library:loadConfig(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))
+        end})
+        general:addButton({name = "Save", callback = function()
+            writefile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg", library:getConfig())
+            library:configListUpdate()
+        end})
+
+        general:addButton({name = "Refresh configs", callback = function()
+            library:configListUpdate()
+        end}); library:configListUpdate()
+
+        local column = Settings:column({fill = true})
+        local other = column:section({name = "Other"})
+
+        local enabled = true
+        general:addLabel({name = "Menu Bind"}):addKeyBind({callback = function(booll) 
+            if window.is_closing_menu == false then 
+                enabled = not enabled
+            end
+            
+            window.toggle_menu(enabled)
+        end})
+
+        general:addLabel({name = "Accent"}):addColorPicker({color = themes.preset.accent, callback = function(color) 
+            library:updateTheme("accent", color)
+        end})
+
+        local old_config = library:getConfig()
+
+        other:addButton({name = "Unload Config", callback = function()
+            library:loadConfig(old_config)
+        end})
+
+        other:addButton({name = "Unload Menu", callback = function()
+            library:unloadMenu()
+        end})
 targetListBox.refresh_options(getgenv().Lists.TargetList)
 whitelistBox.refresh_options(getgenv().Lists.Whitelist)
