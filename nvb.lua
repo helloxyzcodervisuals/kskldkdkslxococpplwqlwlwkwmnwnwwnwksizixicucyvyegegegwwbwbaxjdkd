@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
-
+--yt
 getgenv().CONFIG = getgenv().CONFIG or {
     Ragebot = {
         Enabled = false, RapidFire = false, FireRate = 30, Prediction = true,
@@ -47,7 +47,6 @@ local dim2 = UDim2.new
 local hex = Color3.fromHex
 local screenY=Workspace.CurrentCamera.ViewportSize.Y
 local Y=screenY<400 and 350 or 550
--- ggggggg
     local window = library:window({
         name = os.date('<font color="rgb(170,85,235)">gamesense</font>.cc'),
         size = dim2(0, 600, 0, Y)
