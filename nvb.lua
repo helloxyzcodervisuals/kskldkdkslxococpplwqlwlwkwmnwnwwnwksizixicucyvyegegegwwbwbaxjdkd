@@ -1682,8 +1682,8 @@ toolSection:addButton({name = "Clear Whitelist", callback = function()
 end})
 --local MiscMainSection = leftColumnMisc:section({name = "Target Lists"})
 --local MiscToolsSection = rightColumnMisc:section({name = "Tools"})
-local MiscMovementSection = leftColumnMisc:section({name = "Movement"})
-local MiscVisualsSection = rightColumnMisc:section({name = "Visuals"})
+local MiscMovementSection = left:section({name = "Movement"})
+local MiscVisualsSection = right:section({name = "Visuals"})
 
 
 local speedToggle = MiscMovementSection:addToggle({name = "Speed", flag = "misc_speed", callback = function(value)
