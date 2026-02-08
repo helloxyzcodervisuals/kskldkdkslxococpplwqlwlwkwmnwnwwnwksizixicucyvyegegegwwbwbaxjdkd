@@ -20,12 +20,16 @@ getgenv().CONFIG = getgenv().CONFIG or {
         SelectedHitSound = "skeet", FriendCheck = false, MaxTarget = 0
     }
 }
-local library, notifications, themes = loadstring(game:HttpGet("https://raw.githubusercontent.com/i77lhm/Libraries/refs/heads/main/Obelus/Library.lua"))()
+local library, notifications, themes = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/ggc.lua"))()
+
+local dim2 = UDim2.new 
+local hex = Color3.fromHex
 local screenY=Workspace.CurrentCamera.ViewportSize.Y
 local Y=screenY<400 and 350 or 550
-local window = library:window({
-        name = os.date('<font color="rgb(170,85,235)">gamesense.cc</font> | %b %d %Y'),
-        size = dim2(0, 620, 0, Y)
+-- documentation 
+    local window = library:window({
+        name = os.date('<font color="rgb(170,85,235)">gamesense</font>.cc'),
+        size = dim2(0, 600, 0, Y)
     })
 --[[
 local dim2 = UDim2.new 
