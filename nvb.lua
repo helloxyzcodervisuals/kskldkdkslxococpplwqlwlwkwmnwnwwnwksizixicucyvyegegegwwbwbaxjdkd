@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
---yt
+--ytb
 getgenv().CONFIG = getgenv().CONFIG or {
     Ragebot = {
         Enabled = false, RapidFire = false, FireRate = 30, Prediction = true,
