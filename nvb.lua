@@ -1510,101 +1510,91 @@ local leftColumnMisc = Misc:column({fill = true})
 local rightColumnMisc = Misc:column({fill = true})
 
 local MiscMainSection = leftColumnMisc:section({name = "Target Lists"})
-local MiscToolsSection = rightColumnMisc:section({name = "Tools"})
-local MiscMovementSection = leftColumnMisc:section({name = "Movement"})
-local MiscVisualsSection = rightColumnMisc:section({name = "Visuals"})
+local MiscToolsSection = rightColumnMisc:section({name = "List Tools"})
 
-local targetListBox = MiscMainSection:addList({name = "Target List", flag = "target_list_box", scale = 150})
-local whitelistBox = MiscMainSection:addList({name = "Whitelist", flag = "whitelist_box", scale = 150})
+local targetListBox = MiscMainSection:addList({name = "Target List", flag = "target_list_box", scale = 250})
+local whitelistBox = MiscMainSection:addList({name = "Whitelist", flag = "whitelist_box", scale = 250})
 
-local targetTextBox = MiscMainSection:addTextBox({name = "Add to Target List", flag = "add_target_text", default = "", callback = function(value)
-    if value and value ~= "" then
-        table.insert(getgenv().Lists.TargetList, value)
-        targetListBox.addItem(value)
-        showNotification("Added " .. value .. " to Target List")
-    end
-end})
+local function refreshTargetList()
+    targetListBox.refresh_options(getgenv().Lists.TargetList)
+end
 
-local whitelistTextBox = MiscMainSection:addTextBox({name = "Add to Whitelist", flag = "add_whitelist_text", default = "", callback = function(value)
-    if value and value ~= "" then
-        table.insert(getgenv().Lists.Whitelist, value)
-        whitelistBox.addItem(value)
-        showNotification("Added " .. value .. " to Whitelist")
-    end
-end})
+local function refreshWhitelist()
+    whitelistBox.refresh_options(getgenv().Lists.Whitelist)
+end
 
-MiscMainSection:addButton({name = "Add Closest to Target List", callback = function()
-    local target = getClosestTarget()
-    if target then
-        local targetPlayer = Players:GetPlayerFromCharacter(target.Parent)
-        if targetPlayer then
-            table.insert(getgenv().Lists.TargetList, targetPlayer.Name)
-            targetListBox.addItem(targetPlayer.Name)
-            showNotification("Added " .. targetPlayer.Name .. " to Target List")
-        end
-    end
-end})
-
-MiscMainSection:addButton({name = "Add Closest to Whitelist", callback = function()
-    local target = getClosestTarget()
-    if target then
-        local targetPlayer = Players:GetPlayerFromCharacter(target.Parent)
-        if targetPlayer then
-            table.insert(getgenv().Lists.Whitelist, targetPlayer.Name)
-            whitelistBox.addItem(targetPlayer.Name)
-            showNotification("Added " .. targetPlayer.Name .. " to Whitelist")
-        end
-    end
-end})
-
-MiscToolsSection:addButton({name = "Add All Friends to Whitelist", callback = function()
-    local count = 0
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and LocalPlayer:IsFriendsWith(player.UserId) then
-            local found = false
-            for _,wlName in ipairs(getgenv().Lists.Whitelist) do
-                if wlName == player.Name then
-                    found = true
-                    break
-                end
-            end
-            if not found then
-                table.insert(getgenv().Lists.Whitelist, player.Name)
-                whitelistBox.addItem(player.Name)
-                count = count + 1
+MiscToolsSection:addButton({name = "Add Selected to Target List", callback = function()
+    local selectedPlayer = whitelistBox.flags["whitelist_box"]
+    if selectedPlayer and selectedPlayer ~= "" then
+        whitelistBox.removeItem(selectedPlayer)
+        
+        for i, name in ipairs(getgenv().Lists.Whitelist) do
+            if name == selectedPlayer then
+                table.remove(getgenv().Lists.Whitelist, i)
+                break
             end
         end
+        
+        local found = false
+        for _, name in ipairs(getgenv().Lists.TargetList) do
+            if name == selectedPlayer then
+                found = true
+                break
+            end
+        end
+        
+        if not found then
+            table.insert(getgenv().Lists.TargetList, selectedPlayer)
+            targetListBox.addItem(selectedPlayer)
+        end
     end
-    showNotification("Added " .. count .. " friends to Whitelist")
 end})
 
-MiscToolsSection:addButton({name = "Clear Whitelist", callback = function()
-    getgenv().Lists.Whitelist = {}
-    whitelistBox.refresh_options({})
-    showNotification("Whitelist cleared")
+MiscToolsSection:addButton({name = "Add Selected to Whitelist", callback = function()
+    local selectedPlayer = targetListBox.flags["target_list_box"]
+    if selectedPlayer and selectedPlayer ~= "" then
+        targetListBox.removeItem(selectedPlayer)
+        
+        for i, name in ipairs(getgenv().Lists.TargetList) do
+            if name == selectedPlayer then
+                table.remove(getgenv().Lists.TargetList, i)
+                break
+            end
+        end
+        
+        local found = false
+        for _, name in ipairs(getgenv().Lists.Whitelist) do
+            if name == selectedPlayer then
+                found = true
+                break
+            end
+        end
+        
+        if not found then
+            table.insert(getgenv().Lists.Whitelist, selectedPlayer)
+            whitelistBox.addItem(selectedPlayer)
+        end
+    end
 end})
 
 MiscToolsSection:addButton({name = "Clear Target List", callback = function()
     getgenv().Lists.TargetList = {}
     targetListBox.refresh_options({})
-    showNotification("Target List cleared")
 end})
 
-MiscToolsSection:addButton({name = "Print Target List", callback = function()
-    print("=== Target List ===")
-    for i, name in ipairs(getgenv().Lists.TargetList) do
-        print(i .. ". " .. name)
-    end
-    print("==================")
+MiscToolsSection:addButton({name = "Clear Whitelist", callback = function()
+    getgenv().Lists.Whitelist = {}
+    whitelistBox.refresh_options({})
 end})
 
-MiscToolsSection:addButton({name = "Print Whitelist", callback = function()
-    print("=== Whitelist ===")
-    for i, name in ipairs(getgenv().Lists.Whitelist) do
-        print(i .. ". " .. name)
-    end
-    print("=================")
-end})
+refreshTargetList()
+refreshWhitelist()
+
+--local MiscMainSection = leftColumnMisc:section({name = "Target Lists"})
+--local MiscToolsSection = rightColumnMisc:section({name = "Tools"})
+local MiscMovementSection = leftColumnMisc:section({name = "Movement"})
+local MiscVisualsSection = rightColumnMisc:section({name = "Visuals"})
+
 
 local speedToggle = MiscMovementSection:addToggle({name = "Speed", flag = "misc_speed", callback = function(value)
     speedEnabled = value
