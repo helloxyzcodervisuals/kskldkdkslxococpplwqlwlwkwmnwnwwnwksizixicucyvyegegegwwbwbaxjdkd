@@ -767,23 +767,7 @@ local function disableFlying()
     flyEnabled = false
 end
 
-local function startNoclip()
-    if noclipConnection then noclipConnection:Disconnect() end
-    local character = LocalPlayer.Character
-    if not character then return end
-    for _,part in pairs(character:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide = false end end
-    noclipConnection = RunService.Stepped:Connect(function()
-        if not noclipEnabled or not character or not character.Parent then stopNoclip() return end
-        for _,part in pairs(character:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide = false end end
-    end)
-end
 
-local function stopNoclip()
-    if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
-    local character = LocalPlayer.Character
-    if not character then return end
-    for _,part in pairs(character:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide = true end end
-end
 
 local function enableJumpPower()
     if jumpPowerConnection then jumpPowerConnection:Disconnect() jumpPowerConnection = nil end
@@ -1704,10 +1688,6 @@ MiscMovementSection:addSlider({name = "Speed", flag = "misc_fly_speed", min = 10
     flySpeed = value
 end})
 
-local noclipToggle = MiscMovementSection:addToggle({name = "Noclip", flag = "misc_noclip", callback = function(value)
-    noclipEnabled = value
-    if value then startNoclip() else stopNoclip() end
-end})
 noclipToggle:addKeyBind({name = "Keybind", flag = "misc_noclip_bind"})
 
 local jumpToggle = MiscMovementSection:addToggle({name = "Jump Power", flag = "misc_jump_power", callback = function(value)
