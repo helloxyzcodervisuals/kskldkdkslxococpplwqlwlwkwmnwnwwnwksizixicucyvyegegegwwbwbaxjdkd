@@ -2274,7 +2274,7 @@ end})
 --TracerToggle:addColorPicker({name = "Tracer Color", flag = "legit_tracer_color", color = Color3.fromRGB(255, 0, 0)})
 
 --TracerToggle:addSlider({name = "Tracer Thickness", flag = "legit_tracer_thickness", min = 1, max = 5, default = 1})
---]]
+
 local Legit = window:tab({name = "Legit"})
 local leftColumnLegit = Legit:column({fill = true})
 local rightColumnLegit = Legit:column({fill = true})
@@ -2547,6 +2547,7 @@ end})
 LegitSettingsSection:addToggle({name = "Ignore Friendlies", flag = "legit_ignore_friendlies", callback = function(value)
     legitIgnoreFriendlies = value
 end})
+--]]
 local Settings = window:tab({name = "Settings"})
 
     -- -- Configs 
