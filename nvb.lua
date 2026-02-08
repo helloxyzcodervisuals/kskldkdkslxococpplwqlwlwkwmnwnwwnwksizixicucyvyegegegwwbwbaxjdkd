@@ -1990,6 +1990,294 @@ end})
 local alphaSlider = VisualESPSection:addSlider({name = "Box Alpha", flag = "visual_esp_box_alpha", min = 0, max = 10, default = 3, callback = function(value)
     espBoxAlpha = value
 end})
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local Camera = Workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local LegitAim = {
+    enabled = false,
+    silent_aim = false,
+    aim_assist = false,
+    fov = 100,
+    smoothness = 0.1,
+    silent_target = nil,
+    aiming = false,
+    aim_method = "mouse",
+    silent_aim_is_targetting = false,
+    ignore_behind_walls = true,
+    ignore_forcefield = true,
+    ignore_friendlies = true,
+    connections = {}
+}
+
+function LegitAim:init()
+    self.enabled = true
+    
+    self.connections.render = RunService.RenderStepped:Connect(function()
+        if not self.enabled then return end
+        if self.silent_aim then self:update_silent_target() end
+        if self.aim_assist and self.aiming then self:update_aim_assist() end
+    end)
+    
+    self:hook_silent_aim()
+end
+
+function LegitAim:get_direction(origin, destination)
+    return ((destination - origin).Unit * 1000)
+end
+
+function LegitAim:world_to_screen(position)
+    local viewport_position, on_screen = Camera:WorldToViewportPoint(position)
+    return {position = Vector2.new(viewport_position.X, viewport_position.Y), on_screen = on_screen}
+end
+
+function LegitAim:has_character(player)
+    return player and player.Character and player.Character:FindFirstChildWhichIsA("Humanoid") and true or false
+end
+
+function LegitAim:has_forcefield(player)
+    if not player or not player.Character then return false end
+    for _, obj in pairs(player.Character:GetChildren()) do
+        if obj:IsA("ForceField") then
+            return true
+        end
+    end
+    return false
+end
+
+function LegitAim:is_behind_wall(player)
+    if not self.ignore_behind_walls then return false end
+    if not player or not player.Character then return true end
+    
+    local localHead = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head")
+    local targetHead = player.Character:FindFirstChild("Head")
+    if not localHead or not targetHead then return true end
+    
+    local startPos = localHead.Position
+    local endPos = targetHead.Position
+    local direction = (endPos - startPos)
+    local distance = direction.Magnitude
+    
+    local ray = Ray.new(startPos, direction.Unit * distance)
+    local part, position = Workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character})
+    
+    if part then
+        local model = part:FindFirstAncestorWhichIsA("Model")
+        if model then
+            local humanoid = model:FindFirstChildWhichIsA("Humanoid")
+            if humanoid then
+                local targetPlayer = Players:GetPlayerFromCharacter(model)
+                if targetPlayer and targetPlayer == player then
+                    return false
+                end
+            end
+        end
+        return true
+    end
+    return false
+end
+
+function LegitAim:is_friend(player)
+    if not self.ignore_friendlies then return false end
+    return LocalPlayer:IsFriendsWith(player.UserId)
+end
+
+function LegitAim:get_closest_player_by_mouse()
+    local mouse_position = UserInputService:GetMouseLocation()
+    local radius = math.huge
+    local closest_player
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        if not self:has_character(player) then continue end
+        
+        if self.ignore_friendlies and self:is_friend(player) then continue end
+        if self.ignore_forcefield and self:has_forcefield(player) then continue end
+        if self:is_behind_wall(player) then continue end
+        
+        local screen_position = self:world_to_screen(player.Character.HumanoidRootPart.Position)
+        if not screen_position.on_screen then continue end
+        
+        local distance = (mouse_position - screen_position.position).Magnitude
+        if distance < self.fov and distance < radius then 
+            radius = distance
+            closest_player = player
+        end
+    end
+    
+    return closest_player
+end
+
+function LegitAim:get_closest_player_by_position()
+    local camera_pos = Camera.CFrame.Position
+    local radius = math.huge
+    local closest_player
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player == LocalPlayer then continue end
+        if not self:has_character(player) then continue end
+        
+        if self.ignore_friendlies and self:is_friend(player) then continue end
+        if self.ignore_forcefield and self:has_forcefield(player) then continue end
+        if self:is_behind_wall(player) then continue end
+        
+        local char_pos = player.Character.HumanoidRootPart.Position
+        local distance = (char_pos - camera_pos).Magnitude
+        
+        if distance < radius then 
+            radius = distance
+            closest_player = player
+        end
+    end
+    
+    return closest_player
+end
+
+function LegitAim:update_silent_target()
+    local new_target
+    if self.aim_method == "mouse" then
+        new_target = self:get_closest_player_by_mouse()
+    else
+        new_target = self:get_closest_player_by_position()
+    end
+    
+    self.silent_aim_is_targetting = new_target and true or false
+    self.silent_target = new_target or nil
+end
+
+function LegitAim:update_aim_assist()
+    if not self.aiming then return end
+    
+    local target
+    if self.aim_method == "mouse" then
+        target = self:get_closest_player_by_mouse()
+    else
+        target = self:get_closest_player_by_position()
+    end
+    
+    if not target or not target.Character then return end
+    
+    local current_cf = Camera.CFrame
+    local target_pos = target.Character.HumanoidRootPart.Position
+    local cam_pos = current_cf.Position
+    
+    if self.smoothness > 0 then
+        local target_dir = (target_pos - cam_pos).Unit
+        local current_dir = current_cf.LookVector
+        local new_dir = current_dir:Lerp(target_dir, self.smoothness)
+        Camera.CFrame = CFrame.new(cam_pos, cam_pos + new_dir)
+    else
+        Camera.CFrame = CFrame.new(cam_pos, target_pos)
+    end
+end
+
+function LegitAim:hook_silent_aim()
+    local __namecall
+    __namecall = hookmetamethod(game, "__namecall", function(self, ...)
+        local args, method = {...}, getnamecallmethod()
+        
+        if not checkcaller() and tostring(method) == "Raycast" and self == Workspace then
+            if LegitAim.silent_aim and LegitAim.silent_aim_is_targetting and LegitAim.silent_target and LegitAim.silent_target.Character then
+                local origin = args[1]
+                args[2] = LegitAim:get_direction(origin, LegitAim.silent_target.Character.HumanoidRootPart.Position)
+                return __namecall(self, unpack(args))
+            end
+        end
+        
+        return __namecall(self, ...)
+    end)
+end
+
+function LegitAim:set_fov(value) self.fov = value end
+function LegitAim:set_smoothness(value) self.smoothness = value end
+function LegitAim:set_aim_method(value) self.aim_method = value end
+function LegitAim:set_enabled(value) self.enabled = value end
+function LegitAim:set_silent_aim(value) self.silent_aim = value end
+function LegitAim:set_aim_assist(value) self.aim_assist = value end
+function LegitAim:toggle_aiming(value) self.aiming = value end
+function LegitAim:set_ignore_behind_walls(value) self.ignore_behind_walls = value end
+function LegitAim:set_ignore_forcefield(value) self.ignore_forcefield = value end
+function LegitAim:set_ignore_friendlies(value) self.ignore_friendlies = value end
+local Legit = window:tab({name = "Legit"})
+local leftColumnLegit = Legit:column({fill = true})
+local rightColumnLegit = Legit:column({fill = true})
+
+local MainSection = leftColumnLegit:section({name = "Main"})
+local SettingsSection = leftColumnLegit:section({name = "Settings"})
+--local VisualSection = rightColumnLegit:section({name = "Visuals"})
+--local TargetSection = rightColumnLegit:section({name = "Target"})
+
+local EnableToggle = MainSection:addToggle({name = "Enabled", flag = "legit_enabled", callback = function(value)
+    LegitAim:set_enabled(value)
+    if value then
+        LegitAim:init()
+    else
+        for _, conn in pairs(LegitAim.connections) do
+            if conn then conn:Disconnect() end
+        end
+        LegitAim.connections = {}
+    end
+end})
+
+EnableToggle:addKeyBind({name = "Keybind", flag = "legit_enabled_bind"})
+
+MainSection:addToggle({name = "Silent Aim", flag = "legit_silent_aim", callback = function(value)
+    LegitAim:set_silent_aim(value)
+end})
+
+local a = MainSection:addToggle({name = "Aim Assist", flag = "legit_aim_assist", callback = function(value)
+    LegitAim:set_aim_assist(value)
+end})
+a:addKeyBind({name = "Aim Key", flag = "legit_aim_key", callback = function(value)
+    LegitAim:toggle_aiming(value)
+end})
+
+SettingsSection:addDropdown({name = "Aim Method", flag = "legit_aim_method", items = {"Mouse", "Distance"}, default = "Mouse", callback = function(value)
+    LegitAim:set_aim_method(value:lower())
+end})
+
+SettingsSection:addSlider({name = "FOV", flag = "legit_fov", min = 0, max = 500, default = 100, callback = function(value)
+    LegitAim:set_fov(value)
+end})
+
+SettingsSection:addSlider({name = "Smoothness", flag = "legit_smoothness", min = 0, max = 1, default = 0.1, callback = function(value)
+    LegitAim:set_smoothness(value)
+end})
+
+TargetSection:addToggle({name = "Ignore Walls", flag = "legit_ignore_walls", callback = function(value)
+    LegitAim:set_ignore_behind_walls(value)
+end})
+
+TargetSection:addToggle({name = "Ignore ForceField", flag = "legit_ignore_forcefield", callback = function(value)
+    LegitAim:set_ignore_forcefield(value)
+end})
+
+TargetSection:addToggle({name = "Ignore Friendlies", flag = "legit_ignore_friendlies", callback = function(value)
+    LegitAim:set_ignore_friendlies(value)
+end})
+
+--local FOVCircleToggle = VisualSection:addToggle({name = "FOV Circle", flag = "legit_fov_circle", folding = true})
+
+--FOVCircleToggle:addColorPicker({name = "FOV Color", flag = "legit_fov_color", color = Color3.fromRGB(255, 255, 255)})
+
+--FOVCircleToggle:addSlider({name = "FOV Thickness", flag = "legit_fov_thickness", min = 1, max = 5, default = 1})
+
+--local TargetIndicatorToggle = VisualSection:addToggle({name = "Target Indicator", flag = "legit_target_indicator", folding = true})
+
+--TargetIndicatorToggle:addColorPicker({name = "Indicator Color", flag = "legit_indicator_color", color = Color3.fromRGB(255, 0, 0)})
+
+--TargetIndicatorToggle:addDropdown({name = "Indicator Type", flag = "legit_indicator_type", items = {"Dot", "Box", "Arrow"}, default = "Dot"})
+
+--local TracerToggle = VisualSection:addToggle({name = "Show Tracer", flag = "legit_show_tracer", folding = true})
+
+--TracerToggle:addColorPicker({name = "Tracer Color", flag = "legit_tracer_color", color = Color3.fromRGB(255, 0, 0)})
+
+--TracerToggle:addSlider({name = "Tracer Thickness", flag = "legit_tracer_thickness", min = 1, max = 5, default = 1})
+return LegitAim
 local Settings = window:tab({name = "Settings"})
 
     -- -- Configs 
