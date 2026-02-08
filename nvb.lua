@@ -21,7 +21,44 @@ getgenv().CONFIG = getgenv().CONFIG or {
     }
 }
 local library, notifications, themes = loadstring(game:HttpGet("https://raw.githubusercontent.com/helloxyzcodervisuals/kskldkdkslxococpplwqlwlwkwmnwnwwnwksizixicucyvyegegegwwbwbaxjdkd/refs/heads/main/ggc.lua"))()
+local library={
+    directory="a/",
+    folders={"fonts","configs","logs"},
+    flags={},
+    config_flags={},
+    notifications={}
+}
+library.__index=library
+setmetatable(library,library)
 
+for _,path in next,library.folders do 
+    makefolder(library.directory..path) 
+end
+
+if isfile(library.directory.."/fonts/main.ttf") then 
+    delfile(library.directory.."/fonts/main.ttf") 
+end
+
+writefile(library.directory.."/fonts/main.ttf",game:HttpGet("https://github.com/f1nobe7650/Nebula/raw/refs/heads/main/Minecraftia-Regular.ttf"))
+
+local minecraftia={
+    name="Minecraftia",
+    faces={{name="Regular",weight=400,style="normal",assetId=getcustomasset(library.directory.."/fonts/main.ttf")}}
+}
+
+if not isfile(library.directory.."/fonts/main_encoded.ttf") then 
+    writefile(library.directory.."/fonts/main_encoded.ttf",HttpService:JSONEncode(minecraftia)) 
+end
+
+library.font=Font.new(getcustomasset(library.directory.."/fonts/main_encoded.ttf"),Enum.FontWeight.Regular)
+
+local AFont
+if getcustomasset then
+    local font_data={name="AFont",faces={{name="Regular",weight=400,style="normal",assetId=getcustomasset("a/fonts/main.ttf")or""}}}
+    AFont=Font.new(getcustomasset("a/fonts/main_encoded.ttf")or Enum.Font.Gotham,Enum.FontWeight.Regular)
+else
+    AFont=Enum.Font.Gotham
+end
 local dim2 = UDim2.new 
 local hex = Color3.fromHex
 local screenY=Workspace.CurrentCamera.ViewportSize.Y
@@ -304,9 +341,103 @@ local function createHitNotification(toolName, offsetValue, playerName)
     
     local targetPlayer = game:GetService("Players"):FindFirstChild(playerName)
     local health = targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") and math.floor(targetPlayer.Character.Humanoid.Health) or 0
+
+    local ScreenGui = game:GetService("CoreGui"):FindFirstChild("HitNotifications") or Instance.new("ScreenGui")
+    ScreenGui.Name = "HitNotifications"
+    ScreenGui.Parent = game:GetService("CoreGui")
     
-    local message = "Hit " .. playerName .. " on head, Health: " .. tostring(health) .. ", Offset: " .. string.format("%.2f", offsetValue)
-    showNotification(message)
+    local scrollFrame = ScreenGui:FindFirstChild("NotificationScroll") or Instance.new("ScrollingFrame")
+    scrollFrame.Name = "NotificationScroll"
+    scrollFrame.Parent = ScreenGui
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.Size = UDim2.new(0, 600, 0, 400)
+    scrollFrame.Position = UDim2.new(0, 30, 0, 10)
+    scrollFrame.ScrollingEnabled = false
+    scrollFrame.ScrollBarThickness = 0
+    scrollFrame.ClipsDescendants = false
+
+    local THEME_COLOR = Color3.fromRGB(30, 30, 30)
+    local THEME_TRANSPARENCY = 0.5
+    local GLOW_WIDTH = 20
+    local HIT_COLOR = getgenv().CONFIG.Ragebot.HitColor
+
+    local box = Instance.new("Frame")
+    box.Parent = scrollFrame
+    box.BackgroundColor3 = THEME_COLOR
+    box.BackgroundTransparency = THEME_TRANSPARENCY
+    box.BorderSizePixel = 0
+    
+    local function createGlow(side)
+        local glow = Instance.new("Frame")
+        glow.Size = UDim2.new(0, GLOW_WIDTH, 1, 0)
+        glow.Position = (side == "Left") and UDim2.new(0, -GLOW_WIDTH, 0, 0) or UDim2.new(1, 0, 0, 0)
+        glow.BackgroundColor3 = THEME_COLOR
+        glow.BackgroundTransparency = THEME_TRANSPARENCY
+        glow.BorderSizePixel = 0
+        glow.Parent = box
+        local grad = Instance.new("UIGradient")
+        grad.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, (side == "Left" and 1 or 0)), NumberSequenceKeypoint.new(1, (side == "Left" and 0 or 1))})
+        grad.Parent = glow
+    end
+    createGlow("Left")
+    createGlow("Right")
+
+    local parts = {
+        {"hit ", Color3.fromRGB(255, 255, 255)},
+        {playerName .. " ", HIT_COLOR},
+        {"on head ", Color3.fromRGB(255, 255, 255)},
+        {"Health at ", Color3.fromRGB(200, 200, 200)},
+        {tostring(health) .. " ", Color3.fromRGB(0, 255, 120)},
+        {"in ", Color3.fromRGB(200, 200, 200)},
+        {string.format("%.2f", offsetValue) .. " ", HIT_COLOR},
+        {"via cache", Color3.fromRGB(150, 150, 150)}
+    }
+
+    local offsetX = 8
+    local totalW, maxH = 0, 0
+    for _, seg in ipairs(parts) do
+        local label = Instance.new("TextLabel")
+        label.Parent = box
+        label.BackgroundTransparency = 1
+        label.BorderSizePixel = 0
+        label.TextColor3 = seg[2]
+        label.FontFace = AFont
+        label.TextSize = 10
+        label.Text = seg[1]
+        label.AutomaticSize = Enum.AutomaticSize.XY
+        
+        label.Position = UDim2.new(0, offsetX, 0, 0)
+        local xSize = label.TextBounds.X
+        offsetX = offsetX + xSize
+        totalW = offsetX
+        maxH = math.max(maxH, label.TextBounds.Y)
+    end
+
+    box.Size = UDim2.new(0, totalW + 8, 0, maxH + 4)
+    table.insert(hitNotifications, {box = box, createTime = tick()})
+
+    local function updateScrollFrame()
+        local currentY = 0
+        for i, notif in ipairs(hitNotifications) do
+            if notif.box and notif.box.Parent then
+                notif.box.Position = UDim2.new(0, GLOW_WIDTH, 0, currentY)
+                currentY = currentY + notif.box.AbsoluteSize.Y + 4
+            end
+        end
+    end
+
+    updateScrollFrame()
+
+    task.delay(getgenv().CONFIG.Ragebot.HitNotifyDuration, function()
+        for i, notif in ipairs(hitNotifications) do 
+            if notif.box == box then 
+                table.remove(hitNotifications, i) 
+                box:Destroy() 
+                break 
+            end 
+        end
+        updateScrollFrame()
+    end)
 end
 
 local function playHitSound()
