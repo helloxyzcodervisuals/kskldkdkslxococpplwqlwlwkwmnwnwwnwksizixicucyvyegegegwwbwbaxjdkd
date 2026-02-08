@@ -26,7 +26,7 @@ local dim2 = UDim2.new
 local hex = Color3.fromHex
 local screenY=Workspace.CurrentCamera.ViewportSize.Y
 local Y=screenY<400 and 350 or 550
--- ggg
+-- gggg
     local window = library:window({
         name = os.date('<font color="rgb(170,85,235)">gamesense</font>.cc'),
         size = dim2(0, 600, 0, Y)
@@ -1688,7 +1688,7 @@ MiscMovementSection:addSlider({name = "Speed", flag = "misc_fly_speed", min = 10
     flySpeed = value
 end})
 
-noclipToggle:addKeyBind({name = "Keybind", flag = "misc_noclip_bind"})
+
 
 local jumpToggle = MiscMovementSection:addToggle({name = "Jump Power", flag = "misc_jump_power", callback = function(value)
     jumpPowerEnabled = value
