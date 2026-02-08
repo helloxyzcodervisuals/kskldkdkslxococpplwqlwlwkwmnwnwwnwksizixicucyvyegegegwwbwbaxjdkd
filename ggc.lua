@@ -1,4 +1,4 @@
--- Variables 
+-- Variables uhhh
 local uis = game:GetService("UserInputService") 
 local players = game:GetService("Players") 
 local ws = game:GetService("Workspace")
@@ -3180,7 +3180,7 @@ function library:addList(options)
             TextTruncate = Enum.TextTruncate.AtEnd,
             BackgroundColor3 = rgb(255, 255, 255)
         })       
-        button.text = text
+        button.Text = text
         return button 
     end 
 
@@ -3198,7 +3198,7 @@ function library:addList(options)
                 end 
                 cfg.current_instance = button 
                 button.TextColor3 = themes.preset.accent 
-                flags[cfg.flag] = button.text
+                flags[cfg.flag] = button.Text
                 cfg.callback(button.text)
             end)
         end 
