@@ -2218,7 +2218,7 @@ local function lockNeckMotorsForHandsUp()
             if motor and motor.Parent then
                 motor.C0 = original.C0
                 motor.C1 = original.C1
-                motor.Enabled = false
+                motor.Enabled = true
             end
         end
     end)
