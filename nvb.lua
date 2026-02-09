@@ -55,7 +55,7 @@ local screenY=Workspace.CurrentCamera.ViewportSize.Y
 local Y=screenY<400 and 350 or 550
     local window = library:window({
         name = os.date('<font color="rgb(170,85,235)">gamesense</font>.cc'),
-        size = dim2(0, 600, 0, Y)
+        size = dim2(0, 625, 0, Y)
     })
 --[[
 local Legit = window:tab({name = "Legitbot"})
@@ -2484,7 +2484,7 @@ shaderToggle:addColorPicker({name = "Ambient Color", flag = "visual_shader_color
         if effect then effect.TintColor = color end
     end
 end})
-shaderToggle:addSlider({name = "Brightness", flag = "visual_shader_brightness", min = 0, max = 100, default = 20, callback = function(value)
+VisualShaderSection:addSlider({name = "Brightness", flag = "visual_shader_brightness", min = 0, max = 100, default = 20, callback = function(value)
     richBrightness = value
     if richShaderEnabled then 
         local lighting = game:GetService("Lighting") 
@@ -2492,7 +2492,7 @@ shaderToggle:addSlider({name = "Brightness", flag = "visual_shader_brightness", 
         if effect then effect.Brightness = value / 100 end
     end
 end})
-shaderToggle:addSlider({name = "Contrast", flag = "visual_shader_contrast", min = 0, max = 100, default = 50, callback = function(value)
+VisualShaderSection:addSlider({name = "Contrast", flag = "visual_shader_contrast", min = 0, max = 100, default = 50, callback = function(value)
     richContrast = value
     if richShaderEnabled then 
         local lighting = game:GetService("Lighting") 
@@ -2500,7 +2500,7 @@ shaderToggle:addSlider({name = "Contrast", flag = "visual_shader_contrast", min 
         if effect then effect.Contrast = value / 100 end
     end
 end})
-shaderToggle:addSlider({name = "Saturation", flag = "visual_shader_saturation", min = 0, max = 200, default = 150, callback = function(value)
+VisualShaderSection:addSlider({name = "Saturation", flag = "visual_shader_saturation", min = 0, max = 200, default = 150, callback = function(value)
     richSaturation = value
     if richShaderEnabled then 
         local lighting = game:GetService("Lighting") 
