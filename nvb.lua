@@ -1250,33 +1250,6 @@ local function disableLoopFOV()
     if fovConnection then fovConnection:Disconnect() fovConnection = nil end
 end
 
-local function hideHead()
-    if not LocalPlayer.Character then return end
-    char = LocalPlayer.Character
-    torso = char:FindFirstChild("Torso")
-    if not torso then return end
-    originalMotor6Ds = {}
-    for _,motor in pairs(char:GetDescendants()) do if motor:IsA("Motor6D") then originalMotor6Ds[motor] = {Part0 = motor.Part0, Part1 = motor.Part1, C0 = motor.C0, C1 = motor.C1} end end
-    hideHeadEnabled = true
-    if not originalHook then
-        originalHook = hookmetamethod(game,"__namecall",function(self,...)
-            local methodName = getnamecallmethod()
-            if tostring(methodName) == "FireServer" then
-                if self.Name == "MOVZREP" then local fixedArguments = {{{Vector3.new(-5721.2001953125,-5,971.5162353515625),Vector3.new(-4181.38818359375,-6,11.123311996459961),Vector3.new(0.006237113382667303,-6,-0.18136750161647797),true,true,true,false},false,false,15.8}} return originalHook(self,table.unpack(fixedArguments)) end
-            end
-            return originalHook(self,...)
-        end)
-    end
-    if renderConnection then renderConnection:Disconnect() end
-    renderConnection = RunService.RenderStepped:Connect(function()
-        if torso and torso.Parent then
-            --for motor,originalData in pairs(originalMotor6Ds) do if motor and motor.Parent then motor.C0 = originalData.C0 motor.C1 = originalData.C1 end end
-            local neck = torso:FindFirstChild("Neck")
-            if neck and neck:IsA("Motor6D") then neck.C0 = CFrame.new(0,0,0.75)*CFrame.Angles(math.rad(90),0,0) neck.C1 = CFrame.new(0,0.25,0)*CFrame.Angles(0,0,0) end
-        else if renderConnection then renderConnection:Disconnect() renderConnection = nil end end
-    end)
-end
-
 local function enableInfStamina()
     if infStaminaHook then return end
     local module
@@ -2158,10 +2131,228 @@ local fovToggle = MiscToolsSection:addToggle({name = "Loop FOV", flag = "misc_lo
     if value then enableLoopFOV() else disableLoopFOV() end
 end})
 
-local headToggle = MiscToolsSection:addToggle({name = "Hide Head", flag = "misc_hide_head", callback = function(value)
-    hideHeadEnabled = value
-    if value then hideHead() end
-end})
+local HideHead = {
+    Enabled = false,
+    OriginalMotor6Ds = {},
+    RenderConnection = nil
+}
+
+local HandsUp = {
+    Enabled = false,
+    Tool = nil,
+    OriginalMotor6Ds = {},
+    RenderConnection = nil
+}
+
+local function hasTool()
+    local character = LocalPlayer.Character
+    if not character then return false end
+    
+    for _, tool in pairs(character:GetChildren()) do
+        if tool:IsA("Tool") then
+            return tool
+        end
+    end
+    return false
+end
+
+local function lockNeckMotorForHideHead()
+    local character = LocalPlayer.Character
+    if not character then return end
+    
+    local torso = character:FindFirstChild("Torso")
+    if not torso then return end
+    
+    local neck = torso:FindFirstChild("Neck")
+    if not neck or not neck:IsA("Motor6D") then return end
+    
+    if HideHead.RenderConnection then
+        HideHead.RenderConnection:Disconnect()
+        HideHead.RenderConnection = nil
+    end
+    
+    HideHead.RenderConnection = RunService.RenderStepped:Connect(function()
+        if not HideHead.Enabled then
+            if HideHead.RenderConnection then
+                HideHead.RenderConnection:Disconnect()
+                HideHead.RenderConnection = nil
+            end
+            return
+        end
+        
+        neck.C0 = CFrame.new(0, 0, 0.75) * CFrame.Angles(math.rad(90), 0, 0)
+        neck.C1 = CFrame.new(0, 0.25, 0) * CFrame.Angles(0, 0, 0)
+    end)
+end
+
+local function lockNeckMotorsForHandsUp()
+    local character = LocalPlayer.Character
+    if not character then return end
+    
+    HandsUp.OriginalMotor6Ds = {}
+    
+    for _, motor in pairs(character:GetDescendants()) do
+        if motor:IsA("Motor6D") then
+            HandsUp.OriginalMotor6Ds[motor] = {
+                C0 = motor.C0,
+                C1 = motor.C1,
+                Enabled = motor.Enabled
+            }
+        end
+    end
+    
+    if HandsUp.RenderConnection then
+        HandsUp.RenderConnection:Disconnect()
+    end
+    
+    HandsUp.RenderConnection = RunService.RenderStepped:Connect(function()
+        if not HandsUp.Enabled or not HandsUp.Tool then
+            if HandsUp.RenderConnection then
+                HandsUp.RenderConnection:Disconnect()
+                HandsUp.RenderConnection = nil
+            end
+            return
+        end
+        
+        for motor, original in pairs(HandsUp.OriginalMotor6Ds) do
+            if motor and motor.Parent then
+                motor.C0 = original.C0
+                motor.C1 = original.C1
+                motor.Enabled = false
+            end
+        end
+    end)
+end
+
+local function restoreNeckMotorsForHideHead()
+    if HideHead.RenderConnection then
+        HideHead.RenderConnection:Disconnect()
+        HideHead.RenderConnection = nil
+    end
+end
+
+local function restoreNeckMotorsForHandsUp()
+    if HandsUp.RenderConnection then
+        HandsUp.RenderConnection:Disconnect()
+        HandsUp.RenderConnection = nil
+    end
+    
+    for motor, original in pairs(HandsUp.OriginalMotor6Ds) do
+        if motor and motor.Parent then
+            motor.Enabled = original.Enabled
+            motor.C0 = original.C0
+            motor.C1 = original.C1
+        end
+    end
+    
+    HandsUp.OriginalMotor6Ds = {}
+end
+
+if not originalHook then
+    originalHook = hookmetamethod(game, "__namecall", function(self, ...)
+        local methodName = getnamecallmethod()
+        if tostring(methodName) == "FireServer" then
+            if self.Name == "MOVZREP" then 
+                if HideHead.Enabled then
+                    local fixedArguments = {{{Vector3.new(-5721.2001953125,-5,971.5162353515625),Vector3.new(-4181.38818359375,-6,11.123311996459961),Vector3.new(0.006237113382667303,-6,-0.18136750161647797),true,true,true,false},false,false,15.8}}
+                    return originalHook(self, table.unpack(fixedArguments))
+                elseif HandsUp.Enabled and HandsUp.Tool then
+                    local argsVector
+                    if HideHead.Enabled then
+                        argsVector = Vector3.new(0.006237113382667303,-6,-0.18136750161647797)
+                    else
+                        argsVector = Vector3.new(0.000024969827791210264, 0.9848067164421082, -0.173654243350029)
+                    end
+                    
+                    local fixedArguments = {
+                        {
+                            {
+                                Vector3.new(-2398.133544921875, 9848.2998046875, -30.42790985107422),
+                                Vector3.new(-4134.677734375, 0.3429536819458008, -43.834510803222656),
+                                argsVector,
+                                true,
+                                [6] = true
+                            },
+                            false,
+                            false,
+                            32
+                        }
+                    }
+                    return originalHook(self, table.unpack(fixedArguments))
+                end
+            end
+        end
+        return originalHook(self, ...)
+    end)
+end
+
+local function updateHideHead()
+    if HideHead.Enabled then
+        lockNeckMotorForHideHead()
+    else
+        restoreNeckMotorsForHideHead()
+    end
+end
+
+local function updateHandsUp()
+    local tool = hasTool()
+    HandsUp.Tool = tool
+    
+    if HandsUp.Enabled and tool then
+        lockNeckMotorsForHandsUp()
+    else
+        restoreNeckMotorsForHandsUp()
+    end
+end
+
+local function onToolChanged()
+    updateHandsUp()
+end
+
+local function onCharacterAdded(character)
+    local function checkChild(child)
+        if child:IsA("Tool") then
+            onToolChanged()
+        end
+    end
+    
+    for _, child in pairs(character:GetChildren()) do
+        checkChild(child)
+    end
+    
+    character.ChildAdded:Connect(checkChild)
+    character.ChildRemoved:Connect(checkChild)
+    
+    updateHideHead()
+    updateHandsUp()
+end
+
+LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+if LocalPlayer.Character then
+    onCharacterAdded(LocalPlayer.Character)
+end
+
+--local MiscToolsSection = right:section({name = "Tools"})
+
+local hideHeadToggle = MiscToolsSection:addToggle({
+    name = "Hide Head", 
+    flag = "misc_hide_head", 
+    callback = function(value)
+        HideHead.Enabled = value
+        updateHideHead()
+    end
+})
+--hideHeadToggle:addKeyBind({name = "Keybind", flag = "misc_hide_head_bind"})
+
+local handsUpToggle = MiscToolsSection:addToggle({
+    name = "Hands Up", 
+    flag = "misc_hands_up", 
+    callback = function(value)
+        HandsUp.Enabled = value
+        updateHandsUp()
+    end
+})
+--handsUpToggle:addKeyBind({name = "Keybind", flag = "misc_hands_up_bind"})
 local staminaToggle = MiscToolsSection:addToggle({name = "Inf Stamina", flag = "misc_inf_stamina", callback = function(value)
     infStaminaEnabled = value
     if value then enableInfStamina() else disableInfStamina() end
