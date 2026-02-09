@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
---fixed
+--fixed.com
 repeat task.wait() until game:IsLoaded()
 do
     local function isAdonisAC(tab) return rawget(tab,"Detected") and typeof(rawget(tab,"Detected"))=="function" and rawget(tab,"RLocked") end
@@ -2162,12 +2162,13 @@ local headToggle = MiscToolsSection:addToggle({name = "Hide Head", flag = "misc_
     hideHeadEnabled = value
     if value then hideHead() end
 end})
-
 local HandsUp = {
     Enabled = false,
     Tool = nil,
     OriginalMotor6Ds = {},
-    RenderConnection = nil
+    RenderConnection = nil,
+    IsHooked = false,
+    OriginalNamecall = nil
 }
 
 local function hasTool()
@@ -2242,33 +2243,44 @@ local function restoreNeckMotors()
     HandsUp.OriginalMotor6Ds = {}
 end
 
-if not hookFunction then
-    hookFunction = hookmetamethod(game, "__namecall", function(self, ...)
-        local method = getnamecallmethod()
-        if tostring(method) == "FireServer" then
-            if self.Name == "MOVZREP" then 
-                if HandsUp.Enabled and HandsUp.Tool then
-                    local argsVector = hideHeadEnabled and Vector3.new(0.006237113382667303,-6,-0.18136750161647797) or Vector3.new(0.000024969827791210264, 0.9848067164421082, -0.173654243350029)
-                    local fixedArgs = {
-                        {
+local function setupHook()
+    if not HandsUp.OriginalNamecall then
+        HandsUp.OriginalNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+            local method = getnamecallmethod()
+            if tostring(method) == "FireServer" then
+                if self.Name == "MOVZREP" then 
+                    if HandsUp.Enabled and HandsUp.Tool then
+                        local argsVector = hideHeadEnabled and Vector3.new(0.006237113382667303,-6,-0.18136750161647797) or Vector3.new(0.000024969827791210264, 0.9848067164421082, -0.173654243350029)
+                        local fixedArgs = {
                             {
-                                Vector3.new(-2398.133544921875, 9848.2998046875, -30.42790985107422),
-                                Vector3.new(-4134.677734375, 0.3429536819458008, -43.834510803222656),
-                                argsVector,
-                                true,
-                                [6] = true
-                            },
-                            false,
-                            false,
-                            32
+                                {
+                                    Vector3.new(-2398.133544921875, 9848.2998046875, -30.42790985107422),
+                                    Vector3.new(-4134.677734375, 0.3429536819458008, -43.834510803222656),
+                                    argsVector,
+                                    true,
+                                    [6] = true
+                                },
+                                false,
+                                false,
+                                32
+                            }
                         }
-                    }
-                    return hookFunction(self, table.unpack(fixedArgs))
+                        return HandsUp.OriginalNamecall(self, table.unpack(fixedArgs))
+                    end
                 end
             end
-        end
-        return hookFunction(self, ...)
-    end)
+            return HandsUp.OriginalNamecall(self, ...)
+        end)
+        HandsUp.IsHooked = true
+    end
+end
+
+local function removeHook()
+    if HandsUp.OriginalNamecall and HandsUp.IsHooked then
+        hookmetamethod(game, "__namecall", HandsUp.OriginalNamecall)
+        HandsUp.OriginalNamecall = nil
+        HandsUp.IsHooked = false
+    end
 end
 
 local function updateHandsUp()
@@ -2277,8 +2289,10 @@ local function updateHandsUp()
     
     if HandsUp.Enabled and tool then
         lockNeckMotors()
+        setupHook()
     else
         restoreNeckMotors()
+        removeHook()
     end
 end
 
@@ -2307,7 +2321,7 @@ LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 if LocalPlayer.Character then
     onCharacterAdded(LocalPlayer.Character)
 end
---local MiscToolsSection = right:section({name = "Tools"})
+
 local handsUpToggle = MiscToolsSection:addToggle({
     name = "Hands Up", 
     flag = "misc_hands_up", 
@@ -2316,6 +2330,9 @@ local handsUpToggle = MiscToolsSection:addToggle({
         updateHandsUp()
     end
 })
+
+
+
 --handsUpToggle:addKeyBind({name = "Keybind", flag = "misc_hands_up_bind"})
 --handsUpToggle:addKeyBind({name = "Keybind", flag = "misc_hands_up_bind"})
 local staminaToggle = MiscToolsSection:addToggle({name = "Inf Stamina", flag = "misc_inf_stamina", callback = function(value)
