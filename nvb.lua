@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
---gggg
+--fixed
 repeat task.wait() until game:IsLoaded()
 do
     local function isAdonisAC(tab) return rawget(tab,"Detected") and typeof(rawget(tab,"Detected"))=="function" and rawget(tab,"RLocked") end
@@ -1270,7 +1270,7 @@ local function hideHead()
     if renderConnection then renderConnection:Disconnect() end
     renderConnection = RunService.RenderStepped:Connect(function()
         if torso and torso.Parent then
-            for motor,originalData in pairs(originalMotor6Ds) do if motor and motor.Parent then motor.C0 = originalData.C0 motor.C1 = originalData.C1 end end
+            --for motor,originalData in pairs(originalMotor6Ds) do if motor and motor.Parent then motor.C0 = originalData.C0 motor.C1 = originalData.C1 end end
             local neck = torso:FindFirstChild("Neck")
             if neck and neck:IsA("Motor6D") then neck.C0 = CFrame.new(0,0,0.75)*CFrame.Angles(math.rad(90),0,0) neck.C1 = CFrame.new(0,0.25,0)*CFrame.Angles(0,0,0) end
         else if renderConnection then renderConnection:Disconnect() renderConnection = nil end end
@@ -2162,12 +2162,12 @@ local headToggle = MiscToolsSection:addToggle({name = "Hide Head", flag = "misc_
     hideHeadEnabled = value
     if value then hideHead() end
 end})
+
 local HandsUp = {
     Enabled = false,
     Tool = nil,
     OriginalMotor6Ds = {},
-    RenderConnection = nil,
-    OriginalHook = nil
+    RenderConnection = nil
 }
 
 local function hasTool()
@@ -2242,22 +2242,13 @@ local function restoreNeckMotors()
     HandsUp.OriginalMotor6Ds = {}
 end
 
-local function hookMOVZREP()
-    if HandsUp.OriginalHook then return end
-    
-    local combinedHook = hookmetamethod(game, "__namecall", function(self, ...)
+if not hookFunction then
+    hookFunction = hookmetamethod(game, "__namecall", function(self, ...)
         local method = getnamecallmethod()
-        
-        if not checkcaller() and tostring(method) == "FireServer" then
-            if self.Name == "MOVZREP" then           
+        if tostring(method) == "FireServer" then
+            if self.Name == "MOVZREP" then 
                 if HandsUp.Enabled and HandsUp.Tool then
-                    local argsVector
-                    if hideHeadEnabled then
-                        argsVector = Vector3.new(0.006237113382667303,-6,-0.18136750161647797)
-                    else
-                        argsVector = Vector3.new(0.000024969827791210264, 0.9848067164421082, -0.173654243350029)
-                    end
-                    
+                    local argsVector = hideHeadEnabled and Vector3.new(0.006237113382667303,-6,-0.18136750161647797) or Vector3.new(0.000024969827791210264, 0.9848067164421082, -0.173654243350029)
                     local fixedArgs = {
                         {
                             {
@@ -2272,25 +2263,12 @@ local function hookMOVZREP()
                             32
                         }
                     }
-                    return combinedHook(self, table.unpack(fixedArgs))
+                    return hookFunction(self, table.unpack(fixedArgs))
                 end
             end
         end
-        
-        return combinedHook(self, ...)
+        return hookFunction(self, ...)
     end)
-    
-    HandsUp.OriginalHook = combinedHook
-    if originalHook then
-        originalHook = combinedHook
-    end
-end
-
-local function unhookMOVZREP()
-    if HandsUp.OriginalHook then
-        hookmetamethod(game, "__namecall", HandsUp.OriginalHook)
-        HandsUp.OriginalHook = nil
-    end
 end
 
 local function updateHandsUp()
@@ -2299,14 +2277,8 @@ local function updateHandsUp()
     
     if HandsUp.Enabled and tool then
         lockNeckMotors()
-        if not HandsUp.OriginalHook then
-            hookMOVZREP()
-        end
     else
         restoreNeckMotors()
-        if not HandsUp.Enabled then
-            unhookMOVZREP()
-        end
     end
 end
 
@@ -2335,9 +2307,7 @@ LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 if LocalPlayer.Character then
     onCharacterAdded(LocalPlayer.Character)
 end
-
 --local MiscToolsSection = right:section({name = "Tools"})
-
 local handsUpToggle = MiscToolsSection:addToggle({
     name = "Hands Up", 
     flag = "misc_hands_up", 
@@ -2346,6 +2316,7 @@ local handsUpToggle = MiscToolsSection:addToggle({
         updateHandsUp()
     end
 })
+--handsUpToggle:addKeyBind({name = "Keybind", flag = "misc_hands_up_bind"})
 --handsUpToggle:addKeyBind({name = "Keybind", flag = "misc_hands_up_bind"})
 local staminaToggle = MiscToolsSection:addToggle({name = "Inf Stamina", flag = "misc_inf_stamina", callback = function(value)
     infStaminaEnabled = value
