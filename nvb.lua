@@ -1059,25 +1059,28 @@ end
 
 coroutine.wrap(function()
     while true do
-        if not getgenv().CONFIG.Ragebot.Enabled then task.wait(0.001) else
-            if not LocalPlayer.Character then task.wait(0.001) else
-                if not LocalPlayer.Character:FindFirstChild("Head") then task.wait(0.001) else
-                    local target = getClosestTarget()
-                    local waitTimeValue = 0.01
-                    if target then
+        local cfg = getgenv().CONFIG.Ragebot
+        if not cfg.Enabled or not LocalPlayer.Character then 
+            task.wait()
+        else
+            local head = LocalPlayer.Character:FindFirstChild("Head")
+            if not head then 
+                task.wait()
+            else
+                local target = getClosestTarget()
+                if target then
+                    if cfg.RapidFire then
+                        shootAtTarget(target)
+                    else
                         local currentTime = tick()
-                        local WaitTime = 1 / (getgenv().CONFIG.Ragebot.FireRate * 1)
-                        if getgenv().CONFIG.Ragebot.RapidFire then
-                            local rapidWaitTime = 0
-                            if currentTime - lastShotTime >= rapidWaitTime then shootAtTarget(target) lastShotTime = currentTime end
-                            waitTimeValue = 0
-                        else
-                            if currentTime - lastShotTime >= WaitTime then shootAtTarget(target) lastShotTime = currentTime end
-                            waitTimeValue = WaitTime / 2
+                        local WaitTime = 1 / (cfg.FireRate * 1)
+                        if currentTime - lastShotTime >= WaitTime then
+                            shootAtTarget(target)
+                            lastShotTime = currentTime
                         end
                     end
-                    task.wait(waitTimeValue)
                 end
+                wait()
             end
         end
     end
@@ -1835,7 +1838,7 @@ MainSection:addToggle({name = "Auto Reload", flag = "rage_auto_reload", callback
     autoReload()
 end})
 
-MainSection:addSlider({name = "Fire Rate", flag = "rage_fire_rate", min = 1, max = 100, default = 30, callback = function(value)
+MainSection:addSlider({name = "Fire Rate", flag = "rage_fire_rate", min = 1, max = 1000, default = 30, callback = function(value)
     getgenv().CONFIG.Ragebot.FireRate = value
 end})
 
