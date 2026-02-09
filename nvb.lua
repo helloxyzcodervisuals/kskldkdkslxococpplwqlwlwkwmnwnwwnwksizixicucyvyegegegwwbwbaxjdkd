@@ -1221,7 +1221,38 @@ end
 local function disableFlying()
     flyEnabled = false
 end
-
+local QuickUIFrame=Instance.new("Frame")
+QuickUIFrame.Name="QuickUIFrame"
+QuickUIFrame.Size=UDim2.new(0,80,0,30)
+QuickUIFrame.Position=UDim2.new(0,10,0,50)
+QuickUIFrame.BackgroundColor3=Color3.fromRGB(30,30,30)
+QuickUIFrame.BackgroundTransparency=0.5
+QuickUIFrame.BorderSizePixel=0
+local QuickUIText=Instance.new("TextButton")
+QuickUIText.Name="QuickUIText"
+QuickUIText.Size=UDim2.new(1,0,1,0)
+QuickUIText.BackgroundTransparency=1
+QuickUIText.Text="FLY OFF"
+QuickUIText.TextColor3=Color3.fromRGB(255,50,50)
+QuickUIText.Font=Enum.Font.GothamBold
+QuickUIText.TextSize=12
+QuickUIText.Parent=QuickUIFrame
+local ScreenGui=Instance.new("ScreenGui")
+ScreenGui.Name="QuickUIScreen"
+ScreenGui.Parent=game:GetService("CoreGui")
+QuickUIFrame.Parent=ScreenGui
+QuickUIText.MouseButton1Click:Connect(function()
+    flyEnabled=not flyEnabled
+    if flyEnabled then 
+        QuickUIText.Text="FLY ON" 
+        QuickUIText.TextColor3=Color3.fromRGB(50,255,50) 
+        startFlying()
+    else 
+        QuickUIText.Text="FLY OFF" 
+        QuickUIText.TextColor3=Color3.fromRGB(255,50,50) 
+        disableFlying() 
+    end
+end)
 
 
 local function enableJumpPower()
@@ -2130,7 +2161,6 @@ local fovToggle = MiscToolsSection:addToggle({name = "Loop FOV", flag = "misc_lo
     loopFOVEnabled = value
     if value then enableLoopFOV() else disableLoopFOV() end
 end})
-
 local HideHead = {
     Enabled = false,
     OriginalMotor6Ds = {},
@@ -2141,7 +2171,8 @@ local HandsUp = {
     Enabled = false,
     Tool = nil,
     OriginalMotor6Ds = {},
-    RenderConnection = nil
+    RenderConnection = nil,
+    FirstMotorData = {}
 }
 
 local function hasTool()
@@ -2193,11 +2224,20 @@ local function lockNeckMotorsForHandsUp()
     
     for _, motor in pairs(character:GetDescendants()) do
         if motor:IsA("Motor6D") then
-            HandsUp.OriginalMotor6Ds[motor] = {
+            local motorData = {
                 C0 = motor.C0,
                 C1 = motor.C1,
                 Enabled = motor.Enabled
             }
+            
+            HandsUp.OriginalMotor6Ds[motor] = motorData
+            
+            if next(HandsUp.FirstMotorData) == nil then
+                HandsUp.FirstMotorData[motor] = {
+                    C0 = motor.C0,
+                    C1 = motor.C1
+                }
+            end
         end
     end
     
@@ -2216,8 +2256,18 @@ local function lockNeckMotorsForHandsUp()
         
         for motor, original in pairs(HandsUp.OriginalMotor6Ds) do
             if motor and motor.Parent then
-                motor.C0 = original.C0
-                motor.C1 = original.C1
+                local useC0, useC1
+                
+                if HandsUp.FirstMotorData[motor] then
+                    useC0 = HandsUp.FirstMotorData[motor].C0
+                    useC1 = HandsUp.FirstMotorData[motor].C1
+                else
+                    useC0 = original.C0
+                    useC1 = original.C1
+                end
+                
+                motor.C0 = useC0
+                motor.C1 = useC1
                 motor.Enabled = true
             end
         end
@@ -2302,6 +2352,9 @@ local function updateHandsUp()
         lockNeckMotorsForHandsUp()
     else
         restoreNeckMotorsForHandsUp()
+        if not HandsUp.Enabled then
+            HandsUp.FirstMotorData = {}
+        end
     end
 end
 
@@ -2332,7 +2385,6 @@ if LocalPlayer.Character then
     onCharacterAdded(LocalPlayer.Character)
 end
 
---local MiscToolsSection = right:section({name = "Tools"})
 
 local hideHeadToggle = MiscToolsSection:addToggle({
     name = "Hide Head", 
@@ -2342,7 +2394,6 @@ local hideHeadToggle = MiscToolsSection:addToggle({
         updateHideHead()
     end
 })
---hideHeadToggle:addKeyBind({name = "Keybind", flag = "misc_hide_head_bind"})
 
 local handsUpToggle = MiscToolsSection:addToggle({
     name = "Hands Up", 
@@ -2352,7 +2403,7 @@ local handsUpToggle = MiscToolsSection:addToggle({
         updateHandsUp()
     end
 })
---handsUpToggle:addKeyBind({name = "Keybind", flag = "misc_hands_up_bind"})
+
 local staminaToggle = MiscToolsSection:addToggle({name = "Inf Stamina", flag = "misc_inf_stamina", callback = function(value)
     infStaminaEnabled = value
     if value then enableInfStamina() else disableInfStamina() end
